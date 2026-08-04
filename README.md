@@ -1,6 +1,6 @@
 # KONAS PERSADIA 2026 Portal
 
-Aplikasi portal resmi untuk kegiatan **KONAS PERSADIA 14 SURAKARTA TAHUN 2026**.
+Aplikasi portal resmi untuk kegiatan **KONAS PERSADIA TAHUN 2026**.
 Dibangun menggunakan React 19, Vite, TypeScript, Tailwind CSS, dan Supabase sebagai backend database.
 
 ## 🚀 Fitur Utama
@@ -82,7 +82,7 @@ Aplikasi utama akan berjalan di `http://localhost:3000` (atau port lain yang ter
 
 ### Dashboard Admin
 Dashboard Admin dapat diakses melalui tombol gembok di bagian bawah halaman (footer) atau dengan masuk ke rute tertentu.
-- **PIN Akses**: `k0n@5p3r5@d1@` (Harap ubah ini jika akan dipublikasikan ke production)
+- **PIN Akses**: `rahasia` (Harap ubah ini jika akan dipublikasikan ke production)
 
 ### QR Code Scanner
 Aplikasi ini memiliki *entry point* sekunder untuk scanner QR yang dapat diakses melalui path `/scanner.html` di browser Anda (contoh: `http://localhost:3000/scanner.html`).
