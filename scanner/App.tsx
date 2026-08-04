@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
-import { supabase } from '../src/lib/supabase';
+import { supabase, isSupabaseConfigured } from '../src/lib/supabase';
 import { CheckCircle2, XCircle, Search, RefreshCw, QrCode, ShieldAlert, ArrowLeft, CheckSquare, Square, LogOut } from 'lucide-react';
 
 interface Pendaftar {
@@ -34,7 +34,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState("");
-  const SCANNER_PIN = "konas2026persadia!"; // Same as admin pin for now or similar
+  const SCANNER_PIN = "rahasia"; // Same as admin pin for now or similar
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +57,14 @@ function App() {
   const fetchData = async () => {
     setLoading(true);
     setError(null);
+
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      setError("Supabase tidak dikonfigurasi. Mode scanner memerlukan Supabase.");
+      setData([]);
+      return;
+    }
+
     try {
       const { data: supabaseData, error: supabaseError } = await supabase
         .from('pendaftar')
@@ -181,6 +189,11 @@ function App() {
   const handleUpdateCheckpoint = async (checkpointId: string, currentValue: boolean) => {
     if (!selectedUser) return;
     
+    if (!isSupabaseConfigured) {
+      alert("Supabase tidak dikonfigurasi.");
+      return;
+    }
+
     const newValue = !currentValue;
     setActionLoading(checkpointId);
     

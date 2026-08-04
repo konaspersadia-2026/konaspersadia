@@ -5,7 +5,7 @@ import { RegistrationData } from "../types";
 import { QRCodeSVG } from "qrcode.react";
 import jsPDF from "jspdf";
 import { toPng } from "html-to-image";
-import { supabase } from "../lib/supabase";
+import { supabase, isSupabaseConfigured } from "../lib/supabase";
 
 interface RegistrationModalProps {
   isOpen: boolean;
@@ -147,10 +147,14 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
         slot_waktu_cek_gula: selectedKategori.fieldTambahan.includes("slotWaktuCekGula") ? slotWaktuCekGula : "-",
       };
 
-      let { error: supabaseErr } = await supabase.from('pendaftar').insert([payloadToSupabase]);
-      if (supabaseErr) {
-        console.error("Gagal insert ke Supabase:", supabaseErr);
-        throw new Error(`Peringatan Supabase: Gagal menyimpan ke database Supabase.\nPesan Error: ${supabaseErr.message}`);
+      if (isSupabaseConfigured) {
+        let { error: supabaseErr } = await supabase.from('pendaftar').insert([payloadToSupabase]);
+        if (supabaseErr) {
+          console.error("Gagal insert ke Supabase:", supabaseErr);
+          throw new Error(`Peringatan Supabase: Gagal menyimpan ke database Supabase.\nPesan Error: ${supabaseErr.message}`);
+        }
+      } else {
+        console.warn("Supabase tidak dikonfigurasi. Data registrasi hanya disimpan di lokal/mock.");
       }
 
       setSuccessData({

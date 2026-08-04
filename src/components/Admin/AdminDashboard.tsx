@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
@@ -14,7 +14,7 @@ interface AdminDashboardProps {
 }
 
 // Simple PIN for demo purposes (In real apps, use proper auth or env var)
-const ADMIN_PIN = "k0n@5p3r5@d1@";
+const ADMIN_PIN = "rahasia";
 
 interface Pendaftar {
   Timestamp: string;
@@ -65,6 +65,14 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
   const fetchData = async () => {
     setLoading(true);
     setError("");
+
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      setError("Supabase tidak dikonfigurasi. Menggunakan mock data lokal dinonaktifkan untuk dashboard ini.");
+      setData([]);
+      return;
+    }
+
     try {
       const { data: supabaseData, error: supabaseError } = await supabase
         .from('pendaftar')
@@ -108,6 +116,12 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
     setActionError(null);
     setActionLoadingId(id);
     
+    if (!isSupabaseConfigured) {
+      setActionLoadingId(null);
+      setActionError("Supabase tidak dikonfigurasi.");
+      return;
+    }
+
     try {
       const { error: updateError } = await supabase
         .from('pendaftar')
