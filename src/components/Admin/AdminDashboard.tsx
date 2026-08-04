@@ -14,7 +14,7 @@ interface AdminDashboardProps {
 }
 
 // Simple PIN for demo purposes (In real apps, use proper auth or env var)
-const ADMIN_PIN = "rahasia";
+const ADMIN_PIN = "rahasiakonas26!";
 
 interface Pendaftar {
   Timestamp: string;
