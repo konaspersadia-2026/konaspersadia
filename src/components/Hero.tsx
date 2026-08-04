@@ -1,0 +1,227 @@
+import { useState, useEffect } from "react";
+import { Calendar, MapPin, Users, HeartPulse, ShieldAlert, ArrowRight, Activity } from "lucide-react";
+import { EVENT_INFO } from "../config";
+import { motion } from "motion/react";
+import { SilhouetteSenam, SilhouetteJalanSehat } from "./BackgroundSilhouettes";
+
+interface HeroProps {
+  onOpenRegister: () => void;
+  onNavigate: (sectionId: string) => void;
+}
+
+export default function Hero({ onOpenRegister, onNavigate }: HeroProps) {
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+    isOver: false,
+  });
+
+  useEffect(() => {
+    const eventDate = new Date(`${EVENT_INFO.tanggalMulai}T08:00:00+07:00`).getTime();
+
+    const calculateTime = () => {
+      const now = new Date().getTime();
+      const difference = eventDate - now;
+
+      if (difference <= 0) {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, isOver: true });
+        return;
+      }
+
+      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+      setTimeLeft({ days, hours, minutes, seconds, isOver: false });
+    };
+
+    calculateTime();
+    const interval = setInterval(calculateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <section
+      id="beranda"
+      className="relative min-h-screen pt-24 pb-16 flex flex-col justify-center bg-gradient-to-br from-slate-50 via-white to-blue-50 overflow-hidden"
+    >
+      {/* Decorative Circles */}
+      <div className="absolute top-20 right-[-10%] w-[40rem] h-[40rem] rounded-full bg-blue-100/30 blur-3xl pointer-events-none z-0" />
+      <div className="absolute bottom-10 left-[-10%] w-[35rem] h-[35rem] rounded-full bg-[#00B4AC]/5 blur-3xl pointer-events-none z-0" />
+
+      {/* Background Activity Silhouettes */}
+      <div className="absolute top-[18%] left-[-8%] sm:left-[2%] opacity-[0.03] text-slate-500 rotate-12 pointer-events-none z-0">
+        <SilhouetteSenam className="w-56 h-56 sm:w-80 sm:h-80" />
+      </div>
+      <div className="absolute bottom-[15%] right-[-8%] sm:right-[2%] opacity-[0.03] text-slate-500 -rotate-12 pointer-events-none z-0">
+        <SilhouetteJalanSehat className="w-56 h-56 sm:w-80 sm:h-80" />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
+        
+        {/* Badge World Diabetes Day & Hari Kesehatan Nasional */}
+        <motion.div 
+          className="flex flex-wrap justify-center gap-3 mb-6"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[10px] sm:text-xs font-bold bg-[#C89A2E]/15 text-[#0B3D5E] border border-[#C89A2E]/30 backdrop-blur-sm shadow-sm">
+            <HeartPulse className="h-4 w-4 animate-pulse text-rose-500" />
+            World Diabetes Day 2026
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[10px] sm:text-xs font-bold bg-[#E6F4EA] text-[#2D7A4F] border border-[#2D7A4F]/30 backdrop-blur-sm shadow-sm">
+            <Activity className="h-4 w-4 text-[#2D7A4F]" />
+            Hari Kesehatan Nasional ke-62
+          </span>
+        </motion.div>
+
+        {/* Title & Host Organizations */}
+        <div className="text-center max-w-4xl mx-auto mb-4">
+          <motion.p 
+            className="text-xs sm:text-sm font-extrabold tracking-widest text-[#0B3D5E] uppercase mb-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.1, duration: 0.5 }}
+          >
+            Kongres Nasional &amp; Konferensi Kerja Bersama
+          </motion.p>
+          <motion.h1 
+            className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-800 tracking-tight leading-tight mb-4 font-sans"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+          >
+            KONAS PERSADIA <span className="text-[#0B3D5E]">2026</span>
+          </motion.h1>
+          <motion.p 
+            className="text-base sm:text-lg font-semibold text-slate-600 mb-6 px-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.6 }}
+          >
+            Mewadahi <span className="font-bold text-[#0B3D5E]">PERSADIA</span> (Persatuan Diabetes Indonesia),{" "}
+            <span className="font-bold text-[#0B3D5E]">PEDI</span> (Educator Diabetes), dan{" "}
+            <span className="font-bold text-[#0B3D5E]">PERKENI</span> (Endokrinologi)
+          </motion.p>
+
+          {/* Theme Banner Card */}
+          <motion.div 
+            className="bg-white/85 backdrop-blur-md rounded-2xl p-6 sm:p-8 max-w-3xl mx-auto mb-10 shadow-xl border border-white/40 transform transition hover:scale-[1.01]"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.4, duration: 0.6, type: "spring", stiffness: 100 }}
+          >
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-800 mt-1 mb-2">
+              "Pesta Rakyat Persadia, Menyehatkan Indonesia"
+            </h2>
+            <div className="flex justify-center items-center gap-2 text-[#0B3D5E] font-medium text-xs sm:text-sm">
+              <ShieldAlert className="h-4 w-4 text-[#00B4AC]" />
+              <span>Topik Utama: <strong>Diabetes, Deteksi Dini Lebih Awal</strong></span>
+            </div>
+
+            {/* Campaign Taglines added directly in Hero */}
+            <div className="mt-4 pt-4 border-t border-slate-100 text-center">
+              <p className="text-xs sm:text-sm font-extrabold text-[#0B3D5E]">
+                "Deteksi Dini, Hidup Lebih Baik: Bersama Melawan Diabetes dari Akar"
+              </p>
+              <p className="text-[10px] sm:text-xs text-slate-500 italic mt-0.5">
+                "Early Detection for Better Living: Standing Together Against Diabetes at Its Root"
+              </p>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Date and Locations Info Grid */}
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-12"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.7 }}
+        >
+          {/* Tanggal */}
+          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-white/30 flex items-start gap-4 shadow-sm hover:bg-white/90 transition duration-300">
+            <div className="p-3 bg-[#0B3D5E] text-white rounded-lg">
+              <Calendar className="h-6 w-6" />
+            </div>
+            <div>
+              <h4 className="font-bold text-slate-800 text-xs">Waktu &amp; Tanggal</h4>
+              <p className="text-slate-600 text-xs mt-1">Sabtu - Minggu</p>
+              <p className="text-[#0B3D5E] font-bold text-xs sm:text-sm">7 - 8 November 2026</p>
+            </div>
+          </div>
+
+          {/* Venue Ilmiah */}
+          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-white/30 flex items-start gap-4 shadow-sm hover:bg-white/90 transition duration-300">
+            <div className="p-3 bg-[#00B4AC] text-white rounded-lg">
+              <MapPin className="h-6 w-6" />
+            </div>
+            <div>
+              <h4 className="font-bold text-slate-800 text-xs">Sesi Ilmiah (Nakes)</h4>
+              <p className="text-slate-600 text-xs mt-1">Novotel Bogor</p>
+              <span className="inline-block mt-1.5 px-2 py-0.5 bg-[#0B3D5E]/10 text-[#0B3D5E] font-semibold text-[9px] rounded">
+                Simposium, Workshop &amp; Pameran
+              </span>
+            </div>
+          </div>
+
+          {/* Venue Rakyat */}
+          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-white/30 flex items-start gap-4 shadow-sm hover:bg-white/90 transition duration-300">
+            <div className="p-3 bg-[#C89A2E] text-[#0B3D5E] rounded-lg font-bold">
+              <Users className="h-6 w-6" />
+            </div>
+            <div>
+              <h4 className="font-bold text-slate-800 text-xs">Pesta Rakyat (Umum)</h4>
+              <p className="text-slate-600 text-xs mt-1">GOR Pakansari, Cibinong</p>
+              <span className="inline-block mt-1.5 px-2 py-0.5 bg-[#E6F4EA] text-[#2D7A4F] font-semibold text-[9px] rounded">
+                Senam, Jalan Sehat &amp; Skrining Gratis
+              </span>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Countdown Timer */}
+        <motion.div 
+          className="max-w-xl mx-auto mb-12 text-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6, duration: 0.5 }}
+        >
+          <h3 className="text-xs sm:text-sm font-bold text-slate-600 tracking-wider uppercase mb-3">
+            {timeLeft.isOver ? "Acara Telah Dimulai / Berakhir" : "Menghitung Mundur Menuju Acara"}
+          </h3>
+          {!timeLeft.isOver && (
+            <div className="grid grid-cols-4 gap-3 sm:gap-4 max-w-md mx-auto">
+              {[
+                { label: "Hari", value: timeLeft.days },
+                { label: "Jam", value: timeLeft.hours },
+                { label: "Menit", value: timeLeft.minutes },
+                { label: "Detik", value: timeLeft.seconds },
+              ].map((item, idx) => (
+                <motion.div 
+                  key={idx} 
+                  className="bg-[#0B3D5E] text-white p-3 sm:p-4 rounded-xl shadow-md border border-[#C89A2E]/20"
+                  whileHover={{ scale: 1.05, rotate: 1 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                >
+                  <span className="block text-2xl sm:text-3xl font-extrabold tracking-tight">
+                    {String(item.value).padStart(2, "0")}
+                  </span>
+                  <span className="block text-[10px] sm:text-xs font-medium text-[#C89A2E] uppercase mt-0.5">
+                    {item.label}
+                  </span>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </motion.div>
+
+
+        {/* Primary and Secondary CTA Buttons */}
+      </div>
+    </section>
+  );
+}
