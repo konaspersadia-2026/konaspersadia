@@ -394,15 +394,16 @@ function App() {
             {/* Manual Search */}
             <form onSubmit={handleManualSearch} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
               <h3 className="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">Pencarian Manual</h3>
-              <div className="flex space-x-2">
+              <div className="flex flex-col space-y-3">
                 <input
                   type="text"
                   name="searchId"
                   placeholder="No. Registrasi / Nama..."
-                  className="flex-1 px-4 py-2 min-h-[44px] border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                  className="w-full px-4 py-3 min-h-[44px] border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
                 />
-                <button type="submit" className="px-4 py-2 min-h-[44px] min-w-[44px] bg-slate-800 hover:bg-slate-900 text-white font-medium rounded-lg transition-colors flex items-center justify-center">
-                  <Search className="w-5 h-5" />
+                <button type="submit" className="w-full px-4 py-3 min-h-[44px] bg-slate-800 hover:bg-slate-900 text-white font-medium rounded-lg transition-colors flex items-center justify-center">
+                  <Search className="w-5 h-5 mr-2" />
+                  Cari Peserta
                 </button>
               </div>
             </form>
