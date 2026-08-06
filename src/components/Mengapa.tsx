@@ -37,9 +37,9 @@ export default function Mengapa() {
                 <div className="p-2 bg-[#E6F4EA] text-[#2D7A4F] rounded-lg w-fit mb-3">
                   <Award className="h-5 w-5" />
                 </div>
-                <strong className="text-xs text-[#2D7A4F] block font-bold mb-1">Pemecahan Rekor Skrining</strong>
+                <strong className="text-xs text-[#2D7A4F] block font-bold mb-1">Skrining Kesehatan Masal</strong>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Pada Hari ke-2 di GOR Pakansari, mari jadi saksi dan bagian dari <strong>pemeriksaan gula darah massal gratis untuk 10.000 orang dalam satu hari</strong>.
+                  Pada Hari ke-2 di GOR Pakansari, mari jadi saksi dan bagian dari <strong>pemeriksaan gula darah massal gratis untuk 5.000 orang dalam satu hari</strong>.
                 </p>
               </div>
             </div>
@@ -87,7 +87,7 @@ export default function Mengapa() {
               <ul className="space-y-1.5 text-xs text-slate-600">
                 <li className="flex items-start gap-2">
                   <CheckSquare className="h-3.5 w-3.5 text-[#2D7A4F] shrink-0 mt-0.5" />
-                  <span>Pemeriksaan Gula Darah Massal Gratis (Target Rekor 10.000 peserta).</span>
+                  <span>Pemeriksaan Gula Darah Massal Gratis (Target 5.000 peserta).</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckSquare className="h-3.5 w-3.5 text-[#2D7A4F] shrink-0 mt-0.5" />

@@ -17,6 +17,9 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [successData, setSuccessData] = useState<{ id: string; totalAkhir: number; data: any } | null>(null);
+  const [showThankYouPopup, setShowThankYouPopup] = useState(false);
+  const [showConfirmClose, setShowConfirmClose] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Form Fields
   const [kategoriId, setKategoriId] = useState(KATEGORI_PESERTA[0].id);
@@ -187,41 +190,80 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     setInstitusi("");
     setNoKTP("");
     setCabangPersadia("");
+    setShowThankYouPopup(false);
   };
 
-  const handleDownloadBadge = async () => {
+  const handleSelesai = async () => {
+    setIsDownloading(true);
     const badgeElement = document.getElementById('badge-print-area');
-    if (!badgeElement) return;
-
-    try {
-      // Create image from the badge element
-      const imgData = await toPng(badgeElement, { pixelRatio: 3, backgroundColor: '#ffffff' });
-      
-      // A6 size in portrait is 105 x 148 mm
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a6'
-      });
-
-      pdf.addImage(imgData, 'PNG', 0, 0, 105, 148);
-      pdf.save(`Badge-${successData?.id}.pdf`);
-    } catch (error) {
-      console.error('Error generating PDF', error);
+    if (badgeElement) {
+      try {
+        const imgData = await toPng(badgeElement, { pixelRatio: 3, backgroundColor: '#ffffff' });
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a6'
+        });
+        pdf.addImage(imgData, 'PNG', 0, 0, 105, 148);
+        pdf.save(`Badge-${successData?.id}.pdf`);
+      } catch (error) {
+        console.error('Error generating PDF', error);
+      }
     }
+    setIsDownloading(false);
+    setShowThankYouPopup(true);
   };
 
   const handleClose = () => {
-    if (step === 3) {
+    if (step === 3 || showThankYouPopup) {
       resetForm();
+      onClose();
+    } else {
+      setShowConfirmClose(true);
     }
+  };
+
+  const confirmClose = () => {
+    setShowConfirmClose(false);
+    resetForm();
     onClose();
+  };
+
+  const cancelClose = () => {
+    setShowConfirmClose(false);
   };
 
   if (!isOpen) return null;
 
   return (
     <>
+    {showConfirmClose && (
+      <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 text-center animate-scaleIn">
+          <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+            <Info className="h-6 w-6 text-amber-600" />
+          </div>
+          <h4 className="text-lg font-black text-slate-800 mb-2">Batalkan Pendaftaran?</h4>
+          <p className="text-sm text-slate-600 mb-6 leading-relaxed">
+            Data yang telah Anda isi akan hilang dan tidak tersimpan. Yakin ingin menutup formulir?
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={cancelClose}
+              className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition"
+            >
+              Lanjutkan
+            </button>
+            <button
+              onClick={confirmClose}
+              className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs transition"
+            >
+              Ya, Tutup
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     <div
       id="registration-modal-overlay"
       className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-4"
@@ -230,6 +272,17 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
         id="registration-modal-box"
         className="relative bg-white rounded-3xl shadow-2xl max-w-xl w-full overflow-hidden border border-slate-100 flex flex-col max-h-[90vh]"
       >
+        {showThankYouPopup ? (
+          <div className="p-8 text-center space-y-6 flex-1 flex flex-col items-center justify-center bg-white min-h-[400px]">
+             <div className="p-4 bg-[#2D7A4F]/10 text-[#2D7A4F] rounded-full inline-block">
+                <CheckCircle2 className="h-16 w-16" />
+             </div>
+             <h3 className="text-2xl font-black text-slate-800">Terima Kasih!</h3>
+             <p className="text-sm text-slate-600 max-w-sm mx-auto">Pendaftaran Anda telah selesai dan tiket berhasil diunduh. Sampai jumpa di acara Konas Persadia 2026!</p>
+             <button onClick={handleClose} className="mt-4 px-8 py-3 bg-[#00B4AC] hover:bg-[#00968f] text-white font-bold rounded-full w-full max-w-xs shadow-lg transition-transform hover:scale-105">Oke</button>
+          </div>
+        ) : (
+          <>
         {/* Header Block */}
         <div className="bg-[#0B3D5E] text-white p-6 flex justify-between items-center shrink-0">
           <div>
@@ -558,13 +611,7 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                     includeMargin={true}
                   />
                   <strong className="text-xl font-black text-[#0B3D5E] tracking-widest">{successData.id}</strong>
-                  <button
-                    onClick={handleDownloadBadge}
-                    className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#00B4AC] hover:bg-[#00968f] text-white rounded-xl font-bold text-sm transition-colors"
-                  >
-                    <Download className="h-4 w-4" />
-                    Download
-                  </button>
+                  
                 </div>
               </div>
 
@@ -653,13 +700,23 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
 
           {step === 3 && (
             <button
-              onClick={handleClose}
-              className="w-full py-3 bg-[#0B3D5E] hover:bg-[#1e40af] text-white font-extrabold text-sm rounded-xl text-center shadow transition cursor-pointer"
+              onClick={handleSelesai}
+              disabled={isDownloading}
+              className="w-full py-3 bg-[#0B3D5E] hover:bg-[#1e40af] text-white font-extrabold text-sm rounded-xl text-center shadow transition cursor-pointer flex items-center justify-center gap-2 disabled:bg-slate-400"
             >
-              Selesai
+              {isDownloading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Mengunduh Tiket...
+                </>
+              ) : (
+                "Selesai"
+              )}
             </button>
           )}
         </div>
+        </>
+        )}
       </div>
     </div>
 

@@ -121,7 +121,7 @@ export default function Schedules() {
         },
         {
           time: "06:00 - 07:00",
-          title: "Parade Cabang PERSADIA & Pemeriksaan Gula Darah 10.000 Peserta",
+          title: "Parade Cabang PERSADIA & Pemeriksaan Gula Darah 5.000 Peserta",
           location: "Area GOR Pakansari",
           speaker: "Yell-yell & Mars PERSADIA",
           type: "activity"

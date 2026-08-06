@@ -216,7 +216,7 @@ export default function RegistrationFees({ onOpenRegister }: RegistrationFeesPro
         <div className="bg-gradient-to-r from-[#0B3D5E] to-[#00B4AC] rounded-3xl p-8 sm:p-12 text-center text-white shadow-xl max-w-4xl mx-auto">
           <h3 className="text-xl sm:text-2xl font-bold mb-3">Siap Menjadi Bagian dari Konferensi Ini?</h3>
           <p className="text-xs sm:text-sm text-[#F8FAFC] max-w-xl mx-auto mb-6">
-            Klik tombol di bawah ini untuk mengisi formulir pendaftaran. Proses pendaftaran hanya memakan waktu 3 menit dengan konfirmasi bukti transfer yang mudah.
+            Klik tombol di bawah ini untuk mengisi formulir pendaftaran. Proses pendaftaran hanya memakan waktu 3 menit dengan konfirmasi otomatis berdasarkan 3 digit kode unik.
           </p>
           <button
             id="fees-btn-daftar"

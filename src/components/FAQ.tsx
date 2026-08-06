@@ -11,15 +11,15 @@ export default function FAQ() {
     },
     {
       q: "Bagaimana cara melakukan verifikasi pembayaran pendaftaran?",
-      a: "Setelah mengisi biodata diri dan memilih kategori peserta di pop-up pendaftaran, sistem kami akan memunculkan nominal tagihan transfer yang ditambahkan dengan 3 digit kode unik acak (misal: Rp 1.500.342). Silakan transfer ke rekening resmi panitia tepat pas hingga digit terakhir tersebut. Anda juga wajib mengunggah screenshot bukti transfer. Tim bendahara kami akan mencocokkan mutasi rekening secara manual dan memperbarui status pendaftaran Anda di halaman 'Cek Status Pendaftaran' dalam kurun 1x24 jam."
+      a: "Setelah mengisi biodata diri dan memilih kategori peserta di pop-up pendaftaran, sistem kami akan memunculkan nominal tagihan transfer yang ditambahkan dengan 3 digit kode unik acak (misal: Rp 1.500.342). Silakan transfer ke rekening resmi panitia tepat pas hingga digit terakhir tersebut. Anda tidak perlu mengunggah bukti transfer, karena tim bendahara kami akan mencocokkan mutasi rekening berdasarkan 3 digit kode unik tersebut secara otomatis dan memperbarui status pendaftaran Anda di halaman 'Cek Status Pendaftaran' dalam kurun 1x24 jam."
     },
     {
       q: "Apakah pendaftaran Pesta Rakyat di GOR Pakansari wajib membayar?",
-      a: "Pendaftaran Pesta Rakyat bagi Anggota PERSADIA adalah Gratis (atau Rp 25.000 jika mendaftar reguler di luar masa Early Bird). Sedangkan untuk Masyarakat Umum adalah Rp 50.000 (sudah mencakup konsumsi pagi, atribut senam, serta kupon undian doorprize). Semua pendaftaran di track Pesta Rakyat mendapatkan hak pemeriksaan gula darah gratis."
+      a: "Pendaftaran Pesta Rakyat bagi Anggota PERSADIA maupun Masyarakat Umum adalah sepenuhnya Gratis (tidak dipungut biaya), baik selama periode pendaftaran Early Bird maupun Onsite. Semua pendaftar Pesta Rakyat akan mendapatkan fasilitas seperti konsumsi pagi, atribut senam, kupon undian doorprize, serta pemeriksaan gula darah gratis."
     },
     {
-      q: "Bagaimana cara mengunggah dokumen bukti jika ukuran file kamera HP terlalu besar?",
-      a: "Anda tidak perlu khawatir. Portal website kami dilengkapi dengan sistem pengompres otomatis di sisi browser (client-side compression). Ketika Anda mengunggah screenshot bukti transfer atau kartu mahasiswa dari kamera/galeri HP, sistem akan secara otomatis mengecilkan dimensi lebar maksimal ke ~1000px dengan kualitas sedang tanpa mengurangi kejelasan data transaksi. Pengiriman data menjadi sangat cepat dan hemat kuota internet Anda."
+      q: "Bagaimana cara mengunggah dokumen pas foto atau identitas jika ukuran file kamera HP terlalu besar?",
+      a: "Anda tidak perlu khawatir. Portal website kami dilengkapi dengan sistem pengompres otomatis di sisi browser (client-side compression). Ketika Anda mengunggah pas foto atau kartu mahasiswa dari kamera/galeri HP, sistem akan secara otomatis mengecilkan dimensi lebar maksimal ke ~1000px dengan kualitas sedang tanpa mengurangi kejelasan data. Pengiriman data menjadi sangat cepat dan hemat kuota internet Anda."
     },
     {
       q: "Apakah saya mendapatkan e-sertifikat setelah acara selesai?",

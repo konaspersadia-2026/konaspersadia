@@ -11,7 +11,7 @@ export default function About() {
   ];
 
   const jenisKegiatan = [
-    { title: "Pesta Rakyat", desc: "Pemeriksaan gula darah massal gratis dengan target 10.000 peserta dalam satu hari di GOR Pakansari." },
+    { title: "Pesta Rakyat", desc: "Pemeriksaan gula darah massal gratis dengan target 5.000 peserta dalam satu hari di GOR Pakansari." },
     { title: "Senam Bersama", desc: "Senam bugar diabetesi masal untuk mengampanyekan gaya hidup aktif dan sehat. Dipersembahkan bersama oleh PERSADIA, PEDI, PERKENI, dan KORMI (Komite Olahraga Rekreasi Masyarakat Indonesia)." },
     { title: "Workshop Medis", desc: "Pelatihan interaktif dan intensif khusus bagi dokter umum dan dokter spesialis." },
     { title: "Simposium Klinis", desc: "Seminar sains menyajikan penelitian ilmiah dan tata laksana klinis diabetes termutakhir." },
@@ -148,7 +148,7 @@ export default function About() {
                 <Target className="h-8 w-8" />
               </div>
               <div>
-                <span className="text-2xl sm:text-3xl font-black text-[#00B4AC] block">10.000+ Orang</span>
+                <span className="text-2xl sm:text-3xl font-black text-[#00B4AC] block">5.000+ Orang</span>
                 <strong className="text-xs text-slate-800 block mt-0.5">Track Pesta Rakyat GOR Pakansari</strong>
                 <p className="text-xs text-slate-500 mt-1">Dokter, edukator, anggota PERSADIA, serta masyarakat umum Bogor dan sekitarnya.</p>
               </div>

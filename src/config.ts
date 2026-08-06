@@ -165,8 +165,8 @@ export const SUSUNAN_PANITIA = {
     "dr. Widya Mandala Sari, Sp.PD"
   ],
   seksiAcara: [
-    "Novry Hetharia",
-    "Adisty Wulandari",
+    "Paul Tuanakotta",
+    "Tamara Geraldine",
     "dr. Maya Kusumawati, Sp.PD., K-EMD",
     "dr. Pandu Tridana Sakti, Sp.PD"
   ],
