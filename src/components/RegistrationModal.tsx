@@ -20,6 +20,11 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
   const [showThankYouPopup, setShowThankYouPopup] = useState(false);
   const [showConfirmClose, setShowConfirmClose] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(1);
+
+  useEffect(() => {
+    setScrollProgress(step === 2 ? 0 : 1);
+  }, [step, isOpen]);
 
   // Form Fields
   const [kategoriId, setKategoriId] = useState(KATEGORI_PESERTA[0].id);
@@ -317,7 +322,21 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
         </div>
 
         {/* Scrollable Modal Content */}
-        <div className="p-6 overflow-y-auto flex-1 space-y-4">
+        <div 
+          className="p-6 overflow-y-auto flex-1 space-y-4"
+          onScroll={(e) => {
+            if (step === 2) {
+              const target = e.currentTarget;
+              const scrollMax = target.scrollHeight - target.clientHeight;
+              if (scrollMax > 5) {
+                const progress = Math.min(Math.max(target.scrollTop / scrollMax, 0), 1);
+                setScrollProgress(progress);
+              } else {
+                setScrollProgress(1);
+              }
+            }
+          }}
+        >
           {error && (
             <div className="p-3 bg-rose-50 border border-rose-100 text-rose-600 font-semibold rounded-xl text-xs flex items-start gap-2">
               <Info className="h-4 w-4 shrink-0 mt-0.5" />
@@ -579,10 +598,13 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
               <div className="p-4 bg-amber-50 border border-amber-100 text-amber-800 rounded-2xl text-xs space-y-2">
                 <p className="font-extrabold flex items-center gap-1">
                   <Info className="h-4 w-4 shrink-0 text-amber-600" />
-                  PERINGATAN PENTING:
+                  PERINGATAN PENTING & CATATAN:
                 </p>
                 <p className="leading-relaxed">
                   Mohon transfer <strong>PERSIS PAS</strong> sejumlah <strong className="text-sm bg-amber-100 px-1.5 py-0.5 rounded">{new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(totalAkhir)}</strong> (termasuk 3 digit kode unik di akhir) agar tim bendahara kami dapat memverifikasi pembayaran Anda secara cepat dan otomatis. 
+                </p>
+                <p className="font-bold text-rose-700 pt-1 border-t border-amber-200/60">
+                  ⚠️ Catatan: Jangan tekan tombol kirim belum melakukan pembayaran.
                 </p>
               </div>
             </div>
@@ -681,7 +703,12 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                 id="btn-step2-next"
                 onClick={handleSubmitRegistration}
                 disabled={isSubmitting}
-                className="px-6 py-3 bg-[#0B3D5E] hover:bg-[#1e40af] disabled:bg-slate-300 text-white font-extrabold text-sm rounded-full shadow transition-all flex items-center gap-1.5 cursor-pointer"
+                style={step === 2 ? {
+                  opacity: scrollProgress,
+                  transform: `translateY(${((1 - scrollProgress) * 12)}px)`,
+                  pointerEvents: scrollProgress < 0.2 ? 'none' : 'auto'
+                } : undefined}
+                className="px-6 py-3 bg-[#0B3D5E] hover:bg-[#1e40af] disabled:bg-slate-300 text-white font-extrabold text-sm rounded-full shadow flex items-center gap-1.5 cursor-pointer transition-transform duration-75"
               >
                 {isSubmitting ? (
                   <>
@@ -710,7 +737,10 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                   Mengunduh Tiket...
                 </>
               ) : (
-                "Selesai"
+                <>
+                  <Download className="h-4 w-4" />
+                  Download
+                </>
               )}
             </button>
           )}
