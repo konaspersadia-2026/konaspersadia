@@ -13,9 +13,6 @@ interface AdminDashboardProps {
   onNavigateHome: () => void;
 }
 
-// Simple PIN for demo purposes (In real apps, use proper auth or env var)
-const ADMIN_PIN = "rahasiakonas26!";
-
 interface Pendaftar {
   Timestamp: string;
   "No. Registrasi": string;
@@ -33,8 +30,11 @@ const COLORS = ['#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef'
 
 export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [pinInput, setPinInput] = useState("");
-  const [pinError, setPinError] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
 
   const [data, setData] = useState<Pendaftar[]>([]);
   const [loading, setLoading] = useState(false);
@@ -46,19 +46,75 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
   const [actionError, setActionError] = useState<string | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{isOpen: boolean; id: string; status: string}>({ isOpen: false, id: "", status: "" });
 
-  const handleLogin = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+
+    // Check existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setIsAuthenticated(true);
+        setCurrentUserEmail(session.user?.email || null);
+        fetchData();
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        setIsAuthenticated(true);
+        setCurrentUserEmail(session.user?.email || null);
+      } else {
+        setIsAuthenticated(false);
+        setCurrentUserEmail(null);
+        setData([]);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (pinInput === ADMIN_PIN) {
-      setIsAuthenticated(true);
-      fetchData();
-    } else {
-      setPinError("PIN yang Anda masukkan salah.");
+    setAuthError("");
+    setIsLoggingIn(true);
+
+    if (!isSupabaseConfigured) {
+      setAuthError("Supabase tidak dikonfigurasi.");
+      setIsLoggingIn(false);
+      return;
+    }
+
+    try {
+      const { data: authData, error: loginError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (loginError) {
+        setAuthError(loginError.message === "Invalid login credentials"
+          ? "Email atau password yang Anda masukkan salah."
+          : loginError.message);
+      } else if (authData.session) {
+        setIsAuthenticated(true);
+        setCurrentUserEmail(authData.session.user?.email || null);
+        fetchData();
+      }
+    } catch (err: any) {
+      setAuthError("Terjadi kesalahan saat login: " + err.message);
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (isSupabaseConfigured) {
+      await supabase.auth.signOut();
+    }
     setIsAuthenticated(false);
-    setPinInput("");
+    setCurrentUserEmail(null);
+    setEmail("");
+    setPassword("");
     setData([]);
   };
 
@@ -153,31 +209,60 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
               <ShieldAlert className="h-8 w-8 text-blue-600" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-slate-800 text-center mb-2">Admin Dashboard</h1>
-          <p className="text-slate-500 text-center mb-6">Masukkan PIN keamanan untuk mengakses dashboard panitia.</p>
+          <h1 className="text-2xl font-bold text-slate-800 text-center mb-2">Admin Login</h1>
+          <p className="text-slate-500 text-center text-sm mb-6">
+            Masuk dengan akun admin Supabase untuk mengelola data pendaftaran.
+          </p>
           
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Email Admin</label>
               <input
-                type="password"
-                placeholder="Masukkan PIN"
-                value={pinInput}
-                onChange={(e) => setPinInput(e.target.value)}
-                className="w-full px-4 py-3 text-center tracking-[0.5em] font-mono text-lg rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+                type="email"
+                required
+                placeholder="admin@konaspersadia.or.id"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm transition-all"
                 autoFocus
               />
             </div>
-            {pinError && <p className="text-red-500 text-sm text-center">{pinError}</p>}
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Password</label>
+              <input
+                type="password"
+                required
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm transition-all"
+              />
+            </div>
+
+            {authError && (
+              <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-xs font-medium">
+                {authError}
+              </div>
+            )}
+
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white font-semibold py-3 rounded-xl hover:bg-blue-700 transition-colors"
+              disabled={isLoggingIn}
+              className="w-full bg-blue-600 text-white font-semibold py-3 rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
             >
-              Masuk Dashboard
+              {isLoggingIn ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Memproses...
+                </>
+              ) : (
+                "Masuk Dashboard"
+              )}
             </button>
           </form>
           
           <div className="mt-6 text-center">
-            <button onClick={onNavigateHome} className="text-sm text-slate-500 hover:text-slate-800 flex items-center justify-center mx-auto">
+            <button onClick={onNavigateHome} className="text-sm text-slate-500 hover:text-slate-800 flex items-center justify-center mx-auto cursor-pointer">
               <ChevronLeft className="h-4 w-4 mr-1" />
               Kembali ke Beranda
             </button>
@@ -246,7 +331,12 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
               <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
                 <ShieldAlert className="h-4 w-4 text-white" />
               </div>
-              <h1 className="font-bold text-xl text-slate-800 tracking-tight">Konas Admin</h1>
+              <div>
+                <h1 className="font-bold text-xl text-slate-800 tracking-tight leading-none">Konas Admin</h1>
+                {currentUserEmail && (
+                  <span className="text-[11px] text-slate-400 font-normal block mt-0.5">{currentUserEmail}</span>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex items-center space-x-4">
