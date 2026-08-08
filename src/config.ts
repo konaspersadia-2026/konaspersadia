@@ -113,11 +113,11 @@ export const DUMMY_SPEAKERS: Speaker[] = [
   },
   {
     id: "sp3",
-    name: "Dr. dr. Wismandari, Sp.PD-KEMD",
-    title: "Dokter Spesialis Penyakit Dalam - Konsultan",
-    institution: "Seksi Ilmiah PERKENI",
-    imageUrl: "https://i.ibb.co.com/xqxSLZVq/Dr-dr-Wismandari-Sp-PD-KEMD.webp",
-    topics: ["Gangguan Tiroid dan Diabetes", "Terapi Insulin Presisi"]
+    name: "Prof. dr. Putu Moda Arsana, Sp.PD., K-EMD",
+    title: "Konsultan Endokrinologi, Metabolisme, dan Diabetes",
+    institution: "Konsil Kedokteran Indonesia (KKI) / PB PERKENI",
+    imageUrl: "https://placehold.co/400x400/f1f5f9/0f172a?text=Prof+Putu+Moda",
+    topics: ["Etika Praktik Kedokteran", "Update Tatalaksana Diabetes Melitus Tipe 2"]
   },
   {
     id: "sp4",
@@ -129,11 +129,11 @@ export const DUMMY_SPEAKERS: Speaker[] = [
   },
   {
     id: "sp5",
-    name: "dr. Monika, Sp.PD",
-    title: "Edukator Diabetes & Praktisi Klinis",
-    institution: "PEDI (Perkumpulan Edukator Diabetes Indonesia)",
-    imageUrl: "https://i.ibb.co.com/VWTRq199/dr-Monika-Sp-PD.webp",
-    topics: ["Komunikasi Terapeutik dalam Edukasi Diabetes", "Peran Keluarga dalam Pemantauan Gula Mandiri"]
+    name: "Dr. dr. Wismandari, Sp.PD-KEMD",
+    title: "Dokter Spesialis Penyakit Dalam - Konsultan",
+    institution: "Seksi Ilmiah PERKENI",
+    imageUrl: "https://i.ibb.co.com/xqxSLZVq/Dr-dr-Wismandari-Sp-PD-KEMD.webp",
+    topics: ["Gangguan Tiroid dan Diabetes", "Terapi Insulin Presisi"]
   },
   {
     id: "sp6",

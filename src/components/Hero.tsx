@@ -46,17 +46,25 @@ export default function Hero({ onOpenRegister, onNavigate }: HeroProps) {
   return (
     <section
       id="beranda"
-      className="relative min-h-screen pt-24 pb-16 flex flex-col justify-center bg-gradient-to-br from-slate-50 via-white to-blue-50 overflow-hidden"
+      className="relative min-h-screen pt-24 pb-16 flex flex-col justify-center overflow-hidden"
     >
+      {/* Background Image with Overlay */}
+      <div 
+        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: 'url("https://github.com/user-attachments/assets/c9f7045d-2d27-4384-a171-47a015106321")' }}
+      >
+        <div className="absolute inset-0 bg-[#0B3D5E]/60 backdrop-blur-[1px]"></div>
+      </div>
+
       {/* Decorative Circles */}
-      <div className="absolute top-20 right-[-10%] w-[40rem] h-[40rem] rounded-full bg-blue-100/30 blur-3xl pointer-events-none z-0" />
-      <div className="absolute bottom-10 left-[-10%] w-[35rem] h-[35rem] rounded-full bg-[#00B4AC]/5 blur-3xl pointer-events-none z-0" />
+      <div className="absolute top-20 right-[-10%] w-[40rem] h-[40rem] rounded-full bg-blue-400/20 blur-3xl pointer-events-none z-0" />
+      <div className="absolute bottom-10 left-[-10%] w-[35rem] h-[35rem] rounded-full bg-[#00B4AC]/20 blur-3xl pointer-events-none z-0" />
 
       {/* Background Activity Silhouettes */}
-      <div className="absolute top-[18%] left-[-8%] sm:left-[2%] opacity-[0.03] text-slate-500 rotate-12 pointer-events-none z-0">
+      <div className="absolute top-[18%] left-[-8%] sm:left-[2%] opacity-[0.05] text-white rotate-12 pointer-events-none z-0">
         <SilhouetteSenam className="w-56 h-56 sm:w-80 sm:h-80" />
       </div>
-      <div className="absolute bottom-[15%] right-[-8%] sm:right-[2%] opacity-[0.03] text-slate-500 -rotate-12 pointer-events-none z-0">
+      <div className="absolute bottom-[15%] right-[-8%] sm:right-[2%] opacity-[0.05] text-white -rotate-12 pointer-events-none z-0">
         <SilhouetteJalanSehat className="w-56 h-56 sm:w-80 sm:h-80" />
       </div>
 
@@ -69,12 +77,12 @@ export default function Hero({ onOpenRegister, onNavigate }: HeroProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[10px] sm:text-xs font-bold bg-[#C89A2E]/15 text-[#0B3D5E] border border-[#C89A2E]/30 backdrop-blur-sm shadow-sm">
-            <HeartPulse className="h-4 w-4 animate-pulse text-rose-500" />
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[10px] sm:text-xs font-bold bg-white/10 text-white border border-white/20 backdrop-blur-sm shadow-sm">
+            <HeartPulse className="h-4 w-4 animate-pulse text-rose-400" />
             World Diabetes Day 2026
           </span>
-          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[10px] sm:text-xs font-bold bg-[#E6F4EA] text-[#2D7A4F] border border-[#2D7A4F]/30 backdrop-blur-sm shadow-sm">
-            <Activity className="h-4 w-4 text-[#2D7A4F]" />
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[10px] sm:text-xs font-bold bg-white/10 text-white border border-white/20 backdrop-blur-sm shadow-sm">
+            <Activity className="h-4 w-4 text-emerald-400" />
             Hari Kesehatan Nasional ke-62
           </span>
         </motion.div>
@@ -82,7 +90,7 @@ export default function Hero({ onOpenRegister, onNavigate }: HeroProps) {
         {/* Title & Host Organizations */}
         <div className="text-center max-w-4xl mx-auto mb-4">
           <motion.p 
-            className="text-xs sm:text-sm font-extrabold tracking-widest text-[#0B3D5E] uppercase mb-2"
+            className="text-xs sm:text-sm font-extrabold tracking-widest text-[#C89A2E] uppercase mb-2 drop-shadow-md"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.1, duration: 0.5 }}
@@ -90,22 +98,22 @@ export default function Hero({ onOpenRegister, onNavigate }: HeroProps) {
             Kongres Nasional &amp; Konferensi Kerja Bersama
           </motion.p>
           <motion.h1 
-            className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-800 tracking-tight leading-tight mb-4 font-sans"
+            className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight mb-4 font-sans drop-shadow-lg"
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6 }}
           >
-            KONAS PERSADIA <span className="text-[#0B3D5E]">2026</span>
+            KONAS PERSADIA <span className="text-[#C89A2E]">2026</span>
           </motion.h1>
           <motion.p 
-            className="text-base sm:text-lg font-semibold text-slate-600 mb-6 px-4"
+            className="text-base sm:text-lg font-medium text-blue-50 mb-6 px-4 drop-shadow-md"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.6 }}
           >
-            Mewadahi <span className="font-bold text-[#0B3D5E]">PERSADIA</span> (Persatuan Diabetes Indonesia),{" "}
-            <span className="font-bold text-[#0B3D5E]">PEDI</span> (Educator Diabetes), dan{" "}
-            <span className="font-bold text-[#0B3D5E]">PERKENI</span> (Endokrinologi)
+            Mewadahi <span className="font-bold text-white">PERSADIA</span> (Persatuan Diabetes Indonesia),{" "}
+            <span className="font-bold text-white">PEDI</span> (Educator Diabetes), dan{" "}
+            <span className="font-bold text-white">PERKENI</span> (Endokrinologi)
           </motion.p>
 
           {/* Theme Banner Card */}
@@ -143,7 +151,7 @@ export default function Hero({ onOpenRegister, onNavigate }: HeroProps) {
           transition={{ delay: 0.5, duration: 0.7 }}
         >
           {/* Tanggal */}
-          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-white/30 flex items-start gap-4 shadow-sm hover:bg-white/90 transition duration-300">
+          <div className="bg-white/85 backdrop-blur-md rounded-xl p-5 border border-white/40 flex items-start gap-4 shadow-xl hover:bg-white/95 transition duration-300">
             <div className="p-3 bg-[#0B3D5E] text-white rounded-lg">
               <Calendar className="h-6 w-6" />
             </div>
@@ -155,7 +163,7 @@ export default function Hero({ onOpenRegister, onNavigate }: HeroProps) {
           </div>
 
           {/* Venue Ilmiah */}
-          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-white/30 flex items-start gap-4 shadow-sm hover:bg-white/90 transition duration-300">
+          <div className="bg-white/85 backdrop-blur-md rounded-xl p-5 border border-white/40 flex items-start gap-4 shadow-xl hover:bg-white/95 transition duration-300">
             <div className="p-3 bg-[#00B4AC] text-white rounded-lg">
               <MapPin className="h-6 w-6" />
             </div>
@@ -169,7 +177,7 @@ export default function Hero({ onOpenRegister, onNavigate }: HeroProps) {
           </div>
 
           {/* Venue Rakyat */}
-          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-white/30 flex items-start gap-4 shadow-sm hover:bg-white/90 transition duration-300">
+          <div className="bg-white/85 backdrop-blur-md rounded-xl p-5 border border-white/40 flex items-start gap-4 shadow-xl hover:bg-white/95 transition duration-300">
             <div className="p-3 bg-[#C89A2E] text-[#0B3D5E] rounded-lg font-bold">
               <Users className="h-6 w-6" />
             </div>
@@ -190,7 +198,7 @@ export default function Hero({ onOpenRegister, onNavigate }: HeroProps) {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6, duration: 0.5 }}
         >
-          <h3 className="text-xs sm:text-sm font-bold text-slate-600 tracking-wider uppercase mb-3">
+          <h3 className="text-xs sm:text-sm font-bold text-blue-100 tracking-wider uppercase mb-3 drop-shadow-md">
             {timeLeft.isOver ? "Acara Telah Dimulai / Berakhir" : "Menghitung Mundur Menuju Acara"}
           </h3>
           {!timeLeft.isOver && (

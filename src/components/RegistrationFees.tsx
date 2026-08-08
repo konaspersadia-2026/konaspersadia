@@ -207,6 +207,8 @@ export default function RegistrationFees({ onOpenRegister }: RegistrationFeesPro
           <p className="font-bold text-slate-800 mb-3 flex items-center gap-2"><Info className="h-5 w-5 text-[#00B4AC]" /> Catatan Penting:</p>
           <ul className="list-disc pl-6 space-y-1">
             <li>Biaya sudah termasuk: akses materi, e-certificate, seminar kit, dan konsumsi.</li>
+            <li><strong className="text-slate-800">Spesial:</strong> 200 pendaftar pertama berhak mendapatkan tiket gratis Gala Dinner.</li>
+            <li>Semua pendaftar berbayar juga berhak mengikuti acara tambahan pada tanggal 8.</li>
             <li>Harga dapat berubah sewaktu-waktu tanpa pemberitahuan sebelumnya.</li>
             <li>Deadline pembayaran peserta: <strong className="text-slate-800">{formatDateString(EVENT_INFO.deadlinePembayaranPeserta)}</strong></li>
           </ul>

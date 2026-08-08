@@ -6,18 +6,18 @@ export default function Sponsors() {
   // Larger resolution for main sponsors, smaller for supporting partners.
   
   const mainSponsors = [
-    { id: 1, name: "Novo Nordisk", url: "https://placehold.co/300x150/ffffff/1e3a8a?text=Novo+Nordisk" },
-    { id: 2, name: "Sanofi", url: "https://placehold.co/300x150/ffffff/0d9488?text=Sanofi" },
-    { id: 3, name: "Dexcom", url: "https://placehold.co/300x150/ffffff/f59e0b?text=Dexcom" },
+    { id: 1, name: "DIAMOND", url: "https://placehold.co/300x150/ffffff/1e3a8a?text=DIAMOND" },
+    { id: 2, name: "NUSANTARA", url: "https://placehold.co/300x150/ffffff/0d9488?text=NUSANTARA" },
+    { id: 3, name: "SAPPHIRE", url: "https://placehold.co/300x150/ffffff/f59e0b?text=SAPPHIRE" },
   ];
 
   const supportingSponsors = [
-    { id: 1, name: "Abbott", url: "https://placehold.co/150x80/f8fafc/64748b?text=Abbott" },
-    { id: 2, name: "Medtronic", url: "https://placehold.co/150x80/f8fafc/64748b?text=Medtronic" },
-    { id: 3, name: "Roche", url: "https://placehold.co/150x80/f8fafc/64748b?text=Roche" },
-    { id: 4, name: "Bayer", url: "https://placehold.co/150x80/f8fafc/64748b?text=Bayer" },
-    { id: 5, name: "Kalbe", url: "https://placehold.co/150x80/f8fafc/64748b?text=Kalbe" },
-    { id: 6, name: "Bio Farma", url: "https://placehold.co/150x80/f8fafc/64748b?text=Bio+Farma" },
+    { id: 1, name: "RUBY", url: "https://placehold.co/150x80/f8fafc/64748b?text=RUBY" },
+    { id: 2, name: "NUSANTARA", url: "https://placehold.co/150x80/f8fafc/64748b?text=NUSANTARA" },
+    { id: 3, name: "TOPAZ", url: "https://placehold.co/150x80/f8fafc/64748b?text=TOPAZ" },
+    { id: 4, name: "NUSANTARA", url: "https://placehold.co/150x80/f8fafc/64748b?text=NUSANTARA" },
+    { id: 5, name: "EMERALD", url: "https://placehold.co/150x80/f8fafc/64748b?text=EMERALD" },
+    { id: 6, name: "NUSANTARA", url: "https://placehold.co/150x80/f8fafc/64748b?text=NUSANTARA" },
   ];
 
   return (
