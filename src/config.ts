@@ -148,8 +148,8 @@ export const DUMMY_SPEAKERS: Speaker[] = [
 // Susunan Panitia Pelaksana (Sesuai Dokumen Terbaru)
 export const SUSUNAN_PANITIA = {
   penasehat: [
-    "Prof. Dr. dr. Achmad Rudijanto, Sp.PD., K-EMD",
     "Prof. Dr. dr. Sidartawan Soegondo, Sp.PD., K-EMD",
+    "Prof. Dr. dr. Achmad Rudijanto, Sp.PD., K-EMD",
     "Prof. Dr. dr. Mardi Santoso, Sp.PD., K-EMD",
     "Prof. dr. Putu Moda Arsana, Sp.PD., K-EMD",
     "Dr. dr. K Heri Nugroho Hario Seno, Sp.PD., K-EMD"

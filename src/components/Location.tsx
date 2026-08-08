@@ -108,9 +108,9 @@ export default function Location() {
                   </h4>
                   <ul className="text-xs text-slate-600 space-y-1 list-disc list-inside">
                     <li>Area parkir luas (Barat &amp; Utara)</li>
-                    <li>Tenda posko medis dan pemeriksaan gula darah ber-AC</li>
+                    <li>Posko medis dan pemeriksaan gula darah</li>
                     <li>Panggung hiburan musik rakyat dan stan makanan sehat</li>
-                    <li>Akses toilet umum &amp; mushola portabel</li>
+                    <li>Akses toilet umum &amp; mushola</li>
                   </ul>
                 </div>
               </div>
