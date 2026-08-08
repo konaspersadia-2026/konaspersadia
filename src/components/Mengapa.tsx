@@ -3,7 +3,7 @@ import { Sparkles, Award, TrendingUp, CheckSquare } from "lucide-react";
 
 export default function Mengapa() {
   return (
-    <section className="bg-slate-50 pb-16 px-4 sm:px-6 lg:px-8">
+    <section className="bg-slate-50 py-16 sm:py-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Storytelling & Visual Highlights (Section Utama) */}
         <motion.div
