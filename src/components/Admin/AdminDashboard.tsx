@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { QRCodeSVG } from 'qrcode.react';
+import { toJpeg } from 'html-to-image';
+import { EVENT_INFO } from '../../config';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from 'recharts';
 import { 
   Users, DollarSign, CheckCircle, Clock, Search, ChevronLeft, ShieldAlert,
-  Loader2, LogOut, CheckSquare, XCircle, MessageCircle
+  Loader2, LogOut, CheckSquare, XCircle, MessageCircle, Download, QrCode,
+  Copy, Check, X
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -45,6 +49,10 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{isOpen: boolean; id: string; status: string}>({ isOpen: false, id: "", status: "" });
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [selectedTicketParticipant, setSelectedTicketParticipant] = useState<Pendaftar | null>(null);
+  const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -204,6 +212,70 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
     } finally {
       setActionLoadingId(null);
     }
+  };
+
+  const handleDownloadTicket = async (participant: Pendaftar) => {
+    setDownloadingId(participant["No. Registrasi"]);
+    setSelectedTicketParticipant(participant);
+
+    setTimeout(async () => {
+      const badgeElement = document.getElementById(`admin-badge-${participant["No. Registrasi"]}`);
+      if (badgeElement) {
+        try {
+          const imgData = await toJpeg(badgeElement, { quality: 0.95, pixelRatio: 3, backgroundColor: '#ffffff' });
+          const link = document.createElement('a');
+          link.download = `E-Ticket-${participant["No. Registrasi"]}.jpg`;
+          link.href = imgData;
+          link.click();
+        } catch (error) {
+          console.error('Error generating JPG image', error);
+          alert('Gagal mengunduh E-Ticket. Silakan coba lagi.');
+        }
+      } else {
+        alert('Elemen E-Ticket belum siap. Silakan coba lagi.');
+      }
+      setDownloadingId(null);
+    }, 150);
+  };
+
+  const handleSendWhatsapp = (participant: Pendaftar) => {
+    const rawWa = participant["No. WhatsApp"] || "";
+    const waNum = rawWa.replace(/\D/g, '').replace(/^0/, '62');
+    const scannerUrl = `${window.location.origin}/scanner.html?id=${encodeURIComponent(participant["No. Registrasi"])}`;
+    
+    const message = `Yth. *${participant["Nama Lengkap"]}*,
+
+Berikut adalah E-Ticket digital & QR Code resmi untuk *${EVENT_INFO.namaAcara}*:
+
+📌 *No. Registrasi:* ${participant["No. Registrasi"]}
+👤 *Nama:* ${participant["Nama Lengkap"]}
+🏷️ *Kategori:* ${participant["Kategori Peserta"]}
+🏛️ *Institusi:* ${participant.Institusi || '-'}
+🎟️ *Akses Kegiatan:* ${participant["Akses Kegiatan"]}
+✅ *Status Pembayaran:* ${participant["Status Pembayaran"]}
+
+📱 *Link QR Code / Digital Pass:*
+${scannerUrl}
+
+*Petunjuk:*
+1. Tunjukkan QR Code saat check-in registrasi di lokasi acara.
+2. Panitia akan me-scan QR Code ini untuk akses masuk acara.
+
+Sampai jumpa di Bogor!
+_Panitia KONAS PERSADIA 2026_`;
+
+    const waUrl = waNum 
+      ? `https://wa.me/${waNum}?text=${encodeURIComponent(message)}`
+      : `https://wa.me/?text=${encodeURIComponent(message)}`;
+    
+    window.open(waUrl, "_blank");
+  };
+
+  const handleCopyQrLink = (participant: Pendaftar) => {
+    const scannerUrl = `${window.location.origin}/scanner.html?id=${encodeURIComponent(participant["No. Registrasi"])}`;
+    navigator.clipboard.writeText(scannerUrl);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
   };
 
   if (!isAuthenticated) {
@@ -592,38 +664,72 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right">
-                            {row["Status Pembayaran"] === 'Menunggu Verifikasi' ? (
-                              <div className="flex items-center justify-end space-x-2">
-                                <button
-                                  onClick={() => setConfirmDialog({ isOpen: true, id: row["No. Registrasi"], status: "Lunas" })}
-                                  disabled={actionLoadingId === row["No. Registrasi"]}
-                                  className="inline-flex items-center px-3 py-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-medium rounded-lg hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-                                >
-                                  {actionLoadingId === row["No. Registrasi"] ? (
-                                    <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
-                                  ) : (
-                                    <CheckSquare className="w-4 h-4 mr-1.5" />
-                                  )}
-                                  Lunas
-                                </button>
-                                <button
-                                  onClick={() => setConfirmDialog({ isOpen: true, id: row["No. Registrasi"], status: "Dibatalkan" })}
-                                  disabled={actionLoadingId === row["No. Registrasi"]}
-                                  className="inline-flex items-center px-3 py-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-medium rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-                                >
-                                  {actionLoadingId === row["No. Registrasi"] ? (
-                                    <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
-                                  ) : (
-                                    <XCircle className="w-4 h-4 mr-1.5" />
-                                  )}
-                                  Batal
-                                </button>
-                              </div>
-                            ) : (
-                              <span className="text-xs text-slate-400 italic">
-                                {row["Status Pembayaran"] === 'Lunas' ? 'Terverifikasi' : 'Dibatalkan'}
-                              </span>
-                            )}
+                            <div className="flex items-center justify-end gap-1.5">
+                              {row["Status Pembayaran"] === 'Menunggu Verifikasi' && (
+                                <>
+                                  <button
+                                    onClick={() => setConfirmDialog({ isOpen: true, id: row["No. Registrasi"], status: "Lunas" })}
+                                    disabled={actionLoadingId === row["No. Registrasi"]}
+                                    className="inline-flex items-center px-2 py-1 bg-white border border-slate-200 text-slate-700 text-xs font-medium rounded-lg hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                                    title="Set Lunas"
+                                  >
+                                    {actionLoadingId === row["No. Registrasi"] ? (
+                                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                      <CheckSquare className="w-3.5 h-3.5 mr-1 text-emerald-600" />
+                                    )}
+                                    Lunas
+                                  </button>
+                                  <button
+                                    onClick={() => setConfirmDialog({ isOpen: true, id: row["No. Registrasi"], status: "Dibatalkan" })}
+                                    disabled={actionLoadingId === row["No. Registrasi"]}
+                                    className="inline-flex items-center px-2 py-1 bg-white border border-slate-200 text-slate-700 text-xs font-medium rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                                    title="Set Batal"
+                                  >
+                                    {actionLoadingId === row["No. Registrasi"] ? (
+                                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                      <XCircle className="w-3.5 h-3.5 mr-1 text-red-500" />
+                                    )}
+                                    Batal
+                                  </button>
+                                </>
+                              )}
+
+                              <button
+                                onClick={() => {
+                                  setSelectedTicketParticipant(row);
+                                  setIsTicketModalOpen(true);
+                                }}
+                                className="inline-flex items-center px-2.5 py-1 bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold rounded-lg hover:bg-blue-100 hover:border-blue-300 transition-all shadow-sm cursor-pointer"
+                                title="Lihat / Pratinjau E-Ticket & QR"
+                              >
+                                <QrCode className="w-3.5 h-3.5 mr-1" />
+                                E-Ticket
+                              </button>
+
+                              <button
+                                onClick={() => handleSendWhatsapp(row)}
+                                className="inline-flex items-center px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold rounded-lg hover:bg-emerald-100 hover:border-emerald-300 transition-all shadow-sm cursor-pointer"
+                                title="Kirim QR E-Ticket langsung ke WhatsApp Peserta"
+                              >
+                                <MessageCircle className="w-3.5 h-3.5 mr-1 text-emerald-600" />
+                                Kirim WA
+                              </button>
+
+                              <button
+                                onClick={() => handleDownloadTicket(row)}
+                                disabled={downloadingId === row["No. Registrasi"]}
+                                className="inline-flex items-center p-1.5 bg-slate-100 border border-slate-200 text-slate-700 text-xs font-medium rounded-lg hover:bg-slate-200 transition-all disabled:opacity-50 shadow-sm cursor-pointer"
+                                title="Download E-Ticket (.jpg)"
+                              >
+                                {downloadingId === row["No. Registrasi"] ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
+                                ) : (
+                                  <Download className="w-3.5 h-3.5" />
+                                )}
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))
@@ -648,13 +754,13 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
             <div className="flex justify-end space-x-3">
               <button 
                 onClick={() => setConfirmDialog({ isOpen: false, id: "", status: "" })}
-                className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
               >
                 Batal
               </button>
               <button 
                 onClick={executeUpdateStatus}
-                className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors ${
+                className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors cursor-pointer ${
                   confirmDialog.status === "Lunas" 
                     ? "bg-emerald-600 hover:bg-emerald-700" 
                     : "bg-red-600 hover:bg-red-700"
@@ -662,6 +768,227 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
               >
                 Ya, Ubah Status Dan Kirim Link Undangan Komunitas WA
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Admin E-Ticket Preview Modal */}
+      {isTicketModalOpen && selectedTicketParticipant && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+              <div className="flex items-center gap-2">
+                <QrCode className="w-5 h-5 text-blue-600" />
+                <h3 className="font-bold text-slate-800 text-base">E-Ticket & QR Code Peserta</h3>
+              </div>
+              <button 
+                onClick={() => setIsTicketModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body - Visual Card */}
+            <div className="p-6 overflow-y-auto space-y-4 bg-slate-50/50">
+              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col items-center text-center space-y-3">
+                <div className="w-full bg-[#0B3D5E] text-white p-3 rounded-xl flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider">KONAS PERSADIA 2026</span>
+                  <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded font-mono font-bold">
+                    {selectedTicketParticipant["No. Registrasi"]}
+                  </span>
+                </div>
+
+                <div>
+                  <h4 className="font-extrabold text-lg text-slate-900 leading-tight uppercase">
+                    {selectedTicketParticipant["Nama Lengkap"]}
+                  </h4>
+                  {selectedTicketParticipant.Institusi && (
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">
+                      {selectedTicketParticipant.Institusi}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap justify-center gap-1.5 text-xs">
+                  <span className="px-2.5 py-1 bg-blue-50 text-blue-700 font-semibold rounded-full border border-blue-200">
+                    {selectedTicketParticipant["Kategori Peserta"]}
+                  </span>
+                  <span className={`px-2.5 py-1 font-semibold rounded-full border ${
+                    selectedTicketParticipant["Status Pembayaran"] === 'Lunas'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : 'bg-amber-50 text-amber-700 border-amber-200'
+                  }`}>
+                    {selectedTicketParticipant["Status Pembayaran"]}
+                  </span>
+                </div>
+
+                <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-inner my-2">
+                  <QRCodeSVG 
+                    value={`${window.location.origin}/scanner.html?id=${encodeURIComponent(selectedTicketParticipant["No. Registrasi"])}`} 
+                    size={180} 
+                    level="H" 
+                    includeMargin={true}
+                  />
+                </div>
+
+                <div className="text-xs text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg font-mono w-full truncate">
+                  {window.location.origin}/scanner.html?id={selectedTicketParticipant["No. Registrasi"]}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="p-4 border-t border-slate-200 bg-white flex flex-col gap-2">
+              <button
+                onClick={() => handleDownloadTicket(selectedTicketParticipant)}
+                disabled={downloadingId === selectedTicketParticipant["No. Registrasi"]}
+                className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 text-sm shadow-sm cursor-pointer disabled:opacity-50"
+              >
+                {downloadingId === selectedTicketParticipant["No. Registrasi"] ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Mengunduh E-Ticket...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    Download E-Ticket (.jpg)
+                  </>
+                )}
+              </button>
+
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => handleSendWhatsapp(selectedTicketParticipant)}
+                  className="py-2.5 px-3 bg-[#25D366] hover:bg-[#128C7E] text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 text-xs shadow-sm cursor-pointer"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  Kirim QR ke WA
+                </button>
+
+                <button
+                  onClick={() => handleCopyQrLink(selectedTicketParticipant)}
+                  className="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 text-xs border border-slate-200 cursor-pointer"
+                >
+                  {copiedLink ? (
+                    <>
+                      <Check className="w-4 h-4 text-emerald-600" />
+                      Tersalin!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      Salin Link QR
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden Printable E-Ticket Area for Image Generation */}
+      {selectedTicketParticipant && (
+        <div 
+          id={`admin-badge-${selectedTicketParticipant["No. Registrasi"]}`} 
+          style={{ 
+            width: '450px',
+            height: '720px',
+            position: 'fixed',
+            top: '-9999px',
+            left: '-9999px',
+            zIndex: -50,
+            pointerEvents: 'none',
+            backgroundColor: '#ffffff',
+            padding: '20px',
+            boxSizing: 'border-box'
+          }}
+        >
+          <div className="h-full w-full rounded-2xl overflow-hidden flex flex-col border-2 border-slate-200 bg-white" style={{ boxShadow: '0 8px 30px rgba(0,0,0,0.08)' }}>
+            {/* Header Band */}
+            <div 
+              className="px-6 pt-5 pb-5 text-white" 
+              style={{ backgroundColor: '#0B3D5E' }}
+            >
+              <div className="flex justify-between items-center">
+                <div className="flex gap-3 items-center">
+                  <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center p-1 shadow-sm">
+                     <img src={EVENT_INFO.eventLogoUrl} className="w-full h-full object-contain" alt="Logo" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-black tracking-wider leading-tight">KNS PERSADIA 2026</h2>
+                    <p className="text-[10px] opacity-90 uppercase tracking-widest mt-0.5">Bogor, Indonesia • 7-8 Nov 2026</p>
+                  </div>
+                </div>
+                <div className="bg-white/15 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase border border-white/20">
+                  E-TICKET PASS
+                </div>
+              </div>
+            </div>
+
+            {/* Main Content Area */}
+            <div className="flex-1 px-6 pt-5 pb-4 flex flex-col bg-white text-center items-center">
+              {/* Participant Name */}
+              <div className="mb-3 text-center w-full">
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block mb-1">NAMA PESERTA</span>
+                <h3 className="text-2xl font-black text-slate-900 leading-tight uppercase break-words">
+                  {selectedTicketParticipant["Nama Lengkap"]}
+                </h3>
+                {selectedTicketParticipant.Institusi && (
+                  <p className="text-xs font-bold text-slate-500 mt-1 uppercase tracking-wide">
+                    {selectedTicketParticipant.Institusi}
+                  </p>
+                )}
+              </div>
+
+              {/* Category & Access Badges */}
+              <div className="flex flex-wrap justify-center gap-2 mb-3 w-full">
+                <div className="px-3.5 py-1 rounded-full border border-blue-600 text-blue-700 bg-slate-50 text-[11px] font-black uppercase tracking-wider">
+                  {selectedTicketParticipant["Kategori Peserta"]}
+                </div>
+                <div className="px-3.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-bold uppercase tracking-wider">
+                  {selectedTicketParticipant["Akses Kegiatan"]}
+                </div>
+              </div>
+
+              {/* Status Badge */}
+              <div className="mb-4">
+                <span className={`px-3 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-widest ${
+                  selectedTicketParticipant["Status Pembayaran"] === 'Lunas'
+                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                    : 'bg-amber-100 text-amber-800 border border-amber-300'
+                }`}>
+                  STATUS: {selectedTicketParticipant["Status Pembayaran"]}
+                </span>
+              </div>
+
+              {/* LARGE HIGH-CONTRAST SCANNER-FRIENDLY QR CODE CONTAINER */}
+              <div className="my-auto p-4 bg-white rounded-2xl border-2 border-slate-900 shadow-lg flex flex-col items-center justify-center w-full max-w-[270px]">
+                <div className="bg-white p-2 rounded-xl">
+                  <QRCodeSVG 
+                    value={`${window.location.origin}/scanner.html?id=${encodeURIComponent(selectedTicketParticipant["No. Registrasi"])}`} 
+                    size={200} 
+                    level="H" 
+                    includeMargin={true}
+                  />
+                </div>
+                <div className="mt-2 text-center border-t border-slate-200 pt-2 w-full">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">ID REGISTRASI</span>
+                  <strong className="text-base font-mono font-black text-slate-900 tracking-widest">{selectedTicketParticipant["No. Registrasi"]}</strong>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Footer Area with Paperless Instructions */}
+            <div className="bg-slate-900 text-white px-5 py-4 text-center border-t border-slate-800 flex items-center justify-center">
+              <p className="text-[10px] font-bold tracking-wider text-amber-400 uppercase leading-none">
+                Simpan E-Ticket ini di galeri HP Anda.
+              </p>
             </div>
           </div>
         </div>
