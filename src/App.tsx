@@ -13,6 +13,7 @@ import Footer from "./components/Footer";
 import RegistrationModal from "./components/RegistrationModal";
 import Sponsors from "./components/Sponsors";
 import AdminDashboard from "./components/Admin/AdminDashboard";
+import SponsorshipPage from "./components/SponsorshipPage";
 
 export default function App() {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
@@ -22,7 +23,7 @@ export default function App() {
 
   // Sync scroll position with navbar links if on home page
   useEffect(() => {
-    if (currentHash === "#admin") return;
+    if (currentHash === "#admin" || currentHash === "#sponsorship") return;
     if (currentPath !== "/" && currentPath !== "/index.html") return;
 
     const handleScroll = () => {
@@ -52,11 +53,13 @@ export default function App() {
       setCurrentPath(window.location.pathname);
       setCurrentHash(window.location.hash);
       setActiveSection("beranda");
+      window.scrollTo(0, 0);
     };
     window.addEventListener("popstate", handlePopState);
     
     const handleHashChange = () => {
       setCurrentHash(window.location.hash);
+      window.scrollTo(0, 0);
     };
     window.addEventListener("hashchange", handleHashChange);
     
@@ -114,6 +117,10 @@ export default function App() {
 
   if (currentHash === "#admin") {
     return <AdminDashboard onNavigateHome={handleBackToHome} />;
+  }
+
+  if (currentHash === "#sponsorship") {
+    return <SponsorshipPage onNavigateHome={handleBackToHome} />;
   }
 
   return (

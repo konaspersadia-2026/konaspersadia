@@ -53,7 +53,7 @@ export default function Hero({ onOpenRegister, onNavigate }: HeroProps) {
         className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: 'url("https://github.com/user-attachments/assets/c9f7045d-2d27-4384-a171-47a015106321")' }}
       >
-        <div className="absolute inset-0 bg-[#0B3D5E]/60 backdrop-blur-[1px]"></div>
+        <div className="absolute inset-0 bg-[#0B3D5E]/40 backdrop-blur-[0.5px]"></div>
       </div>
 
       {/* Decorative Circles */}
@@ -83,7 +83,7 @@ export default function Hero({ onOpenRegister, onNavigate }: HeroProps) {
           </span>
           <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[10px] sm:text-xs font-bold bg-white/10 text-white border border-white/20 backdrop-blur-sm shadow-sm">
             <Activity className="h-4 w-4 text-emerald-400" />
-            Hari Kesehatan Nasional ke-62
+            Hari Kesehatan Nasional 2026
           </span>
         </motion.div>
 
@@ -112,8 +112,8 @@ export default function Hero({ onOpenRegister, onNavigate }: HeroProps) {
             transition={{ delay: 0.3, duration: 0.6 }}
           >
             Mewadahi <span className="font-bold text-white">PERSADIA</span> (Persatuan Diabetes Indonesia),{" "}
-            <span className="font-bold text-white">PEDI</span> (Educator Diabetes), dan{" "}
-            <span className="font-bold text-white">PERKENI</span> (Endokrinologi)
+            <span className="font-bold text-white">PEDI</span> (Perkumpulan Edukator Diabetes Indonesia), dan{" "}
+            <span className="font-bold text-white">PERKENI</span> (Perkumpulan Endokrinologi Indonesia)
           </motion.p>
 
           {/* Theme Banner Card */}
@@ -133,10 +133,7 @@ export default function Hero({ onOpenRegister, onNavigate }: HeroProps) {
 
             {/* Campaign Taglines added directly in Hero */}
             <div className="mt-4 pt-4 border-t border-slate-100 text-center">
-              <p className="text-xs sm:text-sm font-extrabold text-[#0B3D5E]">
-                "Deteksi Dini, Hidup Lebih Baik: Bersama Melawan Diabetes dari Akar"
-              </p>
-              <p className="text-[10px] sm:text-xs text-slate-500 italic mt-0.5">
+              <p className="text-xs sm:text-sm font-extrabold text-[#0B3D5E] italic">
                 "Early Detection for Better Living: Standing Together Against Diabetes at Its Root"
               </p>
             </div>
@@ -162,14 +159,15 @@ export default function Hero({ onOpenRegister, onNavigate }: HeroProps) {
             </div>
           </div>
 
-          {/* Venue Ilmiah */}
+          {/* Venue Ilmiah & Temu Wicara */}
           <div className="bg-white/85 backdrop-blur-md rounded-xl p-5 border border-white/40 flex items-start gap-4 shadow-xl hover:bg-white/95 transition duration-300">
             <div className="p-3 bg-[#00B4AC] text-white rounded-lg">
               <MapPin className="h-6 w-6" />
             </div>
             <div>
               <h4 className="font-bold text-slate-800 text-xs">Sesi Ilmiah (Nakes)</h4>
-              <p className="text-slate-600 text-xs mt-1">Novotel Bogor</p>
+              <h4 className="font-bold text-slate-800 text-xs">Temu Wicara (Awam)</h4>
+              <p className="text-slate-600 text-xs mt-1">7 November 2026 • Novotel Bogor</p>
               <span className="inline-block mt-1.5 px-2 py-0.5 bg-[#0B3D5E]/10 text-[#0B3D5E] font-semibold text-[9px] rounded">
                 Simposium, Workshop &amp; Pameran
               </span>
@@ -183,7 +181,7 @@ export default function Hero({ onOpenRegister, onNavigate }: HeroProps) {
             </div>
             <div>
               <h4 className="font-bold text-slate-800 text-xs">Pesta Rakyat (Umum)</h4>
-              <p className="text-slate-600 text-xs mt-1">GOR Pakansari, Cibinong</p>
+              <p className="text-slate-600 text-xs mt-1">8 November 2026 • GOR Pakansari, Cibinong</p>
               <span className="inline-block mt-1.5 px-2 py-0.5 bg-[#E6F4EA] text-[#2D7A4F] font-semibold text-[9px] rounded">
                 Senam, Jalan Sehat &amp; Skrining Gratis
               </span>

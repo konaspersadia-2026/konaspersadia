@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef, DragEvent } from "react";
-import { X, Calendar, User, Mail, Phone, CreditCard, Upload, Loader2, CheckCircle2, ChevronRight, ChevronLeft, Copy, Info, Download } from "lucide-react";
+import { X, Calendar, User, Mail, Phone, CreditCard, Upload, Loader2, CheckCircle2, ChevronRight, ChevronLeft, Copy, Info, Download, Search } from "lucide-react";
 import { KATEGORI_PESERTA, EVENT_INFO, REKENING_PEMBAYARAN, SLOT_WAKTU_CEK_GULA } from "../config";
 import { RegistrationData } from "../types";
 import { QRCodeSVG } from "qrcode.react";
-import jsPDF from "jspdf";
-import { toPng } from "html-to-image";
+import { toJpeg } from "html-to-image";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
 
 interface RegistrationModalProps {
@@ -21,6 +20,14 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
   const [showConfirmClose, setShowConfirmClose] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(1);
+  const [hasClickedWa, setHasClickedWa] = useState(false);
+
+  // Search/Redownload Mode States
+  const [mode, setMode] = useState<'daftar' | 'download'>('daftar');
+  const [searchKey, setSearchKey] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState("");
+  const [foundParticipant, setFoundParticipant] = useState<any>(null);
 
   useEffect(() => {
     setScrollProgress(step === 2 ? 0 : 1);
@@ -38,6 +45,9 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
   const [nim, setNim] = useState("");
   const [noKTP, setNoKTP] = useState("");
   const [cabangPersadia, setCabangPersadia] = useState("");
+  const [tanggalLahir, setTanggalLahir] = useState("");
+  const [jenisKelamin, setJenisKelamin] = useState("Laki-laki");
+  const [setujuPenelitian, setSetujuPenelitian] = useState(false);
   const [slotWaktuCekGula, setSlotWaktuCekGula] = useState(SLOT_WAKTU_CEK_GULA[0]);
   
 
@@ -106,8 +116,12 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     const fields = selectedKategori.fieldTambahan;
     if (fields.includes("institusi") && !institusi.trim()) return setError("Institusi wajib diisi.");
     if (fields.includes("nim") && !nim.trim()) return setError("Nomor Induk Mahasiswa (NIM) wajib diisi.");
-    if (fields.includes("noKTP") && (!noKTP.trim() || noKTP.length < 16)) return setError("Nomor KTP (16 digit) wajib diisi.");
     if (fields.includes("cabangPersadia") && !cabangPersadia.trim()) return setError("Cabang PERSADIA wajib diisi.");
+    if (fields.includes("tanggalLahir") && !tanggalLahir.trim()) return setError("Tanggal lahir wajib diisi.");
+    if (fields.includes("jenisKelamin") && !jenisKelamin.trim()) return setError("Jenis kelamin wajib dipilih.");
+    if ((selectedKategori.id === "persadia" || selectedKategori.id === "umum") && !setujuPenelitian) {
+      return setError("Mohon centang persetujuan penggunaan data hasil pemeriksaan gula darah.");
+    }
 
     setError("");
     
@@ -141,7 +155,7 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
       const payloadToSupabase = {
         timestamp: new Date().toISOString(),
         no_registrasi: activeRegId,
-        status_pembayaran: "Menunggu Verifikasi",
+        status_pembayaran: finalTotal === 0 ? "Lunas" : "Menunggu Verifikasi",
         nama_lengkap: namaLengkap,
         email: email,
         whatsapp: whatsapp,
@@ -150,9 +164,9 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
         total_tagihan: finalTotal,
         institusi: selectedKategori.fieldTambahan.includes("institusi") ? institusi : "-",
         nim: selectedKategori.fieldTambahan.includes("nim") ? nim : "-",
-        no_ktp: selectedKategori.fieldTambahan.includes("noKTP") ? noKTP : "-",
         cabang_persadia: selectedKategori.fieldTambahan.includes("cabangPersadia") ? cabangPersadia : "-",
-        slot_waktu_cek_gula: selectedKategori.fieldTambahan.includes("slotWaktuCekGula") ? slotWaktuCekGula : "-",
+        tanggal_lahir: selectedKategori.fieldTambahan.includes("tanggalLahir") ? tanggalLahir : "-",
+        jenis_kelamin: selectedKategori.fieldTambahan.includes("jenisKelamin") ? jenisKelamin : "-",
       };
 
       if (isSupabaseConfigured) {
@@ -179,6 +193,92 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     }
   };
 
+  const selectParticipant = (participant: any) => {
+    setFoundParticipant(participant);
+    setSuccessData({
+      id: participant.no_registrasi,
+      totalAkhir: participant.total_tagihan || 0,
+      data: participant
+    });
+    setNamaLengkap(participant.nama_lengkap || "");
+    setInstitusi(participant.institusi !== "-" ? (participant.institusi || "") : "");
+    
+    const cat = KATEGORI_PESERTA.find(k => k.label.toLowerCase() === (participant.kategori_peserta || "").toLowerCase());
+    if (cat) {
+      setKategoriId(cat.id);
+    }
+  };
+
+  const handleSearchTicket = async () => {
+    const rawKey = searchKey.trim();
+    if (!rawKey) {
+      setSearchError("Masukkan No. Registrasi, Email, atau No. WhatsApp dengan tepat.");
+      return;
+    }
+    setIsSearching(true);
+    setSearchError("");
+    setFoundParticipant(null);
+
+    const cleanKey = rawKey.toLowerCase();
+    const digits = rawKey.replace(/\D/g, '');
+
+    // Formulate strict exact match conditions
+    const conditions: string[] = [
+      `no_registrasi.eq.${rawKey}`,
+      `email.eq.${cleanKey}`
+    ];
+
+    if (digits.length >= 8) {
+      conditions.push(`whatsapp.eq.${digits}`);
+      if (digits.startsWith('0')) {
+        conditions.push(`whatsapp.eq.62${digits.slice(1)}`);
+      } else if (digits.startsWith('62')) {
+        conditions.push(`whatsapp.eq.0${digits.slice(2)}`);
+      }
+    }
+
+    try {
+      if (isSupabaseConfigured) {
+        const { data, error } = await supabase
+          .from('pendaftar')
+          .select('*')
+          .or(conditions.join(','));
+
+        if (error) {
+          throw error;
+        }
+
+        // Strict verification in JS to ensure 100% exact equality
+        const exactMatch = data?.find(item => {
+          const itemReg = (item.no_registrasi || '').trim().toLowerCase();
+          const itemEmail = (item.email || '').trim().toLowerCase();
+          const itemPhone = (item.whatsapp || '').replace(/\D/g, '');
+
+          if (itemReg === cleanKey) return true;
+          if (itemEmail === cleanKey) return true;
+          if (digits.length >= 8 && itemPhone === digits) return true;
+          if (digits.length >= 8 && digits.startsWith('0') && itemPhone === '62' + digits.slice(1)) return true;
+          if (digits.length >= 8 && digits.startsWith('62') && itemPhone === '0' + digits.slice(2)) return true;
+
+          return false;
+        });
+
+        if (exactMatch) {
+          selectParticipant(exactMatch);
+        } else {
+          setSearchError("Data tidak ditemukan. Pastikan No. Registrasi, Email, atau No. WhatsApp yang Anda masukkan sudah tepat.");
+        }
+      } else {
+        setSearchError("Database Supabase tidak terhubung.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      setSearchError("Gagal mencari data: " + (err.message || "Terjadi kesalahan koneksi"));
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     alert("Berhasil disalin: " + text);
@@ -195,7 +295,15 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     setInstitusi("");
     setNoKTP("");
     setCabangPersadia("");
+    setTanggalLahir("");
+    setJenisKelamin("Laki-laki");
     setShowThankYouPopup(false);
+    setHasClickedWa(false);
+    setMode("daftar");
+    setSearchKey("");
+    setSearchError("");
+    setFoundParticipant(null);
+    setSearchResultsList([]);
   };
 
   const handleSelesai = async () => {
@@ -203,16 +311,13 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     const badgeElement = document.getElementById('badge-print-area');
     if (badgeElement) {
       try {
-        const imgData = await toPng(badgeElement, { pixelRatio: 3, backgroundColor: '#ffffff' });
-        const pdf = new jsPDF({
-          orientation: 'portrait',
-          unit: 'mm',
-          format: 'a6'
-        });
-        pdf.addImage(imgData, 'PNG', 0, 0, 105, 148);
-        pdf.save(`Badge-${successData?.id}.pdf`);
+        const imgData = await toJpeg(badgeElement, { quality: 0.95, pixelRatio: 3, backgroundColor: '#ffffff' });
+        const link = document.createElement('a');
+        link.download = `E-Ticket-${successData?.id}.jpg`;
+        link.href = imgData;
+        link.click();
       } catch (error) {
-        console.error('Error generating PDF', error);
+        console.error('Error generating JPG image', error);
       }
     }
     setIsDownloading(false);
@@ -283,15 +388,39 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                 <CheckCircle2 className="h-16 w-16" />
              </div>
              <h3 className="text-2xl font-black text-slate-800">Terima Kasih!</h3>
-             <p className="text-sm text-slate-600 max-w-sm mx-auto">Pendaftaran Anda telah selesai dan tiket berhasil diunduh. Sampai jumpa di acara Konas Persadia 2026!</p>
-             <button onClick={handleClose} className="mt-4 px-8 py-3 bg-[#00B4AC] hover:bg-[#00968f] text-white font-bold rounded-full w-full max-w-xs shadow-lg transition-transform hover:scale-105">Oke</button>
+             <p className="text-sm text-slate-600 max-w-sm mx-auto">Pendaftaran Anda telah selesai dan gambar E-Ticket (.jpg) berhasil diunduh. Sampai jumpa di acara Konas Persadia 2026!</p>
+             
+             {(selectedKategori.id === "persadia" || selectedKategori.id === "umum") && (
+               <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl mt-4 w-full max-w-sm">
+                 <p className="text-sm text-emerald-800 font-bold mb-3">Informasi Khusus Pesta Rakyat</p>
+                 <a 
+                   href="https://chat.whatsapp.com/JK6wDcnHh27GhJTx8kUKBY" 
+                   target="_blank" 
+                   rel="noopener noreferrer" 
+                   onClick={() => setHasClickedWa(true)}
+                   className="block w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 transition text-white rounded-lg font-bold text-sm"
+                 >
+                   Masuk Komunitas WhatsApp
+                 </a>
+               </div>
+             )}
+
+             <button 
+                onClick={handleClose} 
+                disabled={(selectedKategori.id === "persadia" || selectedKategori.id === "umum") ? !hasClickedWa : false}
+                className={`mt-4 px-8 py-3 rounded-full w-full max-w-xs shadow-lg transition-transform ${(selectedKategori.id === "persadia" || selectedKategori.id === "umum") && !hasClickedWa ? "bg-slate-300 text-slate-500 cursor-not-allowed" : "bg-[#00B4AC] hover:bg-[#00968f] text-white font-bold hover:scale-105"}`}
+              >
+                Oke
+              </button>
           </div>
         ) : (
           <>
         {/* Header Block */}
         <div className="bg-[#0B3D5E] text-white p-6 flex justify-between items-center shrink-0">
           <div>
-            <h3 className="font-extrabold text-base sm:text-lg leading-tight">Formulir Pendaftaran</h3>
+            <h3 className="font-extrabold text-base sm:text-lg leading-tight">
+              {mode === 'daftar' ? 'Formulir Pendaftaran' : 'Cek Status & E-Ticket'}
+            </h3>
             <p className="text-xs text-[#F8FAFC]/95 mt-0.5">Konas Persadia 2026 Online Portal</p>
           </div>
           <button
@@ -303,29 +432,57 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
           </button>
         </div>
 
-        {/* Dynamic Multi-Step Progress Tracker */}
-        <div className="bg-slate-50 border-b border-slate-100 px-6 py-3.5 flex justify-between items-center text-xs text-slate-500 font-bold shrink-0">
-          <div className="flex items-center gap-1.5">
-            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step >= 1 ? "bg-[#0B3D5E] text-white" : "bg-slate-200"}`}>1</span>
-            <span className={step === 1 ? "text-slate-800" : ""}>Biodata</span>
-          </div>
-          <ChevronRight className="h-4 w-4 text-slate-300" />
-          <div className="flex items-center gap-1.5">
-            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step >= 2 ? "bg-[#0B3D5E] text-white" : "bg-slate-200"}`}>2</span>
-            <span className={step === 2 ? "text-slate-800" : ""}>Pembayaran</span>
-          </div>
-          <ChevronRight className="h-4 w-4 text-slate-300" />
-          <div className="flex items-center gap-1.5">
-            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step >= 3 ? "bg-[#2D7A4F] text-white animate-pulse" : "bg-slate-200"}`}>3</span>
-            <span className={step === 3 ? "text-[#2D7A4F]" : ""}>Selesai</span>
-          </div>
+        {/* Mode Selector Tabs */}
+        <div className="flex border-b border-slate-200 bg-slate-100 p-1.5 gap-1 shrink-0">
+          <button
+            onClick={() => { setMode('daftar'); setError(''); }}
+            className={`flex-1 py-2 text-xs font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              mode === 'daftar' 
+                ? 'bg-white text-[#0B3D5E] shadow-sm' 
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <User className="h-4 w-4" />
+            Pendaftaran Baru
+          </button>
+          <button
+            onClick={() => { setMode('download'); setSearchError(''); }}
+            className={`flex-1 py-2 text-xs font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              mode === 'download' 
+                ? 'bg-white text-[#00B4AC] shadow-sm' 
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Download className="h-4 w-4" />
+            Cek Status & E-Ticket
+          </button>
         </div>
+
+        {/* Dynamic Multi-Step Progress Tracker (Only in 'daftar' mode) */}
+        {mode === 'daftar' && (
+          <div className="bg-slate-50 border-b border-slate-100 px-6 py-3.5 flex justify-between items-center text-xs text-slate-500 font-bold shrink-0">
+            <div className="flex items-center gap-1.5">
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step >= 1 ? "bg-[#0B3D5E] text-white" : "bg-slate-200"}`}>1</span>
+              <span className={step === 1 ? "text-slate-800" : ""}>Biodata</span>
+            </div>
+            <ChevronRight className="h-4 w-4 text-slate-300" />
+            <div className="flex items-center gap-1.5">
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step >= 2 ? "bg-[#0B3D5E] text-white" : "bg-slate-200"}`}>2</span>
+              <span className={step === 2 ? "text-slate-800" : ""}>Pembayaran</span>
+            </div>
+            <ChevronRight className="h-4 w-4 text-slate-300" />
+            <div className="flex items-center gap-1.5">
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step >= 3 ? "bg-[#2D7A4F] text-white animate-pulse" : "bg-slate-200"}`}>3</span>
+              <span className={step === 3 ? "text-[#2D7A4F]" : ""}>Selesai</span>
+            </div>
+          </div>
+        )}
 
         {/* Scrollable Modal Content */}
         <div 
           className="p-6 overflow-y-auto flex-1 space-y-4"
           onScroll={(e) => {
-            if (step === 2) {
+            if (step === 2 && mode === 'daftar') {
               const target = e.currentTarget;
               const scrollMax = target.scrollHeight - target.clientHeight;
               if (scrollMax > 5) {
@@ -337,14 +494,187 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
             }
           }}
         >
-          {error && (
+          {error && mode === 'daftar' && (
             <div className="p-3 bg-rose-50 border border-rose-100 text-rose-600 font-semibold rounded-xl text-xs flex items-start gap-2">
               <Info className="h-4 w-4 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
 
-          {/* STEP 1: BIODATA & CATEGORY SELECTION */}
+          {/* MODE DOWNLOAD / CEK E-TICKET */}
+          {mode === 'download' && (
+            <div className="space-y-4 animate-fadeIn">
+              <div className="bg-[#00B4AC]/5 border border-[#00B4AC]/20 p-4 rounded-2xl">
+                <h4 className="text-sm font-extrabold text-slate-800 flex items-center gap-2">
+                  <Download className="h-4 w-4 text-[#00B4AC]" />
+                  Cek Status & Unduh E-Ticket
+                </h4>
+                <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                  Masukkan No. Registrasi, Alamat Email, atau Nomor WhatsApp yang Anda gunakan saat mendaftar.
+                </p>
+              </div>
+
+              {/* Search Input Box */}
+              <div className="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                <label className="block text-xs font-bold text-slate-600 uppercase">Kata Kunci Pencarian</label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="No. Registrasi / Email / No. WA"
+                      value={searchKey}
+                      onChange={(e) => setSearchKey(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSearchTicket()}
+                      className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B4AC] text-sm text-slate-800"
+                    />
+                  </div>
+                  <button
+                    onClick={handleSearchTicket}
+                    disabled={isSearching}
+                    className="px-5 py-2.5 bg-[#00B4AC] hover:bg-[#00968f] disabled:bg-slate-300 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-1.5 shrink-0 cursor-pointer"
+                  >
+                    {isSearching ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Mencari...
+                      </>
+                    ) : (
+                      <>
+                        <Search className="h-4 w-4" />
+                        Cari Data
+                      </>
+                    )}
+                  </button>
+                </div>
+                {searchError && (
+                  <p className="text-xs font-semibold text-rose-600 bg-rose-50 p-2.5 rounded-lg border border-rose-100 flex items-center gap-1.5">
+                    <Info className="h-4 w-4 shrink-0" />
+                    {searchError}
+                  </p>
+                )}
+              </div>
+
+              {/* Search Results Display */}
+              {foundParticipant && (
+                <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4 animate-scaleIn">
+                  {/* Header Status Badge */}
+                  <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+                    <div>
+                      <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">No. Registrasi</span>
+                      <strong className="text-lg font-black text-[#0B3D5E] tracking-widest">{foundParticipant.no_registrasi}</strong>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-extrabold uppercase ${
+                      foundParticipant.status_pembayaran === 'Lunas' 
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
+                        : 'bg-amber-100 text-amber-800 border border-amber-200'
+                    }`}>
+                      {foundParticipant.status_pembayaran}
+                    </span>
+                  </div>
+
+                  {/* Participant Detail Summary */}
+                  <div className="text-xs space-y-1.5 text-slate-700 bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Nama Lengkap:</span>
+                      <strong className="text-slate-900 font-bold">{foundParticipant.nama_lengkap}</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Kategori:</span>
+                      <strong className="text-slate-900 font-bold">{foundParticipant.kategori_peserta}</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">WhatsApp / Email:</span>
+                      <span className="text-slate-800 font-medium">{foundParticipant.whatsapp} / {foundParticipant.email}</span>
+                    </div>
+                    <div className="flex justify-between pt-1 border-t border-slate-200 mt-1">
+                      <span className="text-slate-500">Total Tagihan:</span>
+                      <strong className="text-[#0B3D5E]">
+                        {foundParticipant.total_tagihan === 0 ? 'Gratis' : new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(foundParticipant.total_tagihan)}
+                      </strong>
+                    </div>
+                  </div>
+
+                  {/* IF LUNAS: SHOW QR CODE & DOWNLOAD BUTTON */}
+                  {foundParticipant.status_pembayaran === 'Lunas' ? (
+                    <div className="space-y-4 text-center pt-2">
+                      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 inline-block">
+                        <QRCodeSVG 
+                          value={`${window.location.origin}/scanner.html?id=${foundParticipant.no_registrasi}`} 
+                          size={140} 
+                          level="H" 
+                          includeMargin={true}
+                        />
+                        <p className="text-[10px] text-slate-400 font-bold mt-2 uppercase tracking-wider">E-Ticket QR Code Valid</p>
+                      </div>
+
+                      <button
+                        onClick={handleSelesai}
+                        disabled={isDownloading}
+                        className="w-full py-3.5 bg-[#0B3D5E] hover:bg-[#1e40af] text-white font-extrabold text-sm rounded-xl text-center shadow-lg transition cursor-pointer flex items-center justify-center gap-2 disabled:bg-slate-400"
+                      >
+                        {isDownloading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Mengunduh E-Ticket (.jpg)...
+                          </>
+                        ) : (
+                          <>
+                            <Download className="h-4 w-4" />
+                            Download E-Ticket (.jpg)
+                          </>
+                        )}
+                      </button>
+
+                      {(foundParticipant.kategori_peserta?.includes("PERSADIA") || foundParticipant.kategori_peserta?.includes("Masyarakat Umum")) && (
+                        <a 
+                          href="https://chat.whatsapp.com/GezzqQzSYPuHTiCBRGbela" 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="block w-full py-3 bg-[#25D366] hover:bg-[#128C7E] text-white font-bold text-xs rounded-xl transition text-center shadow-sm"
+                        >
+                          Grup Komunitas WhatsApp
+                        </a>
+                      )}
+                    </div>
+                  ) : (
+                    /* IF MENUNGGU VERIFIKASI / BELUM LUNAS */
+                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-3">
+                      <div className="flex items-start gap-2">
+                        <Info className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                        <div>
+                          <h5 className="text-xs font-bold text-amber-900">Pembayaran Menunggu Verifikasi</h5>
+                          <p className="text-xs text-amber-800 mt-0.5 leading-relaxed">
+                            Status pembayaran Anda belum Lunas. E-Ticket akan dapat diunduh secara otomatis setelah pembayaran Anda diverifikasi oleh tim panitia.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="bg-white p-3.5 rounded-lg border border-amber-200/80 text-xs space-y-1.5">
+                        <div className="flex justify-between font-bold text-slate-800">
+                          <span>Bank Tujuan:</span>
+                          <span>{REKENING_PEMBAYARAN.bank}</span>
+                        </div>
+                        <div className="flex justify-between font-bold text-slate-800">
+                          <span>No. Rekening:</span>
+                          <span className="text-[#0B3D5E]">{REKENING_PEMBAYARAN.nomorRekening}</span>
+                        </div>
+                        <div className="flex justify-between font-bold text-slate-800">
+                          <span>Atas Nama:</span>
+                          <span>{REKENING_PEMBAYARAN.atasNama}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* MODE DAFTAR */}
+          {mode === 'daftar' && (
+            <>
+              {/* STEP 1: BIODATA & CATEGORY SELECTION */}
           {step === 1 && (
             <div className="space-y-4">
               {/* Category Dropdown */}
@@ -454,20 +784,6 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                 </div>
               )}
 
-              {selectedKategori.fieldTambahan.includes("noKTP") && (
-                <div>
-                  <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">No. KTP / NIK (16 digit)</label>
-                  <input
-                    type="text"
-                    maxLength={16}
-                    placeholder="Masukkan 16 digit Nomor NIK KTP Anda"
-                    value={noKTP}
-                    onChange={(e) => setNoKTP(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B4AC] text-sm"
-                  />
-                </div>
-              )}
-
               {selectedKategori.fieldTambahan.includes("cabangPersadia") && (
                 <div>
                   <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">Unit / Cabang PERSADIA</label>
@@ -481,18 +797,45 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                 </div>
               )}
 
-              {selectedKategori.fieldTambahan.includes("slotWaktuCekGula") && (
+              {selectedKategori.fieldTambahan.includes("tanggalLahir") && (
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">Pilih Slot Waktu Cek Gula Darah Gratis</label>
+                  <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">Tanggal Lahir</label>
+                  <input
+                    type="date"
+                    value={tanggalLahir}
+                    onChange={(e) => setTanggalLahir(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B4AC] text-sm text-slate-800"
+                  />
+                </div>
+              )}
+
+              {selectedKategori.fieldTambahan.includes("jenisKelamin") && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">Jenis Kelamin</label>
                   <select
-                    value={slotWaktuCekGula}
-                    onChange={(e) => setSlotWaktuCekGula(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B4AC] text-sm cursor-pointer"
+                    value={jenisKelamin}
+                    onChange={(e) => setJenisKelamin(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B4AC] text-sm text-slate-800 font-medium cursor-pointer"
                   >
-                    {SLOT_WAKTU_CEK_GULA.map((slot, idx) => (
-                      <option key={idx} value={slot}>{slot}</option>
-                    ))}
+                    <option value="Laki-laki">Laki-laki</option>
+                    <option value="Perempuan">Perempuan</option>
                   </select>
+                </div>
+              )}
+
+              {(selectedKategori.id === "persadia" || selectedKategori.id === "umum") && (
+                <div className="pt-2 border-t border-slate-200 mt-2">
+                  <label className="flex items-start gap-3 cursor-pointer p-3.5 bg-amber-50/80 hover:bg-amber-50 border border-amber-200 rounded-xl transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={setujuPenelitian}
+                      onChange={(e) => setSetujuPenelitian(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded border-amber-300 text-[#00B4AC] focus:ring-[#00B4AC] cursor-pointer shrink-0"
+                    />
+                    <span className="text-xs text-slate-700 leading-relaxed font-medium">
+                      Saya menyetujui penggunaan data ini untuk kepentingan penelitian. <span className="text-rose-600 font-bold">*</span>
+                    </span>
+                  </label>
                 </div>
               )}
 
@@ -662,10 +1005,22 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
               </p>
             </div>
           )}
+          </>
+          )}
         </div>
 
         {/* Modal Actions Footer */}
-        <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-between items-center shrink-0">
+        {mode === 'download' ? (
+          <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end shrink-0">
+            <button
+              onClick={handleClose}
+              className="px-6 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-full transition cursor-pointer"
+            >
+              Tutup
+            </button>
+          </div>
+        ) : (
+          <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-between items-center shrink-0">
           {step === 1 && (
             <>
               <span className="text-xs text-slate-400 font-bold">{hargaDasar === 0 ? "Pendaftaran Gratis" : "Masa Early Bird Terbuka"}</span>
@@ -729,35 +1084,36 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
             <button
               onClick={handleSelesai}
               disabled={isDownloading}
-              className="w-full py-3 bg-[#0B3D5E] hover:bg-[#1e40af] text-white font-extrabold text-sm rounded-xl text-center shadow transition cursor-pointer flex items-center justify-center gap-2 disabled:bg-slate-400"
+              className="w-full py-3.5 bg-[#0B3D5E] hover:bg-[#1e40af] text-white font-extrabold text-sm rounded-xl text-center shadow-lg transition cursor-pointer flex items-center justify-center gap-2 disabled:bg-slate-400"
             >
               {isDownloading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Mengunduh Tiket...
+                  Mengunduh E-Ticket (.jpg)...
                 </>
               ) : (
                 <>
                   <Download className="h-4 w-4" />
-                  Download
+                  Download E-Ticket
                 </>
               )}
             </button>
           )}
         </div>
+        )}
         </>
         )}
       </div>
     </div>
 
-    {/* Hidden A6 Print Area for Badge */}
+    {/* Hidden Paperless E-Ticket Print/Image Area */}
       {successData && (
         <div 
           id="badge-print-area" 
           className="absolute bg-[#ffffff]"
           style={{ 
-            width: '396px', // ~105mm at 96dpi
-            height: '559px', // ~148mm at 96dpi
+            width: '450px',
+            height: '720px',
             position: 'fixed',
             top: '0',
             left: '0',
@@ -768,98 +1124,84 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
             boxSizing: 'border-box'
           }}
         >
-          <div className="h-full w-full rounded-2xl overflow-hidden flex flex-col border-2 border-[#e2e8f0] bg-[#ffffff]" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+          <div className="h-full w-full rounded-2xl overflow-hidden flex flex-col border-2 border-slate-200 bg-white" style={{ boxShadow: '0 8px 30px rgba(0,0,0,0.08)' }}>
             
             {/* Header Band */}
             <div 
-              className="px-5 pt-5 pb-5 text-white" 
-              style={{ backgroundColor: selectedKategori?.id === 'dokter_spesialis' ? '#0284c7' : selectedKategori?.id === 'dokter_umum' ? '#0d9488' : selectedKategori?.id === 'residen' ? '#4f46e5' : selectedKategori?.id === 'mahasiswa' ? '#059669' : selectedKategori?.id === 'persadia' ? '#ea580c' : '#475569' }}
+              className="px-6 pt-5 pb-5 text-white" 
+              style={{ backgroundColor: selectedKategori?.id === 'dokter_spesialis' ? '#0284c7' : selectedKategori?.id === 'dokter_umum' ? '#0d9488' : selectedKategori?.id === 'residen' ? '#4f46e5' : selectedKategori?.id === 'mahasiswa' ? '#059669' : selectedKategori?.id === 'persadia' ? '#ea580c' : '#0B3D5E' }}
             >
-              <div className="flex justify-between items-start">
-                <div className="flex gap-2.5 items-center">
-                  <div className="w-9 h-9 bg-[#ffffff] rounded-md flex items-center justify-center p-1 shadow-sm">
+              <div className="flex justify-between items-center">
+                <div className="flex gap-3 items-center">
+                  <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center p-1 shadow-sm">
                      <img src={EVENT_INFO.eventLogoUrl} className="w-full h-full object-contain" alt="Logo" />
                   </div>
                   <div>
-                    <h2 className="text-[15px] font-black tracking-wider leading-tight">KNS 2026</h2>
-                    <p className="text-[9px] opacity-90 uppercase tracking-widest mt-0.5">Bogor, Indonesia</p>
+                    <h2 className="text-base font-black tracking-wider leading-tight">KNS PERSADIA 2026</h2>
+                    <p className="text-[10px] opacity-90 uppercase tracking-widest mt-0.5">Bogor, Indonesia • 7-8 Nov 2026</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-[11px] font-bold">7-8 Nov</p>
-                  <p className="text-[11px] font-bold">2026</p>
+                <div className="bg-white/15 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase border border-white/20">
+                  E-TICKET PASS
                 </div>
               </div>
             </div>
 
             {/* Main Content Area */}
-            <div className="flex-1 px-6 py-6 flex flex-col bg-[#ffffff]">
+            <div className="flex-1 px-6 pt-5 pb-4 flex flex-col bg-white text-center items-center">
               
-              {/* Name (Dominant) */}
-              <div className="mb-6 text-left">
-                <h3 className="text-[26px] font-black text-[#0f172a] leading-[1.1] tracking-tight uppercase break-words">
+              {/* Participant Name */}
+              <div className="mb-3 text-center w-full">
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block mb-1">NAMA PESERTA</span>
+                <h3 className="text-2xl font-black text-slate-900 leading-tight uppercase break-words">
                   {namaLengkap}
                 </h3>
-                <p className="text-[13px] font-bold text-[#64748b] mt-2 uppercase tracking-wide">
-                  {institusi || "Peserta"}
-                </p>
+                {institusi && (
+                  <p className="text-xs font-bold text-slate-500 mt-1 uppercase tracking-wide">
+                    {institusi}
+                  </p>
+                )}
               </div>
 
-              {/* Different shape for Category and Access */}
-              <div className="space-y-4 mb-auto text-left">
-                {/* Category: Pill Shape */}
-                <div className="inline-block">
-                   <div 
-                    className="px-3.5 py-1.5 rounded-full border" 
-                    style={{ 
-                      borderColor: selectedKategori?.id === 'dokter_spesialis' ? '#0284c7' : selectedKategori?.id === 'dokter_umum' ? '#0d9488' : selectedKategori?.id === 'residen' ? '#4f46e5' : selectedKategori?.id === 'mahasiswa' ? '#059669' : selectedKategori?.id === 'persadia' ? '#ea580c' : '#475569',
-                      backgroundColor: (selectedKategori?.id === 'dokter_spesialis' ? '#0284c7' : selectedKategori?.id === 'dokter_umum' ? '#0d9488' : selectedKategori?.id === 'residen' ? '#4f46e5' : selectedKategori?.id === 'mahasiswa' ? '#059669' : selectedKategori?.id === 'persadia' ? '#ea580c' : '#475569') + '15'
-                    }}
-                   >
-                     <span 
-                      className="text-[11px] font-bold uppercase tracking-wider" 
-                      style={{ color: selectedKategori?.id === 'dokter_spesialis' ? '#0284c7' : selectedKategori?.id === 'dokter_umum' ? '#0d9488' : selectedKategori?.id === 'residen' ? '#4f46e5' : selectedKategori?.id === 'mahasiswa' ? '#059669' : selectedKategori?.id === 'persadia' ? '#ea580c' : '#475569' }}
-                     >
-                       {selectedKategori?.label}
-                     </span>
-                   </div>
+              {/* Category & Access Badges */}
+              <div className="flex flex-wrap justify-center gap-2 mb-4 w-full">
+                <div 
+                  className="px-3.5 py-1 rounded-full border text-[11px] font-black uppercase tracking-wider"
+                  style={{ 
+                    borderColor: selectedKategori?.id === 'dokter_spesialis' ? '#0284c7' : selectedKategori?.id === 'dokter_umum' ? '#0d9488' : selectedKategori?.id === 'residen' ? '#4f46e5' : selectedKategori?.id === 'mahasiswa' ? '#059669' : selectedKategori?.id === 'persadia' ? '#ea580c' : '#0B3D5E',
+                    color: selectedKategori?.id === 'dokter_spesialis' ? '#0284c7' : selectedKategori?.id === 'dokter_umum' ? '#0d9488' : selectedKategori?.id === 'residen' ? '#4f46e5' : selectedKategori?.id === 'mahasiswa' ? '#059669' : selectedKategori?.id === 'persadia' ? '#ea580c' : '#0B3D5E',
+                    backgroundColor: '#F8FAFC'
+                  }}
+                >
+                  {selectedKategori?.label}
                 </div>
-
-                {/* Access: Panel Shape with Icon */}
-                <div className="flex items-center gap-3 p-3 bg-[#f8fafc] border border-[#e2e8f0] rounded-lg">
-                  <div className="w-8 h-8 rounded bg-[#ffffff] shadow-sm flex items-center justify-center shrink-0 border border-[#e2e8f0]">
-                    <Calendar className="w-4 h-4 text-[#475569]" />
-                  </div>
-                  <div className="text-left">
-                    <span className="text-[9px] font-bold text-[#94a3b8] uppercase tracking-wider block">Akses Acara</span>
-                    <strong className="text-[11px] text-[#334155] block leading-tight mt-0.5">
-                      {selectedKategori?.akses === "ilmiah" ? "Sesi Ilmiah (Novotel)" : "Pesta Rakyat (GOR Pakansari)"}
-                    </strong>
-                  </div>
+                <div className="px-3.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-bold uppercase tracking-wider">
+                  {selectedKategori?.akses === "ilmiah" ? "Sesi Ilmiah (Novotel)" : "Pesta Rakyat (GOR Pakansari)"}
                 </div>
               </div>
-              
+
+              {/* LARGE HIGH-CONTRAST SCANNER-FRIENDLY QR CODE CONTAINER */}
+              <div className="my-auto p-4 bg-white rounded-2xl border-2 border-slate-900 shadow-lg flex flex-col items-center justify-center w-full max-w-[270px]">
+                <div className="bg-white p-2 rounded-xl">
+                  <QRCodeSVG 
+                    value={`${window.location.origin}/scanner.html?id=${successData.id}`} 
+                    size={200} 
+                    level="H" 
+                    includeMargin={true}
+                  />
+                </div>
+                <div className="mt-2 text-center border-t border-slate-200 pt-2 w-full">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">ID REGISTRASI</span>
+                  <strong className="text-base font-mono font-black text-slate-900 tracking-widest">{successData.id}</strong>
+                </div>
+              </div>
+
             </div>
 
-            {/* Footer Area with QR */}
-            <div className="bg-[#f8fafc] px-6 py-4 flex items-center justify-between border-t border-[#e2e8f0]">
-               <div className="text-left">
-                 <span className="text-[9px] font-black text-[#94a3b8] tracking-widest uppercase block mb-1">ID Peserta</span>
-                 <span className="text-sm font-mono font-bold text-[#1e293b]">{successData.id}</span>
-               </div>
-               <div className="p-1.5 bg-[#ffffff] rounded-lg shadow-sm border border-[#e2e8f0]">
-                <QRCodeSVG 
-                  value={`${window.location.origin}/scanner.html?id=${successData.id}`} 
-                  size={60} 
-                  level="H" 
-                />
-               </div>
-            </div>
-
-            {/* Note Area */}
-            <div className="bg-[#f1f5f9] px-4 py-2.5 text-center border-t border-[#e2e8f0]">
-              <p className="text-[8px] text-[#64748b] font-medium leading-tight">
-                Simpan file PDF ini di HP Anda — tunjukkan QR Code ini saat check-in di lokasi acara.
+            {/* Footer Area with Paperless Instructions */}
+            <div className="bg-slate-900 text-white px-5 py-4 text-center border-t border-slate-800 flex items-center justify-center">
+              <p className="text-[10px] font-bold tracking-wider text-amber-400 uppercase leading-none">
+                Simpan E-Ticket ini di galeri HP Anda.
               </p>
             </div>
           </div>

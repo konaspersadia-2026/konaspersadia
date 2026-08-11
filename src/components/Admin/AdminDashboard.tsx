@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import { 
   Users, DollarSign, CheckCircle, Clock, Search, ChevronLeft, ShieldAlert,
-  Loader2, LogOut, CheckSquare, XCircle
+  Loader2, LogOut, CheckSquare, XCircle, MessageCircle
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -45,6 +45,10 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{isOpen: boolean; id: string; status: string}>({ isOpen: false, id: "", status: "" });
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
@@ -192,6 +196,8 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
       setData(prev => prev.map(item => 
         item["No. Registrasi"] === id ? { ...item, "Status Pembayaran": status } : item
       ));
+      
+      window.open("https://chat.whatsapp.com/GezzqQzSYPuHTiCBRGbela", "_blank");
     } catch (err: any) {
       console.error(err);
       setActionError("Terjadi kesalahan jaringan saat update status: " + err.message);
@@ -437,7 +443,18 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
 
               {/* Status Bar Chart */}
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <h3 className="text-lg font-bold text-slate-800 mb-6">Status Pembayaran</h3>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-bold text-slate-800">Status Pembayaran</h3>
+                  <a 
+                    href="https://chat.whatsapp.com/GezzqQzSYPuHTiCBRGbela"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center px-3 py-1.5 bg-[#25D366] hover:bg-[#128C7E] text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+                  >
+                    <MessageCircle className="h-4 w-4 mr-1.5" />
+                    Grup WA
+                  </a>
+                </div>
                 <div className="h-72 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={statusBarData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
@@ -533,8 +550,21 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
                           </td>
                           <td className="px-6 py-4">
                             <div className="font-medium text-slate-800">{row["Nama Lengkap"]}</div>
-                            <div className="text-xs text-slate-500 mt-0.5">{row["No. WhatsApp"]}</div>
-                            <div className="text-xs text-slate-500">{row.Email}</div>
+                            <div className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
+                              {row["No. WhatsApp"]}
+                              {row["No. WhatsApp"] && row["No. WhatsApp"] !== "-" && (
+                                <a 
+                                  href={`https://wa.me/${row["No. WhatsApp"].replace(/\D/g, '').replace(/^0/, '62')}`} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center justify-center p-1 bg-[#25D366]/10 text-[#128C7E] rounded hover:bg-[#25D366]/20 transition-colors"
+                                  title="Chat WhatsApp"
+                                >
+                                  <MessageCircle className="h-3 w-3" />
+                                </a>
+                              )}
+                            </div>
+                            <div className="text-xs text-slate-500 mt-0.5">{row.Email}</div>
                           </td>
                           <td className="px-6 py-4">
                             <div className="text-slate-800">{row["Kategori Peserta"]}</div>
@@ -630,7 +660,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
                     : "bg-red-600 hover:bg-red-700"
                 }`}
               >
-                Ya, Ubah Status
+                Ya, Ubah Status Dan Kirim Link Undangan Komunitas WA
               </button>
             </div>
           </div>

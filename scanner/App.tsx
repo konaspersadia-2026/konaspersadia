@@ -14,11 +14,7 @@ interface Pendaftar {
 
 // Opsi checkpoint yang bisa diedit/ditambah dengan mudah
 export const CHECKPOINTS = [
-  { id: "Registrasi_OnSite", label: "Registrasi On-Site", isMain: true },
-  { id: "Makan_Siang_Hari_1", label: "Makan Siang (Hari 1)" },
-  { id: "Makan_Siang_Hari_2", label: "Makan Siang (Hari 2)" },
-  { id: "Seminar_Kit", label: "Pengambilan Seminar Kit" },
-  { id: "Cek_Gula_Darah", label: "Cek Gula Darah" },
+  { id: "Registrasi_OnSite", label: "Registrasi On-Site", isMain: true }
 ];
 
 function App() {
@@ -30,33 +26,149 @@ function App() {
   const [selectedUser, setSelectedUser] = useState<Pendaftar | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [torchOn, setTorchOn] = useState(false);
+  
+  type ScannerMode = 'registrasi' | 'workshop' | 'pesta_rakyat' | 'makan_siang';
+  const [scannerMode, setScannerMode] = useState<ScannerMode>('registrasi');
+
+  // States for pemeriksaan
+  const [tinggiBadan, setTinggiBadan] = useState("");
+  const [beratBadan, setBeratBadan] = useState("");
+  const [tensiSistolik, setTensiSistolik] = useState("");
+  const [tensiDiastolik, setTensiDiastolik] = useState("");
+  const [gulaDarah, setGulaDarah] = useState("");
+  const [lingkarPerut, setLingkarPerut] = useState("");
 
   // Gunakan ref untuk menyimpan data terbaru agar useEffect scanner tidak perlu direstart saat data berubah
   const dataRef = useRef<Pendaftar[]>([]);
 
   useEffect(() => {
+    if (selectedUser) {
+      setTinggiBadan(selectedUser.tinggi_badan || "");
+      setBeratBadan(selectedUser.berat_badan || "");
+      const [sis, dia] = (selectedUser.tensi || "").split('/');
+      setTensiSistolik(sis || "");
+      setTensiDiastolik(dia || "");
+      setGulaDarah(selectedUser.gula_darah || "");
+      setLingkarPerut(selectedUser.lingkar_perut || "");
+    } else {
+      setTinggiBadan("");
+      setBeratBadan("");
+      setTensiSistolik("");
+      setTensiDiastolik("");
+      setGulaDarah("");
+      setLingkarPerut("");
+    }
+  }, [selectedUser]);
+
+  useEffect(() => {
     dataRef.current = data;
   }, [data]);
 
-  // Auth state
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [pinInput, setPinInput] = useState("");
-  const [pinError, setPinError] = useState("");
-  const SCANNER_PIN = "rahasia"; // Same as admin pin for now or similar
-
-  const handleLogin = (e: React.FormEvent) => {
+  const handleSimpanPemeriksaan = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (pinInput === SCANNER_PIN) {
-      setIsAuthenticated(true);
-      fetchData();
-    } else {
-      setPinError("PIN yang Anda masukkan salah.");
+    if (!selectedUser) return;
+    
+    setActionLoading('pemeriksaan');
+    try {
+      const { error: updateError } = await supabase
+        .from('pendaftar')
+        .update({
+          tinggi_badan: tinggiBadan,
+          berat_badan: beratBadan,
+          tensi: (tensiSistolik && tensiDiastolik) ? `${tensiSistolik}/${tensiDiastolik}` : '',
+          gula_darah: gulaDarah,
+          lingkar_perut: lingkarPerut,
+          cek_gula_darah: 'Ya'
+        })
+        .eq('no_registrasi', selectedUser["No. Registrasi"]);
+
+      if (updateError) throw updateError;
+      
+      const updatedUser = { 
+        ...selectedUser, 
+        tinggi_badan: tinggiBadan, 
+        berat_badan: beratBadan, 
+        tensi: (tensiSistolik && tensiDiastolik) ? `${tensiSistolik}/${tensiDiastolik}` : '', 
+        gula_darah: gulaDarah, 
+        lingkar_perut: lingkarPerut,
+        cek_gula_darah: 'Ya',
+        "Cek_Gula_Darah": 'Ya'
+      };
+      setSelectedUser(updatedUser);
+      setData(prevData => prevData.map(d => 
+        d["No. Registrasi"] === selectedUser["No. Registrasi"] ? updatedUser : d
+      ));
+      
+      alert('Data pemeriksaan berhasil disimpan!');
+    } catch (err: any) {
+      console.error(err);
+      let errorMsg = err.message;
+      if (err.code === 'PGRST204' || errorMsg.includes('schema cache')) {
+        errorMsg += '\n\nTips: Jika Anda baru saja menambahkan kolom di Supabase, silakan ke Dasbor Supabase > API Settings > Klik "Reload schema cache". Pastikan juga nama kolom sudah benar: tinggi_badan, berat_badan, tensi, gula_darah, lingkar_perut, cek_gula_darah (semua huruf kecil).';
+      }
+      alert('Gagal menyimpan data: ' + errorMsg);
+    } finally {
+      setActionLoading(null);
     }
   };
 
-  const handleLogout = () => {
+  // Auth state
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+
+  // Periksa sesi yang ada saat komponen dimuat
+  useEffect(() => {
+    if (isSupabaseConfigured) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          setIsAuthenticated(true);
+          fetchData();
+        }
+      });
+    }
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError("");
+    setAuthLoading(true);
+
+    try {
+      if (!isSupabaseConfigured) {
+        throw new Error("Supabase tidak dikonfigurasi.");
+      }
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.session) {
+        setIsAuthenticated(true);
+        fetchData();
+      }
+    } catch (err: any) {
+      console.error(err);
+      setLoginError("Login gagal: " + (err.message || "Email atau password salah."));
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    if (isSupabaseConfigured) {
+      await supabase.auth.signOut();
+    }
     setIsAuthenticated(false);
-    setPinInput("");
+    setEmail("");
+    setPassword("");
     setData([]);
     setScanResult(null);
     setSelectedUser(null);
@@ -92,6 +204,7 @@ function App() {
           "Registrasi_OnSite": row.registrasi_onsite,
           "Makan_Siang_Hari_1": row.makan_siang_hari_1,
           "Makan_Siang_Hari_2": row.makan_siang_hari_2,
+          "Makan_Siang_Pesta_Rakyat": row.makan_siang_pesta_rakyat,
           "Seminar_Kit": row.seminar_kit,
           "Cek_Gula_Darah": row.cek_gula_darah,
           ...row
@@ -114,14 +227,19 @@ function App() {
     const scannedId = params.get("id");
     
     if (scannedId && data.length > 0 && isAuthenticated) {
-      const user = data.find(d => d["No. Registrasi"] === scannedId);
+      const extractedId = scannedId.trim();
+      const user = data.find(d => 
+        d["No. Registrasi"].toLowerCase() === extractedId.toLowerCase() ||
+        d["Nama Lengkap"].toLowerCase().includes(extractedId.toLowerCase())
+      );
+      
       setSelectedUser(user || null);
       
       if (!user) {
-        setError(`Nomor registrasi ${scannedId} tidak ditemukan.`);
+        setError(`Data peserta dengan identitas "${extractedId}" tidak ditemukan.`);
       } else {
         setError(null);
-        setScanResult(scannedId);
+        setScanResult(user["No. Registrasi"]);
       }
       
       // Clean up URL so refresh doesn't trigger it again
@@ -132,6 +250,32 @@ function App() {
   useEffect(() => {
     let html5QrCode: Html5Qrcode | null = null;
     let isComponentMounted = true;
+    
+    const extractIdFromScannedText = (text: string) => {
+      let trimmed = text.trim();
+      try {
+        // Coba parsing sebagai URL
+        const url = new URL(trimmed);
+        const id = url.searchParams.get("id");
+        if (id) return id.trim();
+      } catch (e) {
+        // Jika bukan URL yang valid, lanjutkan ke regex
+      }
+      
+      // Fallback regex jika URL parser gagal karena suatu hal (misal format tidak standar)
+      const match = trimmed.match(/[?&]id=([^&]+)/);
+      if (match && match[1]) {
+        return match[1].trim();
+      }
+      
+      // Coba cari pola ID KNS2026-XXXXX
+      const knsMatch = trimmed.match(/(KNS2026-\d+)/i);
+      if (knsMatch && knsMatch[1]) {
+        return knsMatch[1].toUpperCase();
+      }
+      
+      return trimmed;
+    };
     
     if (isScanning) {
       html5QrCode = new Html5Qrcode("reader");
@@ -148,16 +292,22 @@ function App() {
         (decodedText) => {
           if (!isComponentMounted) return;
           
+          const extractedId = extractIdFromScannedText(decodedText);
+          
           if (navigator.vibrate) navigator.vibrate(200);
-          setScanResult(decodedText);
+          setScanResult(extractedId);
           setIsScanning(false);
           
           // Cari user menggunakan dataRef agar selalu up-to-date
-          const user = dataRef.current.find(d => d["No. Registrasi"] === decodedText);
+          const user = dataRef.current.find(d => 
+            d["No. Registrasi"].toLowerCase() === extractedId.toLowerCase() ||
+            d["Nama Lengkap"].toLowerCase().includes(extractedId.toLowerCase())
+          );
+          
           setSelectedUser(user || null);
           
           if (!user) {
-            setError(`Nomor registrasi ${decodedText} tidak ditemukan.`);
+            setError(`Data peserta dengan identitas "${extractedId}" tidak ditemukan.`);
           } else {
             setError(null);
           }
@@ -277,27 +427,40 @@ function App() {
             </div>
           </div>
           <h1 className="text-2xl font-bold text-slate-800 text-center mb-2">Scanner Panitia</h1>
-          <p className="text-slate-500 text-center mb-6">Masukkan PIN keamanan untuk mengakses scanner registrasi.</p>
+          <p className="text-slate-500 text-center mb-6">Masuk menggunakan akun admin untuk mengakses scanner.</p>
           
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
               <input
-                type="password"
-                placeholder="Masukkan PIN"
-                value={pinInput}
-                onChange={(e) => setPinInput(e.target.value)}
-                className="w-full px-4 py-3 text-center tracking-[0.5em] font-mono text-lg rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all"
+                type="email"
+                placeholder="admin@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all"
                 autoFocus
+                required
               />
             </div>
-            {pinError && <p className="text-red-500 text-sm text-center">{pinError}</p>}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all"
+                required
+              />
+            </div>
+            {loginError && <p className="text-red-500 text-sm text-center bg-red-50 p-2 rounded-lg">{loginError}</p>}
             <button
               type="submit"
               className="w-full bg-emerald-600 text-white font-semibold py-3 rounded-xl hover:bg-emerald-700 transition-colors flex items-center justify-center"
-              disabled={loading}
+              disabled={authLoading}
             >
-              {loading ? <RefreshCw className="w-5 h-5 animate-spin mr-2" /> : null}
-              {loading ? "Memverifikasi..." : "Akses Scanner"}
+              {authLoading ? <RefreshCw className="w-5 h-5 animate-spin mr-2" /> : null}
+              {authLoading ? "Memverifikasi..." : "Akses Scanner"}
             </button>
           </form>
           
@@ -321,6 +484,49 @@ function App() {
         </div>
       </div>
     );
+  }
+
+  let hasAccess = false;
+  let rejectionReason = "";
+  
+  if (selectedUser) {
+    const isLunas = selectedUser["Status Pembayaran"] === 'Lunas';
+    const kategori = selectedUser["Kategori Peserta"] || "";
+    // Because we just use ...row, the db column name is `pilihan_kegiatan`
+    const pilihanKegiatan = selectedUser["pilihan_kegiatan"] || "";
+    
+    const isIlmiah = ["Dokter Umum", "Dokter Spesialis", "Residen", "Mahasiswa"].includes(kategori);
+    const isPestaRakyat = ["Anggota PERSADIA", "Masyarakat Umum"].includes(kategori);
+
+    if (!isLunas && scannerMode !== 'pesta_rakyat' && scannerMode !== 'makan_siang') {
+       hasAccess = false;
+       rejectionReason = "Pembayaran belum lunas. Registrasi on-site tidak dapat dilanjutkan.";
+    } else {
+       if (scannerMode === 'registrasi') {
+          hasAccess = true;
+       } else if (scannerMode === 'workshop') {
+          if (isIlmiah && pilihanKegiatan.includes("Workshop")) {
+             hasAccess = true;
+          } else {
+             hasAccess = false;
+             rejectionReason = "Akses Ditolak: Peserta tidak memiliki tiket Workshop.";
+          }
+       } else if (scannerMode === 'pesta_rakyat') {
+          if (isPestaRakyat) {
+             hasAccess = true;
+          } else {
+             hasAccess = false;
+             rejectionReason = "Akses Ditolak: Peserta bukan kategori Pesta Rakyat.";
+          }
+       } else if (scannerMode === 'makan_siang') {
+          if (isPestaRakyat) {
+             hasAccess = true;
+          } else {
+             hasAccess = false;
+             rejectionReason = "Akses Ditolak: Pengambilan makan siang ini khusus untuk kategori Pesta Rakyat.";
+          }
+       }
+    }
   }
 
   return (
@@ -367,6 +573,38 @@ function App() {
 
         {!selectedUser && !isScanning && (
           <div className="space-y-6">
+            
+            {/* Mode Selector */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+              <h2 className="text-lg font-bold text-slate-800 mb-3 text-center">Pilih Mode Scanner</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <button
+                  onClick={() => setScannerMode('registrasi')}
+                  className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors border min-h-[44px] ${scannerMode === 'registrasi' ? 'bg-emerald-100 border-emerald-300 text-emerald-800 font-bold' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+                >
+                  Registrasi On-Site
+                </button>
+                <button
+                  onClick={() => setScannerMode('workshop')}
+                  className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors border min-h-[44px] ${scannerMode === 'workshop' ? 'bg-emerald-100 border-emerald-300 text-emerald-800 font-bold' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+                >
+                  Workshop
+                </button>
+                <button
+                  onClick={() => setScannerMode('pesta_rakyat')}
+                  className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors border min-h-[44px] ${scannerMode === 'pesta_rakyat' ? 'bg-emerald-100 border-emerald-300 text-emerald-800 font-bold' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+                >
+                  Cek Gula Darah
+                </button>
+                <button
+                  onClick={() => setScannerMode('makan_siang')}
+                  className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors border min-h-[44px] ${scannerMode === 'makan_siang' ? 'bg-emerald-100 border-emerald-300 text-emerald-800 font-bold' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+                >
+                  Makan Siang
+                </button>
+              </div>
+            </div>
+
             {/* Action Card */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col items-center text-center">
               <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4">
@@ -470,72 +708,109 @@ function App() {
               </div>
             </div>
 
-            {selectedUser["Status Pembayaran"] !== 'Lunas' ? (
+            {!hasAccess ? (
               <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
                 <XCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-                <h3 className="text-lg font-bold text-red-800 mb-2">Pembayaran Belum Lunas</h3>
-                <p className="text-red-600 text-sm">Peserta ini belum menyelesaikan pembayaran atau masih menunggu verifikasi. Registrasi on-site tidak dapat dilanjutkan.</p>
+                <h3 className="text-lg font-bold text-red-800 mb-2">Akses Ditolak</h3>
+                <p className="text-red-600 text-sm">{rejectionReason}</p>
               </div>
             ) : (
-              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-500 mr-2" />
-                  Checkpoints Kehadiran
-                </h3>
+              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 text-center">
+                <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
+                <h3 className="text-lg font-bold text-emerald-800 mb-2">Akses Diberikan</h3>
+                <p className="text-emerald-600 text-sm mb-6">
+                  Peserta berhak masuk ke area <strong>{
+                    scannerMode === 'registrasi' ? 'Registrasi' :
+                    scannerMode === 'workshop' ? 'Workshop' :
+                    scannerMode === 'pesta_rakyat' ? 'Cek Gula Darah' : 'Pengambilan Makan Siang'
+                  }</strong>.
+                </p>
+
+                {scannerMode === 'makan_siang' && (
+                  <button
+                    disabled={actionLoading === 'Makan_Siang_Pesta_Rakyat' || selectedUser['Makan_Siang_Pesta_Rakyat'] === 'Ya'}
+                    onClick={() => handleUpdateCheckpoint('Makan_Siang_Pesta_Rakyat', selectedUser['Makan_Siang_Pesta_Rakyat'] === 'Ya')}
+                    className={`w-full py-3 px-4 rounded-xl font-bold flex items-center justify-center transition-colors ${
+                      selectedUser['Makan_Siang_Pesta_Rakyat'] === 'Ya'
+                        ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                        : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md'
+                    }`}
+                  >
+                    {actionLoading === 'Makan_Siang_Pesta_Rakyat' ? (
+                      <RefreshCw className="w-5 h-5 animate-spin mr-2" />
+                    ) : selectedUser['Makan_Siang_Pesta_Rakyat'] === 'Ya' ? (
+                      <CheckCircle2 className="w-5 h-5 mr-2" />
+                    ) : (
+                      <CheckSquare className="w-5 h-5 mr-2" />
+                    )}
+                    {selectedUser['Makan_Siang_Pesta_Rakyat'] === 'Ya' ? 'Sudah Ambil Makan Siang' : 'Verifikasi Pengambilan Makan Siang'}
+                  </button>
+                )}
                 
-                <div className="space-y-3">
-                  {CHECKPOINTS.map((cp) => {
-                    const isChecked = selectedUser[cp.id] === "Ya";
-                    const isMain = cp.isMain;
-                    const isMainChecked = selectedUser[CHECKPOINTS.find(c => c.isMain)?.id || ""] === "Ya";
+                {scannerMode === 'registrasi' && (
+                  <button
+                    disabled={actionLoading === 'Registrasi_OnSite' || selectedUser['Registrasi_OnSite'] === 'Ya'}
+                    onClick={() => handleUpdateCheckpoint('Registrasi_OnSite', selectedUser['Registrasi_OnSite'] === 'Ya')}
+                    className={`w-full py-3 px-4 rounded-xl font-bold flex items-center justify-center transition-colors ${
+                      selectedUser['Registrasi_OnSite'] === 'Ya'
+                        ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                        : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md'
+                    }`}
+                  >
+                    {actionLoading === 'Registrasi_OnSite' ? (
+                      <RefreshCw className="w-5 h-5 animate-spin mr-2" />
+                    ) : selectedUser['Registrasi_OnSite'] === 'Ya' ? (
+                      <CheckCircle2 className="w-5 h-5 mr-2" />
+                    ) : (
+                      <CheckSquare className="w-5 h-5 mr-2" />
+                    )}
+                    {selectedUser['Registrasi_OnSite'] === 'Ya' ? 'Sudah Registrasi On-Site' : 'Check-In Registrasi On-Site'}
+                  </button>
+                )}
+
+                {scannerMode === 'pesta_rakyat' && (
+                  <form onSubmit={handleSimpanPemeriksaan} className="bg-white p-4 rounded-xl border border-emerald-100 text-left space-y-4">
+                    <h4 className="font-bold text-slate-800 border-b pb-2">Form Pemeriksaan</h4>
                     
-                    // Disable non-main checkpoints if main is not checked
-                    const isDisabled = !isMain && !isMainChecked;
-                    
-                    return (
-                      <div 
-                        key={cp.id}
-                        className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
-                          isChecked 
-                            ? 'bg-emerald-50 border-emerald-200' 
-                            : isDisabled 
-                              ? 'bg-slate-50 border-slate-100 opacity-60' 
-                              : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm'
-                        }`}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <button
-                            disabled={isDisabled || actionLoading === cp.id}
-                            onClick={() => handleUpdateCheckpoint(cp.id, isChecked)}
-                            className={`flex-shrink-0 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center ${
-                              isChecked ? 'text-emerald-600' : isDisabled ? 'text-slate-300' : 'text-slate-400 hover:text-emerald-500'
-                            }`}
-                          >
-                            {isChecked ? <CheckSquare className="w-6 h-6" /> : <Square className="w-6 h-6" />}
-                          </button>
-                          <div>
-                            <p className={`font-medium ${isChecked ? 'text-emerald-900' : 'text-slate-700'}`}>
-                              {cp.label}
-                            </p>
-                            {isMain && (
-                              <p className="text-xs text-slate-500">Gerbang Utama Registrasi</p>
-                            )}
-                          </div>
-                        </div>
-                        
-                        {actionLoading === cp.id && (
-                          <RefreshCw className="w-5 h-5 text-slate-400 animate-spin" />
-                        )}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-medium text-slate-600 mb-1 truncate" title="Tinggi Badan (cm)">Tinggi (cm)</label>
+                        <input type="number" value={tinggiBadan} onChange={e => setTinggiBadan(e.target.value)} className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-200 outline-none text-center" placeholder="165" />
                       </div>
-                    );
-                  })}
-                </div>
-                
-                <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-xl">
-                  <p className="text-sm text-blue-800 text-center">
-                    <strong>Informasi:</strong> Ceklis <em>Registrasi On-Site</em> terlebih dahulu untuk membuka kunci checkpoint lainnya.
-                  </p>
-                </div>
+                      <div>
+                        <label className="block text-[11px] font-medium text-slate-600 mb-1 truncate" title="Berat Badan (kg)">Berat (kg)</label>
+                        <input type="number" step="0.1" value={beratBadan} onChange={e => setBeratBadan(e.target.value)} className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-200 outline-none text-center" placeholder="60.5" />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-medium text-slate-600 mb-1 truncate" title="Lingkar Perut (cm)">L. Perut (cm)</label>
+                        <input type="number" step="0.1" value={lingkarPerut} onChange={e => setLingkarPerut(e.target.value)} className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-200 outline-none text-center" placeholder="80" />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-medium text-slate-600 mb-1 truncate" title="Gula Darah (mg/dL)">Gula Darah (mg/dL)</label>
+                        <input type="number" value={gulaDarah} onChange={e => setGulaDarah(e.target.value)} className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-200 outline-none text-center" placeholder="110" />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="block text-[11px] font-medium text-slate-600 mb-1 truncate" title="Tensi (mmHg)">Tensi (mmHg)</label>
+                        <div className="grid grid-cols-2 gap-3 relative items-center">
+                          <input type="number" value={tensiSistolik} onChange={e => setTensiSistolik(e.target.value)} className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-200 outline-none text-center" placeholder="120" />
+                          <div className="absolute inset-0 flex justify-center items-center pointer-events-none">
+                            <span className="text-slate-400 font-bold text-sm bg-white px-1">/</span>
+                          </div>
+                          <input type="number" value={tensiDiastolik} onChange={e => setTensiDiastolik(e.target.value)} className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-200 outline-none text-center" placeholder="80" />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <button
+                      type="submit"
+                      disabled={actionLoading === 'pemeriksaan'}
+                      className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center text-sm"
+                    >
+                      {actionLoading === 'pemeriksaan' ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                      {selectedUser['Cek_Gula_Darah'] === 'Ya' ? 'Update Data Pemeriksaan' : 'Simpan Data Pemeriksaan'}
+                    </button>
+                  </form>
+                )}
               </div>
             )}
           </div>

@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { Sparkles, Star } from "lucide-react";
+import { Sparkles, Star, ArrowRight } from "lucide-react";
 
 export default function Sponsors() {
   // We use placeholder images for sponsors. 
@@ -81,6 +81,38 @@ export default function Sponsors() {
           {/* Fading edges for marquee */}
           <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-white to-transparent pointer-events-none"></div>
           <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-white to-transparent pointer-events-none"></div>
+        </div>
+
+        {/* Call to Action Banner for Sponsorship */}
+        <div className="mt-16 bg-gradient-to-r from-[#0B3D5E] via-[#0B3D5E] to-[#00B4AC] rounded-2xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden w-full border border-white/10">
+          <div className="absolute top-0 right-0 -mr-6 -mt-6 p-8 opacity-10 rotate-12 pointer-events-none">
+            <Star className="w-40 h-40" />
+          </div>
+          <div className="absolute bottom-0 left-1/3 -mb-8 p-8 opacity-10 -rotate-12 pointer-events-none">
+            <Sparkles className="w-28 h-28" />
+          </div>
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
+            <div className="max-w-2xl">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-white/10 text-[#C89A2E] border border-white/15 mb-3">
+                <Sparkles className="h-3.5 w-3.5 text-[#C89A2E]" />
+                Kemitraan Strategis
+              </span>
+              <h3 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white">
+                Jadilah Bagian dari Sejarah Kongres Nasional 2026!
+              </h3>
+              <p className="text-blue-100 text-xs sm:text-sm mt-2 leading-relaxed">
+                Dukung kesuksesan Kongres Nasional PERSADIA 2026 dan dapatkan eksposur maksimal bagi brand/perusahaan Anda di hadapan ribuan peserta &amp; tenaga kesehatan.
+              </p>
+            </div>
+            <a 
+              href="#sponsorship" 
+              onClick={() => window.scrollTo(0, 0)}
+              className="shrink-0 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white px-7 py-3.5 rounded-full font-extrabold text-xs sm:text-sm shadow-md hover:shadow-xl transition-all transform hover:-translate-y-0.5 cursor-pointer"
+            >
+              Lihat Peluang Sponsor
+              <ArrowRight className="h-4 w-4" />
+            </a>
+          </div>
         </div>
 
       </div>

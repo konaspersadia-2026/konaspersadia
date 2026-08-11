@@ -55,7 +55,7 @@ export const KATEGORI_PESERTA: KategoriPeserta[] = [
     akses: "pesta_rakyat",
     hargaEarlyBird: 0,
     hargaReguler: 0,
-    fieldTambahan: ["noKTP", "cabangPersadia", "slotWaktuCekGula"],
+    fieldTambahan: ["cabangPersadia", "tanggalLahir", "jenisKelamin"],
   },
   {
     id: "umum",
@@ -63,7 +63,7 @@ export const KATEGORI_PESERTA: KategoriPeserta[] = [
     akses: "pesta_rakyat",
     hargaEarlyBird: 0,
     hargaReguler: 0,
-    fieldTambahan: ["noKTP", "slotWaktuCekGula"],
+    fieldTambahan: ["tanggalLahir", "jenisKelamin"],
   },
 ];
 

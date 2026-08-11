@@ -5,7 +5,7 @@ import { SilhouetteMedis, SilhouettePemeriksaan } from "./BackgroundSilhouettes"
 
 export default function About() {
   const tujuanKegiatan = [
-    "Meningkatkan pengetahuan dan keterampilan dokter (khususnya di pelayanan kesehatan primer) serta memberi informasi perkembangan mutakhir Ilmu Penyakit Dalam.",
+    "Meningkatkan pengetahuan dan keterampilan dokter (khususnya di pelayanan kesehatan primer) serta memberi informasi perkembangan pengobatan mutakhir Diabetes.",
     "Memberikan informasi komprehensif mengenai produk farmasi dan inovasi alat kesehatan terbaru.",
     "Menyelenggarakan Rapat Kerja Nasional dan koordinasi strategis PERSADIA, PERKENI, dan PEDI."
   ];
@@ -15,8 +15,8 @@ export default function About() {
     { title: "Senam Bersama", desc: "Senam bugar diabetesi masal untuk mengampanyekan gaya hidup aktif dan sehat. Dipersembahkan bersama oleh PERSADIA, PEDI, PERKENI, dan KORMI (Komite Olahraga Rekreasi Masyarakat Indonesia)." },
     { title: "Workshop Medis", desc: "Pelatihan interaktif dan intensif khusus bagi dokter umum dan dokter spesialis." },
     { title: "Simposium Klinis", desc: "Seminar sains menyajikan penelitian ilmiah dan tata laksana klinis diabetes termutakhir." },
-    { title: "Stand Pameran", desc: "Exhibition produk kesehatan, alat medis mandiri, dan layanan farmasi terpercaya." },
-    { title: "Pemilihan Presiden", desc: "Sidang organisasi untuk Pemilihan Presiden PERSADIA kepengurusan berikutnya." },
+    { title: "Exhibition", desc: "Exhibition produk kesehatan, alat medis mandiri, dan layanan farmasi terpercaya." },
+    { title: "President Elect", desc: "Sidang organisasi untuk Pemilihan Presiden PERSADIA kepengurusan berikutnya." },
     { title: "Rapat Kerja", desc: "Rapat Kerja Nasional organisasi PEDI dan PERKENI demi keselarasan program." }
   ];
 
@@ -71,10 +71,7 @@ export default function About() {
             {/* Campaign Tagline Box */}
             <div className="p-5 bg-amber-50 rounded-2xl border-l-4 border-[#C89A2E] shadow-sm">
               <span className="text-[10px] uppercase font-bold text-[#C89A2E] block mb-1">Tema Kampanye Kesehatan</span>
-              <p className="text-sm font-extrabold text-slate-800 leading-snug">
-                "Deteksi Dini, Hidup Lebih Baik: Bersama Melawan Diabetes dari Akar"
-              </p>
-              <p className="text-xs italic text-slate-500 mt-1">
+              <p className="text-sm font-extrabold text-slate-800 leading-snug italic">
                 "Early Detection for Better Living: Standing Together Against Diabetes at Its Root"
               </p>
             </div>

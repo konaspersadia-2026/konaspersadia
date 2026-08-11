@@ -7,35 +7,35 @@ export default function Footer() {
   return (
     <footer className="bg-[#0B3D5E] text-white">
       {/* Contact Hub Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b border-white/10 py-10">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center text-center md:text-left">
-          <div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b border-white/10 py-8 md:py-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-6 lg:gap-8 items-center text-center md:text-left">
+          <div className="flex flex-col items-center md:items-start text-center md:text-left">
             <h4 className="text-base font-black uppercase tracking-wider text-[#C89A2E] mb-2">Hubungi Panitia</h4>
-            <p className="text-xs text-white/80 max-w-xs">
+            <p className="text-xs text-white/80 max-w-xs text-center md:text-left mx-auto md:mx-0">
               Hubungi sekretariat pendaftaran kami jika Anda memerlukan bantuan koordinasi rombongan atau verifikasi manual cepat.
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row justify-center md:justify-start gap-4 text-xs font-bold">
+          <div className="flex flex-col gap-2.5 text-xs font-bold w-full max-w-xs mx-auto md:mx-0">
             <a
               href={`mailto:${KONTAK_PANITIA.email}`}
-              className="flex items-center justify-center md:justify-start gap-2 px-4 py-3 bg-white/10 rounded-xl hover:bg-white/20 transition"
+              className="flex items-center justify-center md:justify-start gap-2 px-3.5 py-2.5 bg-white/10 rounded-xl hover:bg-white/20 transition truncate"
             >
-              <Mail className="h-4 w-4 text-[#C89A2E]" />
-              <span>{KONTAK_PANITIA.email}</span>
+              <Mail className="h-4 w-4 text-[#C89A2E] shrink-0" />
+              <span className="truncate">{KONTAK_PANITIA.email}</span>
             </a>
             <a
               href={`https://wa.me/${KONTAK_PANITIA.whatsapp.replace(/[^0-9]/g, "")}`}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center justify-center md:justify-start gap-2 px-4 py-3 bg-[#2D7A4F] rounded-xl hover:bg-[#2D7A4F] transition"
+              className="flex items-center justify-center md:justify-start gap-2 px-3.5 py-2.5 bg-[#2D7A4F] rounded-xl hover:bg-[#2D7A4F] transition truncate"
             >
-              <Phone className="h-4 w-4" />
-              <span>{KONTAK_PANITIA.whatsapp} (WhatsApp)</span>
+              <Phone className="h-4 w-4 shrink-0" />
+              <span className="truncate">{KONTAK_PANITIA.whatsapp} (WhatsApp)</span>
             </a>
           </div>
 
-          <div className="text-center md:text-right">
+          <div className="flex flex-col items-center md:items-end text-center md:text-right">
             <span className="text-[10px] text-white/50 block font-semibold uppercase tracking-widest">Sekretariat Bersama</span>
             <span className="text-xs font-extrabold text-white">Gedung PERSADIA / PERKENI Raya</span>
             <p className="text-[10px] text-white/70 mt-0.5">Jakarta Selatan, DKI Jakarta</p>
@@ -83,7 +83,7 @@ export default function Footer() {
           <div className="lg:col-span-4 space-y-3">
             <h5 className="text-xs font-bold uppercase tracking-wider text-[#C89A2E]">Kampanye Kesehatan</h5>
             <p className="text-xs text-white/80 leading-relaxed max-w-xs mx-auto lg:mx-0">
-              Mendukung penuh kampanye global pencegahan diabetes dalam momentum <strong>World Diabetes Day 2026</strong> dan memperingati <strong>Hari Kesehatan Nasional ke-62</strong>.
+              Mendukung penuh kampanye global pencegahan diabetes dalam momentum <strong>World Diabetes Day 2026</strong> dan memperingati <strong>Hari Kesehatan Nasional 2026</strong>.
             </p>
             <span className="inline-block px-3 py-1 bg-white/10 text-[#C89A2E] rounded-full text-[10px] font-bold">
               #DiabetesDeteksiDiniLebihAwal
@@ -92,26 +92,32 @@ export default function Footer() {
         </div>
 
         {/* Copyright */}
-        <div className="border-t border-white/10 mt-12 pt-6 text-center text-[10px] text-white/60 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p>
-            © {currentYear} Panitia Pelaksana Bersama KONAS PERSADIA, PEDI, PERKENI. All Rights Reserved.
-            <button 
-              onClick={() => {
-                window.location.hash = "admin";
-              }} 
-              className="ml-2 hover:text-white transition-colors"
-            >
-              (Admin)
-            </button>
-            <a 
-              href="/scanner.html"
-              className="ml-2 hover:text-white transition-colors inline-block"
-            >
-              (Scanner)
-            </a>
+        <div className="border-t border-white/10 mt-12 pt-6 text-left text-[10px] text-white/60 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <p className="flex flex-col items-start text-left leading-relaxed">
+            <span>© {currentYear} Panitia Pelaksana Bersama KONAS PERSADIA, PEDI, PERKENI.</span>
+            <span>
+              All Rights Reserved.
+              <button 
+                onClick={() => {
+                  window.location.hash = "admin";
+                }} 
+                className="ml-2 hover:text-white transition-colors"
+              >
+                (Admin)
+              </button>
+              <a 
+                href="/scanner.html"
+                className="ml-2 hover:text-white transition-colors inline-block"
+              >
+                (Scanner)
+              </a>
+            </span>
           </p>
-          <p className="flex items-center gap-1">
-            Made with <Heart className="h-3 w-3 text-rose-500 fill-rose-500" /> for a healthier Indonesia.
+          <p className="flex flex-col items-start sm:items-end text-left sm:text-right leading-relaxed">
+            <span className="flex items-center gap-1 sm:justify-end">
+              Made with <Heart className="h-3 w-3 text-rose-500 fill-rose-500" />
+            </span>
+            <span>For a healthier Indonesia.</span>
           </p>
         </div>
       </div>

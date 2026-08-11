@@ -22,7 +22,7 @@ export interface KategoriPeserta {
   hargaSymposiumWorkshop?: HargaKegiatan;
   hargaEarlyBird?: number; // untuk pesta_rakyat
   hargaReguler?: number; // untuk pesta_rakyat
-  fieldTambahan: Array<"noSTR" | "institusi" | "noKTP" | "cabangPersadia" | "slotWaktuCekGula" | "nim">;
+  fieldTambahan: Array<"noSTR" | "institusi" | "noKTP" | "cabangPersadia" | "slotWaktuCekGula" | "nim" | "tanggalLahir" | "jenisKelamin">;
 }
 
 export interface RekeningPembayaran {
@@ -66,6 +66,8 @@ export interface RegistrationData {
   noKTP?: string;
   cabangPersadia?: string;
   slotWaktuCekGula?: string;
+  tanggalLahir?: string;
+  jenisKelamin?: string;
   hargaDasar: number;
   kodeUnik: number;
   totalAkhir: number;
