@@ -303,7 +303,6 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     setSearchKey("");
     setSearchError("");
     setFoundParticipant(null);
-    setSearchResultsList([]);
   };
 
   const handleSelesai = async () => {
