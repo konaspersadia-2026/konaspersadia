@@ -258,9 +258,12 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
   const handleSendWhatsapp = (participant: Pendaftar) => {
     const rawWa = participant["No. WhatsApp"] || "";
     const waNum = rawWa.replace(/\D/g, '').replace(/^0/, '62');
-    const scannerUrl = `${window.location.origin}/scanner.html?id=${encodeURIComponent(participant["No. Registrasi"])}`;
     
-    const message = `Yth. *${participant["Nama Lengkap"]}*,
+    let message = "";
+    
+    if (participant["Status Pembayaran"] === "Lunas") {
+      const scannerUrl = `${window.location.origin}/scanner.html?id=${encodeURIComponent(participant["No. Registrasi"])}`;
+      message = `Yth. *${participant["Nama Lengkap"]}*,
 
 Berikut adalah E-Ticket digital & QR Code resmi untuk *${EVENT_INFO.namaAcara}*:
 
@@ -280,6 +283,18 @@ ${scannerUrl}
 
 Sampai jumpa di Bogor!
 _Panitia KONAS PERSADIA 2026_`;
+    } else {
+      message = `Yth. *${participant["Nama Lengkap"]}*,
+
+Terima kasih telah mendaftar di acara *${EVENT_INFO.namaAcara}*.
+
+Terkait pendaftaran Anda dengan No. Registrasi *${participant["No. Registrasi"]}*, kami belum menemukan data pembayaran Anda di mutasi rekening kami.
+
+Mohon bantuannya untuk mengirimkan *Bukti Transfer* pembayaran secara manual dengan membalas pesan ini agar pendaftaran Anda dapat segera kami verifikasi (Lunas).
+
+Terima kasih atas kerja samanya.
+_Panitia KONAS PERSADIA 2026_`;
+    }
 
     const waUrl = waNum 
       ? `https://wa.me/${waNum}?text=${encodeURIComponent(message)}`
@@ -727,11 +742,15 @@ _Panitia KONAS PERSADIA 2026_`;
 
                               <button
                                 onClick={() => handleSendWhatsapp(row)}
-                                className="inline-flex items-center px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold rounded-lg hover:bg-emerald-100 hover:border-emerald-300 transition-all shadow-sm cursor-pointer"
-                                title="Kirim QR E-Ticket langsung ke WhatsApp Peserta"
+                                className={`inline-flex items-center px-2.5 py-1 border text-xs font-semibold rounded-lg transition-all shadow-sm cursor-pointer ${
+                                  row["Status Pembayaran"] === "Lunas"
+                                    ? "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300"
+                                    : "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100 hover:border-amber-300"
+                                }`}
+                                title={row["Status Pembayaran"] === "Lunas" ? "Kirim QR E-Ticket langsung ke WhatsApp Peserta" : "Minta Bukti Transfer Pembayaran ke WhatsApp"}
                               >
-                                <MessageCircle className="w-3.5 h-3.5 mr-1 text-emerald-600" />
-                                Kirim WA
+                                <MessageCircle className={`w-3.5 h-3.5 mr-1 ${row["Status Pembayaran"] === "Lunas" ? "text-emerald-600" : "text-amber-600"}`} />
+                                {row["Status Pembayaran"] === "Lunas" ? "Kirim WA" : "Tagih WA"}
                               </button>
 
                               <button

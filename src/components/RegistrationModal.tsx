@@ -660,10 +660,6 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
 
                 {/* Cloudflare Turnstile Widget */}
                 <div className="flex flex-col items-center justify-center bg-slate-50 p-3 rounded-2xl border border-slate-200">
-                  <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-bold uppercase mb-2">
-                    <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                    <span>Proteksi Keamanan Antispam (Cloudflare Turnstile)</span>
-                  </div>
                   <Turnstile
                     siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY || "0x4AAAAAAEOAiM4w0fOlLeLx"}
                     onSuccess={(token) => setTurnstileToken(token)}
