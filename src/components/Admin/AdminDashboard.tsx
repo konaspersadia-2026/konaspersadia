@@ -205,7 +205,18 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
         item["No. Registrasi"] === id ? { ...item, "Status Pembayaran": status } : item
       ));
       
-      window.open("https://chat.whatsapp.com/GezzqQzSYPuHTiCBRGbela", "_blank");
+      if (status === "Lunas") {
+        const participant = data.find(item => item["No. Registrasi"] === id);
+        const rawWa = participant ? (participant["No. WhatsApp"] || "") : "";
+        const waNum = rawWa.replace(/\D/g, '').replace(/^0/, '62');
+        const message = `Halo ${participant ? participant["Nama Lengkap"] : "Peserta"},\n\nPembayaran Anda untuk acara Konas Persadia 2026 telah diverifikasi (LUNAS).\n\nSilakan bergabung ke dalam grup WhatsApp Komunitas melalui link undangan berikut:\nhttps://chat.whatsapp.com/GezzqQzSYPuHTiCBRGbela\n\nTerima kasih,\nPanitia Konas Persadia 2026`;
+        
+        const waUrl = waNum 
+          ? `https://wa.me/${waNum}?text=${encodeURIComponent(message)}`
+          : `https://wa.me/?text=${encodeURIComponent(message)}`;
+          
+        window.open(waUrl, "_blank");
+      }
     } catch (err: any) {
       console.error(err);
       setActionError("Terjadi kesalahan jaringan saat update status: " + err.message);
@@ -218,11 +229,17 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
     setDownloadingId(participant["No. Registrasi"]);
     setSelectedTicketParticipant(participant);
 
+    // Give React time to render the badge element into the DOM
     setTimeout(async () => {
       const badgeElement = document.getElementById(`admin-badge-${participant["No. Registrasi"]}`);
       if (badgeElement) {
         try {
-          const imgData = await toJpeg(badgeElement, { quality: 0.95, pixelRatio: 3, backgroundColor: '#ffffff' });
+          const imgData = await toJpeg(badgeElement, { 
+            quality: 0.95, 
+            pixelRatio: 2, 
+            backgroundColor: '#ffffff',
+            cacheBust: true
+          });
           const link = document.createElement('a');
           link.download = `E-Ticket-${participant["No. Registrasi"]}.jpg`;
           link.href = imgData;
@@ -235,7 +252,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
         alert('Elemen E-Ticket belum siap. Silakan coba lagi.');
       }
       setDownloadingId(null);
-    }, 150);
+    }, 300);
   };
 
   const handleSendWhatsapp = (participant: Pendaftar) => {
@@ -766,7 +783,9 @@ _Panitia KONAS PERSADIA 2026_`;
                     : "bg-red-600 hover:bg-red-700"
                 }`}
               >
-                Ya, Ubah Status Dan Kirim Link Undangan Komunitas WA
+                {confirmDialog.status === "Lunas" 
+                  ? "Ya, Ubah Status & Kirim WA" 
+                  : "Ya, Batalkan Pendaftaran"}
               </button>
             </div>
           </div>
@@ -899,8 +918,8 @@ _Panitia KONAS PERSADIA 2026_`;
             width: '450px',
             height: '720px',
             position: 'fixed',
-            top: '-9999px',
-            left: '-9999px',
+            top: '0',
+            left: '0',
             zIndex: -50,
             pointerEvents: 'none',
             backgroundColor: '#ffffff',
@@ -917,7 +936,7 @@ _Panitia KONAS PERSADIA 2026_`;
               <div className="flex justify-between items-center">
                 <div className="flex gap-3 items-center">
                   <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center p-1 shadow-sm">
-                     <img src={EVENT_INFO.eventLogoUrl} className="w-full h-full object-contain" alt="Logo" />
+                     <img src={EVENT_INFO.eventLogoUrl} crossOrigin="anonymous" className="w-full h-full object-contain" alt="Logo" />
                   </div>
                   <div>
                     <h2 className="text-base font-black tracking-wider leading-tight">KNS PERSADIA 2026</h2>

@@ -213,7 +213,12 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     const badgeElement = document.getElementById('badge-print-area');
     if (badgeElement) {
       try {
-        const imgData = await toJpeg(badgeElement, { quality: 0.95, pixelRatio: 3, backgroundColor: '#ffffff' });
+        const imgData = await toJpeg(badgeElement, { 
+          quality: 0.95, 
+          pixelRatio: 2, 
+          backgroundColor: '#ffffff',
+          cacheBust: true
+        });
         const link = document.createElement('a');
         link.download = `E-Ticket-${successData?.id}.jpg`;
         link.href = imgData;
@@ -820,7 +825,7 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
               <div className="flex justify-between items-center">
                 <div className="flex gap-3 items-center">
                   <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center p-1 shadow-sm">
-                     <img src={EVENT_INFO.eventLogoUrl} className="w-full h-full object-contain" alt="Logo" />
+                     <img src={EVENT_INFO.eventLogoUrl} crossOrigin="anonymous" className="w-full h-full object-contain" alt="Logo" />
                   </div>
                   <div>
                     <h2 className="text-base font-black tracking-wider leading-tight">KNS PERSADIA 2026</h2>
