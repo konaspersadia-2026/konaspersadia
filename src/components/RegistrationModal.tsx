@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, DragEvent } from "react";
-import { X, Calendar, User, Mail, Phone, CreditCard, Upload, Loader2, CheckCircle2, ChevronRight, ChevronLeft, Copy, Info, Download } from "lucide-react";
+import { X, Calendar, User, Mail, Phone, CreditCard, Upload, Loader2, CheckCircle2, ChevronRight, ChevronLeft, Copy, Info, Download, ShieldCheck } from "lucide-react";
 import { KATEGORI_PESERTA, EVENT_INFO, REKENING_PEMBAYARAN, SLOT_WAKTU_CEK_GULA } from "../config";
 import { RegistrationData } from "../types";
 import { QRCodeSVG } from "qrcode.react";
 import { toJpeg } from "html-to-image";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 interface RegistrationModalProps {
   isOpen: boolean;
@@ -21,9 +22,11 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
   const [isDownloading, setIsDownloading] = useState(false);
   const [hasConfirmedPayment, setHasConfirmedPayment] = useState(false);
   const [hasClickedWa, setHasClickedWa] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   useEffect(() => {
     setHasConfirmedPayment(false);
+    setTurnstileToken(null);
   }, [step, isOpen]);
 
   // Form Fields
@@ -207,6 +210,7 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     setShowThankYouPopup(false);
     setHasClickedWa(false);
     setHasConfirmedPayment(false);
+    setTurnstileToken(null);
   };
 
   const handleSelesai = async () => {
@@ -641,7 +645,7 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                 </p>
               </div>
 
-              <div className="pt-2">
+              <div className="pt-2 space-y-3">
                 <label className="flex items-start gap-3 cursor-pointer p-4 bg-blue-50/50 hover:bg-blue-50 border border-blue-200 rounded-xl transition-colors">
                   <input
                     type="checkbox"
@@ -653,6 +657,20 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                     Saya <strong>telah melakukan pembayaran</strong> ke rekening di atas sejumlah nominal tagihan.
                   </span>
                 </label>
+
+                {/* Cloudflare Turnstile Widget */}
+                <div className="flex flex-col items-center justify-center bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-bold uppercase mb-2">
+                    <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                    <span>Proteksi Keamanan Antispam (Cloudflare Turnstile)</span>
+                  </div>
+                  <Turnstile
+                    siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY || "0x4AAAAAAEOAiM4w0fOlLeLx"}
+                    onSuccess={(token) => setTurnstileToken(token)}
+                    onExpire={() => setTurnstileToken(null)}
+                    onError={() => setTurnstileToken(null)}
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -749,7 +767,7 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
               <button
                 id="btn-step2-next"
                 onClick={handleSubmitRegistration}
-                disabled={isSubmitting || !hasConfirmedPayment}
+                disabled={isSubmitting || !hasConfirmedPayment || !turnstileToken}
                 className="px-6 py-3 bg-[#0B3D5E] hover:bg-[#1e40af] disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-extrabold text-sm rounded-full shadow flex items-center gap-1.5 transition-all duration-200"
               >
                 {isSubmitting ? (
