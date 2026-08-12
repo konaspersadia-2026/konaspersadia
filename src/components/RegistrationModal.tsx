@@ -19,11 +19,11 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
   const [showThankYouPopup, setShowThankYouPopup] = useState(false);
   const [showConfirmClose, setShowConfirmClose] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [scrollProgress, setScrollProgress] = useState(1);
+  const [hasConfirmedPayment, setHasConfirmedPayment] = useState(false);
   const [hasClickedWa, setHasClickedWa] = useState(false);
 
   useEffect(() => {
-    setScrollProgress(step === 2 ? 0 : 1);
+    setHasConfirmedPayment(false);
   }, [step, isOpen]);
 
   // Form Fields
@@ -206,6 +206,7 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     setJenisKelamin("Laki-laki");
     setShowThankYouPopup(false);
     setHasClickedWa(false);
+    setHasConfirmedPayment(false);
   };
 
   const handleSelesai = async () => {
@@ -358,18 +359,6 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
         {/* Scrollable Modal Content */}
         <div 
           className="p-6 overflow-y-auto flex-1 space-y-4"
-          onScroll={(e) => {
-            if (step === 2) {
-              const target = e.currentTarget;
-              const scrollMax = target.scrollHeight - target.clientHeight;
-              if (scrollMax > 5) {
-                const progress = Math.min(Math.max(target.scrollTop / scrollMax, 0), 1);
-                setScrollProgress(progress);
-              } else {
-                setScrollProgress(1);
-              }
-            }
-          }}
         >
           {error && (
             <div className="p-3 bg-rose-50 border border-rose-100 text-rose-600 font-semibold rounded-xl text-xs flex items-start gap-2">
@@ -650,9 +639,20 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                 <p className="leading-relaxed">
                   Mohon transfer <strong>PERSIS PAS</strong> sejumlah <strong className="text-sm bg-amber-100 px-1.5 py-0.5 rounded">{new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(totalAkhir)}</strong> (termasuk 3 digit kode unik di akhir) agar tim bendahara kami dapat memverifikasi pembayaran Anda secara cepat dan otomatis. 
                 </p>
-                <p className="font-bold text-rose-700 pt-1 border-t border-amber-200/60">
-                  ⚠️ Catatan: Jangan tekan tombol kirim belum melakukan pembayaran.
-                </p>
+              </div>
+
+              <div className="pt-2">
+                <label className="flex items-start gap-3 cursor-pointer p-4 bg-blue-50/50 hover:bg-blue-50 border border-blue-200 rounded-xl transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={hasConfirmedPayment}
+                    onChange={(e) => setHasConfirmedPayment(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-blue-300 text-[#0B3D5E] focus:ring-[#0B3D5E] cursor-pointer shrink-0"
+                  />
+                  <span className="text-xs text-slate-700 leading-relaxed font-medium">
+                    Saya <strong>telah melakukan pembayaran</strong> ke rekening di atas sejumlah nominal tagihan.
+                  </span>
+                </label>
               </div>
             </div>
           )}
@@ -749,13 +749,8 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
               <button
                 id="btn-step2-next"
                 onClick={handleSubmitRegistration}
-                disabled={isSubmitting}
-                style={step === 2 ? {
-                  opacity: scrollProgress,
-                  transform: `translateY(${((1 - scrollProgress) * 12)}px)`,
-                  pointerEvents: scrollProgress < 0.2 ? 'none' : 'auto'
-                } : undefined}
-                className="px-6 py-3 bg-[#0B3D5E] hover:bg-[#1e40af] disabled:bg-slate-300 text-white font-extrabold text-sm rounded-full shadow flex items-center gap-1.5 cursor-pointer transition-transform duration-75"
+                disabled={isSubmitting || !hasConfirmedPayment}
+                className="px-6 py-3 bg-[#0B3D5E] hover:bg-[#1e40af] disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-extrabold text-sm rounded-full shadow flex items-center gap-1.5 transition-all duration-200"
               >
                 {isSubmitting ? (
                   <>
