@@ -113,12 +113,21 @@ export default function Footer() {
               </a>
             </span>
           </p>
-          <p className="flex flex-col items-start sm:items-end text-left sm:text-right leading-relaxed">
+          <div className="flex flex-col items-start sm:items-end text-left sm:text-right leading-relaxed">
             <span className="flex items-center gap-1 sm:justify-end">
-              Made with <Heart className="h-3 w-3 text-rose-500 fill-rose-500" />
+              Made with <Heart className="h-3 w-3 text-rose-500 fill-rose-500 mx-0.5" /> by 
+              <a 
+                href="https://api.whatsapp.com/send/?phone=6285370716686&text&type=phone_number&app_absent=0" 
+                target="_blank" 
+                rel="noreferrer"
+                className="font-bold text-white hover:text-[#C89A2E] transition-colors ml-0.5"
+                title="Hubungi Pengembang Aplikasi"
+              >
+                satukreatif
+              </a>
             </span>
-            <span>For a healthier Indonesia.</span>
-          </p>
+            <span className="mt-0.5">For a healthier Indonesia.</span>
+          </div>
         </div>
       </div>
     </footer>
