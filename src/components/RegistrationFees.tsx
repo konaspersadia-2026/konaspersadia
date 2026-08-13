@@ -54,7 +54,7 @@ export default function RegistrationFees({ onOpenRegister }: RegistrationFeesPro
             <div className="bg-[#E6F4EA] border border-[#2D7A4F]/30 text-[#2D7A4F] rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 shadow-sm">
               <CheckCircle2 className="h-5 w-5 text-[#2D7A4F] shrink-0 mt-0.5" />
               <div>
-                <h4 className="font-extrabold text-sm sm:text-base">Masa Registrasi Early Bird Aktif!</h4>
+                <p className="font-extrabold text-sm sm:text-base">Masa Registrasi Early Bird Aktif!</p>
                 <p className="text-xs sm:text-sm text-[#2D7A4F]/90 mt-0.5">
                   Daftarkan diri Anda sekarang sebelum akhir <strong>September 2026</strong> untuk mendapatkan potongan harga eksklusif.
                 </p>
@@ -64,7 +64,7 @@ export default function RegistrationFees({ onOpenRegister }: RegistrationFeesPro
             <div className="bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 shadow-sm">
               <Info className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
               <div>
-                <h4 className="font-extrabold text-sm sm:text-base">Harga Onsite Berlaku</h4>
+                <p className="font-extrabold text-sm sm:text-base">Harga Onsite Berlaku</p>
                 <p className="text-xs sm:text-sm text-rose-700/90 mt-0.5">
                   Masa pendaftaran Early Bird telah berakhir. Harga tiket saat ini menggunakan tarif Onsite (mulai Oktober 2026).
                 </p>
@@ -74,7 +74,7 @@ export default function RegistrationFees({ onOpenRegister }: RegistrationFeesPro
             <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 shadow-sm">
               <Info className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
               <div>
-                <h4 className="font-extrabold text-sm sm:text-base">Registrasi Reguler Berlaku</h4>
+                <p className="font-extrabold text-sm sm:text-base">Registrasi Reguler Berlaku</p>
                 <p className="text-xs sm:text-sm text-amber-700/90 mt-0.5">
                   Periode Early Bird telah berakhir. Harga tiket menggunakan tarif reguler sebelum masuk masa Onsite pada <strong>{formatDateString(EVENT_INFO.batasOnsite)}</strong>.
                 </p>

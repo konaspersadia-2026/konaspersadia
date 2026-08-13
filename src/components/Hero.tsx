@@ -153,7 +153,7 @@ export default function Hero({ onOpenRegister, onNavigate }: HeroProps) {
               <Calendar className="h-6 w-6" />
             </div>
             <div>
-              <h4 className="font-bold text-slate-800 text-xs">Waktu &amp; Tanggal</h4>
+              <p className="font-bold text-slate-800 text-xs">Waktu &amp; Tanggal</p>
               <p className="text-slate-600 text-xs mt-1">Sabtu - Minggu</p>
               <p className="text-[#0B3D5E] font-bold text-xs sm:text-sm">7 - 8 November 2026</p>
             </div>
@@ -165,8 +165,8 @@ export default function Hero({ onOpenRegister, onNavigate }: HeroProps) {
               <MapPin className="h-6 w-6" />
             </div>
             <div>
-              <h4 className="font-bold text-slate-800 text-xs">Sesi Ilmiah (Nakes)</h4>
-              <h4 className="font-bold text-slate-800 text-xs">Temu Wicara (Awam)</h4>
+              <p className="font-bold text-slate-800 text-xs">Sesi Ilmiah (Nakes)</p>
+              <p className="font-bold text-slate-800 text-xs">Temu Wicara (Awam)</p>
               <p className="text-slate-600 text-xs mt-1">7 November 2026 • Novotel Bogor</p>
               <span className="inline-block mt-1.5 px-2 py-0.5 bg-[#0B3D5E]/10 text-[#0B3D5E] font-semibold text-[9px] rounded">
                 Simposium, Workshop &amp; Pameran
@@ -180,7 +180,7 @@ export default function Hero({ onOpenRegister, onNavigate }: HeroProps) {
               <Users className="h-6 w-6" />
             </div>
             <div>
-              <h4 className="font-bold text-slate-800 text-xs">Pesta Rakyat (Umum)</h4>
+              <p className="font-bold text-slate-800 text-xs">Pesta Rakyat (Umum)</p>
               <p className="text-slate-600 text-xs mt-1">8 November 2026 • GOR Pakansari, Cibinong</p>
               <span className="inline-block mt-1.5 px-2 py-0.5 bg-[#E6F4EA] text-[#2D7A4F] font-semibold text-[9px] rounded">
                 Senam, Jalan Sehat &amp; Skrining Gratis

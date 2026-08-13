@@ -14,7 +14,7 @@ export default function Mengapa() {
           transition={{ duration: 0.6 }}
         >
           <div className="text-center mb-6">
-            <h3 className="text-xl sm:text-2xl font-black text-slate-800 mt-2">Mengapa Anda Harus Terlibat?</h3>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-800 mt-2">Mengapa Anda Harus Terlibat?</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
