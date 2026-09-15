@@ -200,7 +200,7 @@ export default function Hero({ onOpenRegister, onNavigate }: HeroProps) {
             {timeLeft.isOver ? "Acara Telah Dimulai / Berakhir" : "Menghitung Mundur Menuju Acara"}
           </h3>
           {!timeLeft.isOver && (
-            <div className="grid grid-cols-4 gap-3 sm:gap-4 max-w-md mx-auto">
+            <div className="grid grid-cols-4 gap-2 sm:gap-4 max-w-md mx-auto px-1">
               {[
                 { label: "Hari", value: timeLeft.days },
                 { label: "Jam", value: timeLeft.hours },
@@ -209,11 +209,11 @@ export default function Hero({ onOpenRegister, onNavigate }: HeroProps) {
               ].map((item, idx) => (
                 <motion.div 
                   key={idx} 
-                  className="bg-[#0B3D5E] text-white p-3 sm:p-4 rounded-xl shadow-md border border-[#C89A2E]/20"
+                  className="bg-[#0B3D5E] text-white p-2 sm:p-4 rounded-xl shadow-md border border-[#C89A2E]/20"
                   whileHover={{ scale: 1.05, rotate: 1 }}
                   transition={{ type: "spring", stiffness: 300 }}
                 >
-                  <span className="block text-2xl sm:text-3xl font-extrabold tracking-tight">
+                  <span className="block text-xl sm:text-3xl font-extrabold tracking-tight">
                     {String(item.value).padStart(2, "0")}
                   </span>
                   <span className="block text-[10px] sm:text-xs font-medium text-[#C89A2E] uppercase mt-0.5">

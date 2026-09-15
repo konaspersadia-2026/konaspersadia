@@ -117,14 +117,14 @@ export default function Navbar({ onOpenRegister, activeSection, onNavigate }: Na
             <a
               href="#sponsorship"
               onClick={() => window.scrollTo(0, 0)}
-              className="px-3 py-1.5 sm:px-4 sm:py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-extrabold text-xs sm:text-sm rounded-full shadow-md cursor-pointer text-center whitespace-nowrap animate-pulse"
+              className="px-2.5 py-1 sm:px-4 sm:py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-extrabold text-[11px] sm:text-sm rounded-full shadow-md cursor-pointer text-center whitespace-nowrap animate-pulse"
             >
               Sponsorship
             </a>
             <button
               id="nav-mobile-btn-daftar"
               onClick={onOpenRegister}
-              className="px-3.5 py-1.5 sm:px-4 sm:py-2 bg-red-600 hover:bg-red-500 text-white font-black text-xs sm:text-sm rounded-full shadow-lg cursor-pointer whitespace-nowrap ring-2 ring-red-300 ring-offset-1 ring-offset-[#0B3D5E]"
+              className="px-2.5 py-1 sm:px-4 sm:py-2 bg-red-600 hover:bg-red-500 text-white font-black text-[11px] sm:text-sm rounded-full shadow-lg cursor-pointer whitespace-nowrap ring-1 sm:ring-2 ring-red-300 ring-offset-1 ring-offset-[#0B3D5E]"
             >
               Daftar
             </button>

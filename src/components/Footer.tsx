@@ -25,7 +25,7 @@ export default function Footer() {
               <span className="truncate">{KONTAK_PANITIA.email}</span>
             </a>
             <a
-              href={`https://wa.me/${KONTAK_PANITIA.whatsapp.replace(/[^0-9]/g, "")}`}
+              href={`https://wa.me/${KONTAK_PANITIA.whatsapp.replace(/\D/g, "").replace(/^0/, "62")}`}
               target="_blank"
               rel="noreferrer"
               className="flex items-center justify-center md:justify-start gap-2 px-3.5 py-2.5 bg-[#2D7A4F] rounded-xl hover:bg-[#2D7A4F] transition truncate"

@@ -79,8 +79,8 @@ function App() {
       const { error: updateError } = await supabase
         .from('pendaftar')
         .update({
-          tinggi_badan: tinggiBadan,
-          berat_badan: beratBadan,
+          tinggi_badan: tinggiBadan ? parseFloat(tinggiBadan) : null,
+          berat_badan: beratBadan ? parseFloat(beratBadan) : null,
           tensi: (tensiSistolik && tensiDiastolik) ? `${tensiSistolik}/${tensiDiastolik}` : '',
           gula_darah: gulaDarah,
           lingkar_perut: lingkarPerut,
@@ -250,25 +250,87 @@ function App() {
     }
   };
 
+  const extractIdFromScannedText = (text: string) => {
+    let trimmed = (text || "").trim();
+    try {
+      // Coba parsing sebagai URL
+      const url = new URL(trimmed);
+      const id = url.searchParams.get("id");
+      if (id) return decodeURIComponent(id.trim());
+    } catch (e) {
+      // Jika bukan URL yang valid, lanjutkan ke regex
+    }
+    
+    // Fallback regex jika URL parser gagal karena suatu hal (misal format tidak standar)
+    const match = trimmed.match(/[?&]id=([^&]+)/);
+    if (match && match[1]) {
+      return decodeURIComponent(match[1].trim());
+    }
+    
+    // Coba cari pola ID KNS2026-XXXXX
+    const knsMatch = trimmed.match(/(KNS2026-[A-Z0-9]+)/i);
+    if (knsMatch && knsMatch[1]) {
+      return knsMatch[1].toUpperCase();
+    }
+    
+    return trimmed;
+  };
+
+  const findParticipant = (rawQuery: string): Pendaftar | null => {
+    if (!rawQuery || !rawQuery.trim()) return null;
+    const cleanId = extractIdFromScannedText(rawQuery).toLowerCase().trim();
+    const rawLower = rawQuery.toLowerCase().trim();
+    const sourceList = dataRef.current.length > 0 ? dataRef.current : data;
+
+    // 1. Coba pencocokan presisi (No. Registrasi sama persis)
+    let found = sourceList.find(d => {
+      const reg = String(d["No. Registrasi"] || d.no_registrasi || "").toLowerCase().trim();
+      return reg === cleanId || reg === rawLower;
+    });
+    if (found) return found;
+
+    // 2. Coba pencocokan parsial No. Registrasi (misal tanpa awalan KNS2026 atau hanya digit terakhir)
+    found = sourceList.find(d => {
+      const reg = String(d["No. Registrasi"] || d.no_registrasi || "").toLowerCase().trim();
+      return (
+        (cleanId.length >= 3 && reg.includes(cleanId)) ||
+        (rawLower.length >= 3 && reg.includes(rawLower)) ||
+        (reg.length >= 4 && cleanId.includes(reg))
+      );
+    });
+    if (found) return found;
+
+    // 3. Coba pencocokan Nama Lengkap, Email, atau WhatsApp
+    found = sourceList.find(d => {
+      const name = String(d["Nama Lengkap"] || d.nama_lengkap || "").toLowerCase().trim();
+      const email = String(d.email || d.Email || "").toLowerCase().trim();
+      const wa = String(d.whatsapp || d["No. WhatsApp"] || "").toLowerCase().trim();
+
+      return (
+        (cleanId.length >= 3 && name.includes(cleanId)) ||
+        (rawLower.length >= 3 && name.includes(rawLower)) ||
+        (email && (email === cleanId || email === rawLower)) ||
+        (wa && (wa.includes(cleanId) || wa.includes(rawLower)))
+      );
+    });
+
+    return found || null;
+  };
+
   useEffect(() => {
     // Automatically process ID from URL parameter (e.g. ?id=KNS2026-12345)
     const params = new URLSearchParams(window.location.search);
     const scannedId = params.get("id");
     
     if (scannedId && data.length > 0 && isAuthenticated) {
-      const extractedId = scannedId.trim();
-      const user = data.find(d => 
-        d["No. Registrasi"].toLowerCase() === extractedId.toLowerCase() ||
-        d["Nama Lengkap"].toLowerCase().includes(extractedId.toLowerCase())
-      );
-      
-      setSelectedUser(user || null);
+      const user = findParticipant(scannedId);
+      setSelectedUser(user);
       
       if (!user) {
-        setError(`Data peserta dengan identitas "${extractedId}" tidak ditemukan.`);
+        setError(`Data peserta dengan identitas "${scannedId}" tidak ditemukan.`);
       } else {
         setError(null);
-        setScanResult(user["No. Registrasi"]);
+        setScanResult(user["No. Registrasi"] || user.no_registrasi || scannedId);
       }
       
       // Clean up URL so refresh doesn't trigger it again
@@ -279,32 +341,6 @@ function App() {
   useEffect(() => {
     let html5QrCode: Html5Qrcode | null = null;
     let isComponentMounted = true;
-    
-    const extractIdFromScannedText = (text: string) => {
-      let trimmed = text.trim();
-      try {
-        // Coba parsing sebagai URL
-        const url = new URL(trimmed);
-        const id = url.searchParams.get("id");
-        if (id) return id.trim();
-      } catch (e) {
-        // Jika bukan URL yang valid, lanjutkan ke regex
-      }
-      
-      // Fallback regex jika URL parser gagal karena suatu hal (misal format tidak standar)
-      const match = trimmed.match(/[?&]id=([^&]+)/);
-      if (match && match[1]) {
-        return match[1].trim();
-      }
-      
-      // Coba cari pola ID KNS2026-XXXXX
-      const knsMatch = trimmed.match(/(KNS2026-\d+)/i);
-      if (knsMatch && knsMatch[1]) {
-        return knsMatch[1].toUpperCase();
-      }
-      
-      return trimmed;
-    };
     
     if (isScanning) {
       html5QrCode = new Html5Qrcode("reader");
@@ -327,13 +363,10 @@ function App() {
           setScanResult(extractedId);
           setIsScanning(false);
           
-          // Cari user menggunakan dataRef agar selalu up-to-date
-          const user = dataRef.current.find(d => 
-            d["No. Registrasi"].toLowerCase() === extractedId.toLowerCase() ||
-            d["Nama Lengkap"].toLowerCase().includes(extractedId.toLowerCase())
-          );
+          // Cari user menggunakan findParticipant yang aman dan fleksibel
+          const user = findParticipant(decodedText);
           
-          setSelectedUser(user || null);
+          setSelectedUser(user);
           
           if (!user) {
             setError(`Data peserta dengan identitas "${extractedId}" tidak ditemukan.`);
@@ -355,26 +388,19 @@ function App() {
       isComponentMounted = false;
       if (html5QrCode && html5QrCode.isScanning) {
         html5QrCode.stop().then(() => {
-          html5QrCode?.clear();
+          try { html5QrCode?.clear(); } catch(e) {}
         }).catch(e => console.error("Failed to stop/clear scanner", e));
       } else if (html5QrCode) {
-        html5QrCode.clear();
+        try { html5QrCode.clear(); } catch(e) {}
       }
     };
   }, [isScanning]);
 
   const toggleTorch = async () => {
-    // Torch tidak didukung secara native oleh semua browser lewat library ini dengan mudah
-    // Tapi kita bisa coba restart dengan advanced constraint
     if (!isScanning) return;
     
     try {
       const html5QrCode = new Html5Qrcode("reader");
-      // This is a simplified approach. In a real scenario, applying constraints to an active track is better.
-      // For simplicity, we just inform the user if it's tricky, but let's assume we can re-apply constraints if we had the track.
-      // Alternatively, just toggling state is fine if we restart, but restarting is slow.
-      // So let's skip complex torch implementation or just add a UI placeholder if needed.
-      // Wait, Html5Qrcode has applyVideoConstraints
       setTorchOn(!torchOn);
       html5QrCode.applyVideoConstraints({
         advanced: [{ torch: !torchOn } as any]
@@ -385,28 +411,25 @@ function App() {
       console.error(e);
     }
   };
+
   const handleManualSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const searchId = formData.get("searchId") as string;
+    const searchId = ((formData.get("searchId") as string) || "").trim();
     
     if (searchId) {
-      const user = data.find(d => 
-        d["No. Registrasi"].toLowerCase() === searchId.toLowerCase() ||
-        d["Nama Lengkap"].toLowerCase().includes(searchId.toLowerCase())
-      );
-      
-      setSelectedUser(user || null);
+      const user = findParticipant(searchId);
+      setSelectedUser(user);
       if (!user) {
         setError(`Data dengan kata kunci "${searchId}" tidak ditemukan.`);
       } else {
         setError(null);
-        setScanResult(user["No. Registrasi"]);
+        setScanResult(user["No. Registrasi"] || user.no_registrasi || searchId);
       }
     }
   };
 
-  const handleUpdateCheckpoint = async (checkpointId: string, currentValue: boolean) => {
+  const handleUpdateCheckpoint = async (checkpointId: string, currentValue: boolean, extraColumns: string[] = []) => {
     if (!selectedUser) return;
     
     if (!isSupabaseConfigured) {
@@ -418,23 +441,36 @@ function App() {
     setActionLoading(checkpointId);
     
     try {
-      // Create a column name for the checkpoint
-      // e.g., "Registrasi_OnSite" -> "registrasi_onsite"
-      const columnName = checkpointId.toLowerCase();
+      const updatePayload: Record<string, string | null> = {
+        [checkpointId.toLowerCase()]: newValue ? "Ya" : null
+      };
+
+      extraColumns.forEach(col => {
+        updatePayload[col.toLowerCase()] = newValue ? "Ya" : null;
+      });
 
       const { error: updateError } = await supabase
         .from('pendaftar')
-        .update({ [columnName]: newValue ? "Ya" : null })
+        .update(updatePayload)
         .eq('no_registrasi', selectedUser["No. Registrasi"]);
         
       if (updateError) {
         throw updateError;
       }
       
-      // Update local state (keep using original case for local state to match UI logic)
-      const updatedUser = { ...selectedUser, [checkpointId]: newValue ? "Ya" : null };
+      // Update local state
+      const updatedUser: Pendaftar = { 
+        ...selectedUser, 
+        [checkpointId]: newValue ? "Ya" : null,
+        [checkpointId.toLowerCase()]: newValue ? "Ya" : null
+      };
+
+      extraColumns.forEach(col => {
+        updatedUser[col] = newValue ? "Ya" : null;
+        updatedUser[col.toLowerCase()] = newValue ? "Ya" : null;
+      });
+
       setSelectedUser(updatedUser);
-      
       setData(prevData => prevData.map(d => 
         d["No. Registrasi"] === selectedUser["No. Registrasi"] ? updatedUser : d
       ));
@@ -518,54 +554,58 @@ function App() {
   let hasAccess = false;
   let rejectionReason = "";
   
-  if (selectedUser) {
-    const isLunas = selectedUser["Status Pembayaran"] === 'Lunas';
-    const kategori = selectedUser["Kategori Peserta"] || "";
-    // Because we just use ...row, the db column name is `pilihan_kegiatan`
-    const pilihanKegiatan = selectedUser["pilihan_kegiatan"] || "";
-    
-    const isIlmiah = ["Dokter Umum", "Dokter Spesialis", "Residen", "Mahasiswa"].includes(kategori);
-    const isPestaRakyat = ["Anggota PERSADIA", "Masyarakat Umum"].includes(kategori);
-    const bersediaAnggota = selectedUser["bersedia_anggota_persadia"] === true || 
-                            selectedUser["bersedia_anggota_persadia"] === 'Ya' || 
-                            selectedUser["bersedia_anggota_persadia"] === 'true' || 
-                            selectedUser["Bersedia_Anggota_Persadia"] === 'Ya';
+  const isLunas = selectedUser ? (selectedUser["Status Pembayaran"] === 'Lunas' || selectedUser.status_pembayaran === 'Lunas') : false;
+  const kategori = selectedUser ? String(selectedUser["Kategori Peserta"] || selectedUser.kategori_peserta || "") : "";
+  const pilihanKegiatan = selectedUser ? String(selectedUser["pilihan_kegiatan"] || selectedUser["Akses Kegiatan"] || selectedUser.pilihan_kegiatan || "") : "";
+  
+  const isIlmiah = ["Dokter Umum", "Dokter Spesialis", "Residen", "Perawat", "Mahasiswa"].includes(kategori);
+  const isPestaRakyat = ["Anggota PERSADIA", "Masyarakat Umum"].includes(kategori);
+  const bersediaAnggota = selectedUser ? (
+    selectedUser["bersedia_anggota_persadia"] === true || 
+    selectedUser["bersedia_anggota_persadia"] === 'Ya' || 
+    selectedUser["bersedia_anggota_persadia"] === 'true' || 
+    selectedUser["Bersedia_Anggota_Persadia"] === 'Ya'
+  ) : false;
 
-    if (!isLunas && scannerMode !== 'pesta_rakyat' && scannerMode !== 'makan_siang' && scannerMode !== 'merchandise') {
-       hasAccess = false;
-       rejectionReason = "Pembayaran belum lunas. Registrasi on-site tidak dapat dilanjutkan.";
+  if (selectedUser) {
+    // 1. Peserta Ilmiah berbayar wajib berstatus Lunas untuk seluruh aktivitas
+    if (isIlmiah && !isLunas) {
+      hasAccess = false;
+      rejectionReason = "Pembayaran belum lunas. Registrasi & rangkaian kegiatan belum dapat diikuti.";
     } else {
-       if (scannerMode === 'registrasi') {
+      // 2. Validasi per mode scanner
+      if (scannerMode === 'registrasi') {
+        // Registrasi on-site dibuka untuk seluruh peserta sah (Ilmiah lunas & Pesta Rakyat)
+        hasAccess = true;
+      } else if (scannerMode === 'workshop') {
+        if (isIlmiah && (pilihanKegiatan.toLowerCase().includes("workshop") || pilihanKegiatan.toLowerCase().includes("paket"))) {
           hasAccess = true;
-       } else if (scannerMode === 'workshop') {
-          if (isIlmiah && pilihanKegiatan.includes("Workshop")) {
-             hasAccess = true;
-          } else {
-             hasAccess = false;
-             rejectionReason = "Akses Ditolak: Peserta tidak memiliki tiket Workshop.";
-          }
-       } else if (scannerMode === 'pesta_rakyat') {
-          if (isPestaRakyat) {
-             hasAccess = true;
-          } else {
-             hasAccess = false;
-             rejectionReason = "Akses Ditolak: Peserta bukan kategori Pesta Rakyat.";
-          }
-       } else if (scannerMode === 'makan_siang') {
-          if (isPestaRakyat) {
-             hasAccess = true;
-          } else {
-             hasAccess = false;
-             rejectionReason = "Akses Ditolak: Pengambilan makan siang ini khusus untuk kategori Pesta Rakyat.";
-          }
-       } else if (scannerMode === 'merchandise') {
-          if (kategori === "Anggota PERSADIA" || (kategori === "Masyarakat Umum" && bersediaAnggota)) {
-             hasAccess = true;
-          } else {
-             hasAccess = false;
-             rejectionReason = "Akses Ditolak: Pengambilan merchandise khusus untuk Anggota PERSADIA atau Masyarakat Umum yang bersedia mendaftar sebagai anggota PERSADIA.";
-          }
-       }
+        } else if (isIlmiah) {
+          hasAccess = false;
+          rejectionReason = "Akses Ditolak: Tiket peserta adalah Simposium Saja (tidak termasuk Workshop).";
+        } else {
+          hasAccess = false;
+          rejectionReason = "Akses Ditolak: Peserta bukan kategori Sesi Ilmiah / Workshop.";
+        }
+      } else if (scannerMode === 'pesta_rakyat') {
+        // Cek Gula Darah: Pesta Rakyat & Peserta Ilmiah berbayar (Lunas) BERHAK ikut Hari ke-2!
+        if (isPestaRakyat || isIlmiah) {
+          hasAccess = true;
+        } else {
+          hasAccess = false;
+          rejectionReason = "Akses Ditolak: Kategori peserta tidak terdaftar untuk kegiatan ini.";
+        }
+      } else if (scannerMode === 'makan_siang') {
+        // Makan Siang: Terbuka untuk seluruh peserta sah (Ilmiah berhak Hari 1 & 2; Pesta Rakyat berhak Hari 2)
+        hasAccess = true;
+      } else if (scannerMode === 'merchandise') {
+        if (kategori === "Anggota PERSADIA" || bersediaAnggota) {
+          hasAccess = true;
+        } else {
+          hasAccess = false;
+          rejectionReason = "Akses Ditolak: Pengambilan merchandise khusus untuk Anggota PERSADIA atau peserta yang bersedia mendaftar sebagai anggota PERSADIA.";
+        }
+      }
     }
   }
 
@@ -620,31 +660,31 @@ function App() {
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                 <button
                   onClick={() => setScannerMode('registrasi')}
-                  className={`py-2 px-2.5 rounded-lg text-xs sm:text-sm font-medium transition-colors border min-h-[44px] ${scannerMode === 'registrasi' ? 'bg-emerald-100 border-emerald-300 text-emerald-800 font-bold' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+                  className={`py-2 px-1.5 sm:px-2.5 rounded-lg text-[11px] sm:text-sm font-medium transition-colors border min-h-[44px] ${scannerMode === 'registrasi' ? 'bg-emerald-100 border-emerald-300 text-emerald-800 font-bold' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
                 >
                   Registrasi
                 </button>
                 <button
                   onClick={() => setScannerMode('workshop')}
-                  className={`py-2 px-2.5 rounded-lg text-xs sm:text-sm font-medium transition-colors border min-h-[44px] ${scannerMode === 'workshop' ? 'bg-emerald-100 border-emerald-300 text-emerald-800 font-bold' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+                  className={`py-2 px-1.5 sm:px-2.5 rounded-lg text-[11px] sm:text-sm font-medium transition-colors border min-h-[44px] ${scannerMode === 'workshop' ? 'bg-emerald-100 border-emerald-300 text-emerald-800 font-bold' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
                 >
                   Workshop
                 </button>
                 <button
                   onClick={() => setScannerMode('pesta_rakyat')}
-                  className={`py-2 px-2.5 rounded-lg text-xs sm:text-sm font-medium transition-colors border min-h-[44px] ${scannerMode === 'pesta_rakyat' ? 'bg-emerald-100 border-emerald-300 text-emerald-800 font-bold' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+                  className={`py-2 px-1.5 sm:px-2.5 rounded-lg text-[11px] sm:text-sm font-medium transition-colors border min-h-[44px] ${scannerMode === 'pesta_rakyat' ? 'bg-emerald-100 border-emerald-300 text-emerald-800 font-bold' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
                 >
                   Cek Gula Darah
                 </button>
                 <button
                   onClick={() => setScannerMode('makan_siang')}
-                  className={`py-2 px-2.5 rounded-lg text-xs sm:text-sm font-medium transition-colors border min-h-[44px] ${scannerMode === 'makan_siang' ? 'bg-emerald-100 border-emerald-300 text-emerald-800 font-bold' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+                  className={`py-2 px-1.5 sm:px-2.5 rounded-lg text-[11px] sm:text-sm font-medium transition-colors border min-h-[44px] ${scannerMode === 'makan_siang' ? 'bg-emerald-100 border-emerald-300 text-emerald-800 font-bold' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
                 >
                   Makan Siang
                 </button>
                 <button
                   onClick={() => setScannerMode('merchandise')}
-                  className={`py-2 px-2.5 rounded-lg text-xs sm:text-sm font-medium transition-colors border min-h-[44px] col-span-2 sm:col-span-1 ${scannerMode === 'merchandise' ? 'bg-emerald-100 border-emerald-300 text-emerald-800 font-bold' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+                  className={`py-2 px-1.5 sm:px-2.5 rounded-lg text-[11px] sm:text-sm font-medium transition-colors border min-h-[44px] col-span-2 sm:col-span-1 ${scannerMode === 'merchandise' ? 'bg-emerald-100 border-emerald-300 text-emerald-800 font-bold' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
                 >
                   Merchandise
                 </button>
@@ -733,34 +773,61 @@ function App() {
             </button>
 
             {/* Profile Card */}
-            <div className={`bg-white rounded-2xl shadow-sm border p-6 ${selectedUser["Status Pembayaran"] === 'Lunas' ? 'border-emerald-200' : 'border-red-200'}`}>
+            <div className={`bg-white rounded-2xl shadow-sm border p-4 sm:p-6 ${selectedUser["Status Pembayaran"] === 'Lunas' ? 'border-emerald-200' : 'border-red-200'}`}>
               <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                 <div>
-                  <div className="flex items-center space-x-2 mb-1 flex-wrap gap-y-1">
-                    <span className="text-xs font-bold px-2 py-1 bg-slate-100 text-slate-600 rounded-md uppercase tracking-wider">
+                  <div className="flex items-center gap-1.5 sm:gap-2 mb-2 flex-wrap">
+                    <span className="text-[11px] sm:text-xs font-bold px-2 py-1 bg-slate-100 text-slate-600 rounded-md uppercase tracking-wider">
                       {selectedUser["No. Registrasi"]}
                     </span>
-                    <span className={`text-xs font-bold px-2 py-1 rounded-md uppercase tracking-wider ${
+                    <span className={`text-[11px] sm:text-xs font-bold px-2 py-1 rounded-md uppercase tracking-wider ${
                       selectedUser["Status Pembayaran"] === 'Lunas' 
                         ? 'bg-emerald-100 text-emerald-700' 
                         : 'bg-red-100 text-red-700'
                     }`}>
                       {selectedUser["Status Pembayaran"]}
                     </span>
-                    {selectedUser["Kategori Peserta"] === "Masyarakat Umum" && (
+
+                    {/* Badge Akses Acara */}
+                    {isIlmiah ? (
+                      <span className="text-[11px] sm:text-xs font-bold px-2.5 py-1 bg-emerald-50 text-emerald-800 border border-emerald-300 rounded-md shadow-xs">
+                        🎫 Akses: Hari 1 (Novotel) + Hari 2 (GOR Pakansari)
+                      </span>
+                    ) : (
+                      <span className="text-[11px] sm:text-xs font-bold px-2.5 py-1 bg-sky-50 text-sky-800 border border-sky-300 rounded-md shadow-xs">
+                        🎪 Akses: Hari 2 (GOR Pakansari)
+                      </span>
+                    )}
+
+                    {isIlmiah && (pilihanKegiatan.toLowerCase().includes("workshop") || pilihanKegiatan.toLowerCase().includes("paket")) && (
+                      <span className="text-[11px] sm:text-xs font-bold px-2 py-1 bg-purple-50 text-purple-800 border border-purple-300 rounded-md">
+                        🔬 Termasuk Workshop
+                      </span>
+                    )}
+
+                    {(selectedUser.kode_voucher || selectedUser['kode_voucher']) && (
+                      <span className="text-[11px] sm:text-xs font-mono font-bold px-2 py-1 bg-amber-50 text-amber-900 border border-amber-300 rounded-md">
+                        🎟️ {selectedUser.kode_voucher || selectedUser['kode_voucher']}
+                      </span>
+                    )}
+
+                    {selectedUser["Kategori Peserta"] !== "Anggota PERSADIA" && (
                       (selectedUser["bersedia_anggota_persadia"] === true || selectedUser["bersedia_anggota_persadia"] === 'Ya' || selectedUser["bersedia_anggota_persadia"] === 'true') ? (
-                        <span className="text-xs font-bold px-2 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md">
+                        <span className="text-[11px] sm:text-xs font-bold px-2 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md">
                           🎁 Bersedia Anggota PERSADIA
                         </span>
                       ) : (
-                        <span className="text-xs font-medium px-2 py-1 bg-slate-100 text-slate-500 rounded-md">
+                        <span className="text-[11px] sm:text-xs font-medium px-2 py-1 bg-slate-100 text-slate-500 rounded-md">
                           Tidak Mendaftar Anggota PERSADIA
                         </span>
                       )
                     )}
                   </div>
-                  <h2 className="text-2xl font-bold text-slate-800">{selectedUser["Nama Lengkap"]}</h2>
-                  <p className="text-slate-500 font-medium">{selectedUser["Kategori Peserta"]}</p>
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-800 break-words">{selectedUser["Nama Lengkap"]}</h2>
+                  <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
+                    {selectedUser["Kategori Peserta"]}
+                    {selectedUser.institusi ? ` • ${selectedUser.institusi}` : ''}
+                  </p>
                 </div>
               </div>
             </div>
@@ -806,24 +873,90 @@ function App() {
                 )}
 
                 {scannerMode === 'makan_siang' && (
-                  <button
-                    disabled={actionLoading === 'Makan_Siang_Pesta_Rakyat' || selectedUser['Makan_Siang_Pesta_Rakyat'] === 'Ya'}
-                    onClick={() => handleUpdateCheckpoint('Makan_Siang_Pesta_Rakyat', selectedUser['Makan_Siang_Pesta_Rakyat'] === 'Ya')}
-                    className={`w-full py-3 px-4 rounded-xl font-bold flex items-center justify-center transition-colors ${
-                      selectedUser['Makan_Siang_Pesta_Rakyat'] === 'Ya'
-                        ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
-                        : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md'
-                    }`}
-                  >
-                    {actionLoading === 'Makan_Siang_Pesta_Rakyat' ? (
-                      <RefreshCw className="w-5 h-5 animate-spin mr-2" />
-                    ) : selectedUser['Makan_Siang_Pesta_Rakyat'] === 'Ya' ? (
-                      <CheckCircle2 className="w-5 h-5 mr-2" />
-                    ) : (
-                      <CheckSquare className="w-5 h-5 mr-2" />
-                    )}
-                    {selectedUser['Makan_Siang_Pesta_Rakyat'] === 'Ya' ? 'Sudah Ambil Makan Siang' : 'Verifikasi Pengambilan Makan Siang'}
-                  </button>
+                  <div className="space-y-3 text-left">
+                    {/* Hari 1 - Novotel (Khusus Peserta Ilmiah Berbayar) */}
+                    <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-xs">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Hari 1 • Novotel Bogor</span>
+                          <h4 className="text-sm font-bold text-slate-800">Makan Siang Sesi Ilmiah</h4>
+                        </div>
+                        {isIlmiah ? (
+                          <span className="text-[11px] px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded font-semibold border border-emerald-200">
+                            Berhak
+                          </span>
+                        ) : (
+                          <span className="text-[11px] px-2 py-0.5 bg-slate-100 text-slate-500 rounded font-medium">
+                            Khusus Peserta Ilmiah
+                          </span>
+                        )}
+                      </div>
+
+                      {isIlmiah ? (
+                        <button
+                          disabled={actionLoading === 'Makan_Siang_Hari_1' || selectedUser['Makan_Siang_Hari_1'] === 'Ya' || selectedUser['makan_siang_hari_1'] === 'Ya'}
+                          onClick={() => handleUpdateCheckpoint('Makan_Siang_Hari_1', selectedUser['Makan_Siang_Hari_1'] === 'Ya' || selectedUser['makan_siang_hari_1'] === 'Ya')}
+                          className={`w-full py-2.5 px-4 rounded-lg font-bold flex items-center justify-center text-sm transition-colors ${
+                            (selectedUser['Makan_Siang_Hari_1'] === 'Ya' || selectedUser['makan_siang_hari_1'] === 'Ya')
+                              ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                              : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm'
+                          }`}
+                        >
+                          {actionLoading === 'Makan_Siang_Hari_1' ? (
+                            <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                          ) : (selectedUser['Makan_Siang_Hari_1'] === 'Ya' || selectedUser['makan_siang_hari_1'] === 'Ya') ? (
+                            <CheckCircle2 className="w-4 h-4 mr-2" />
+                          ) : (
+                            <CheckSquare className="w-4 h-4 mr-2" />
+                          )}
+                          {(selectedUser['Makan_Siang_Hari_1'] === 'Ya' || selectedUser['makan_siang_hari_1'] === 'Ya') ? 'Sudah Ambil Makan Siang Hari 1' : 'Verifikasi Makan Siang Hari 1'}
+                        </button>
+                      ) : (
+                        <p className="text-xs text-slate-400 italic">Peserta Pesta Rakyat tidak memiliki kupon makan siang Hari 1 di Novotel.</p>
+                      )}
+                    </div>
+
+                    {/* Hari 2 - GOR Pakansari (Semua Peserta: Pesta Rakyat + Peserta Ilmiah Berbayar yang Lunas) */}
+                    <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-xs">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Hari 2 • GOR Pakansari</span>
+                          <h4 className="text-sm font-bold text-slate-800">Makan Siang / Snack Pesta Rakyat</h4>
+                        </div>
+                        <span className="text-[11px] px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded font-semibold border border-emerald-200">
+                          Berhak
+                        </span>
+                      </div>
+
+                      <button
+                        disabled={
+                          actionLoading === 'Makan_Siang_Pesta_Rakyat' || 
+                          selectedUser['Makan_Siang_Pesta_Rakyat'] === 'Ya' || 
+                          selectedUser['makan_siang_pesta_rakyat'] === 'Ya'
+                        }
+                        onClick={() => handleUpdateCheckpoint(
+                          'Makan_Siang_Pesta_Rakyat', 
+                          selectedUser['Makan_Siang_Pesta_Rakyat'] === 'Ya' || selectedUser['makan_siang_pesta_rakyat'] === 'Ya'
+                        )}
+                        className={`w-full py-2.5 px-4 rounded-lg font-bold flex items-center justify-center text-sm transition-colors ${
+                          (selectedUser['Makan_Siang_Pesta_Rakyat'] === 'Ya' || selectedUser['makan_siang_pesta_rakyat'] === 'Ya')
+                            ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                            : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm'
+                        }`}
+                      >
+                        {actionLoading === 'Makan_Siang_Pesta_Rakyat' ? (
+                          <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                        ) : (selectedUser['Makan_Siang_Pesta_Rakyat'] === 'Ya' || selectedUser['makan_siang_pesta_rakyat'] === 'Ya') ? (
+                          <CheckCircle2 className="w-4 h-4 mr-2" />
+                        ) : (
+                          <CheckSquare className="w-4 h-4 mr-2" />
+                        )}
+                        {(selectedUser['Makan_Siang_Pesta_Rakyat'] === 'Ya' || selectedUser['makan_siang_pesta_rakyat'] === 'Ya') 
+                          ? 'Sudah Ambil Makan Siang Hari 2' 
+                          : 'Verifikasi Makan Siang Hari 2'}
+                      </button>
+                    </div>
+                  </div>
                 )}
                 
                 {scannerMode === 'registrasi' && (

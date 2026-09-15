@@ -203,9 +203,9 @@ export default function RegistrationFees({ onOpenRegister }: RegistrationFeesPro
         </div>
 
         {/* Important Notes */}
-        <div className="max-w-5xl mx-auto mb-12 bg-slate-50 p-6 rounded-2xl border border-slate-100 text-sm text-slate-600 space-y-2">
-          <p className="font-bold text-slate-800 mb-3 flex items-center gap-2"><Info className="h-5 w-5 text-[#00B4AC]" /> Catatan Penting:</p>
-          <ul className="list-disc pl-6 space-y-1">
+        <div className="max-w-5xl mx-auto mb-12 bg-slate-50 p-4 sm:p-6 rounded-2xl border border-slate-100 text-xs sm:text-sm text-slate-600 space-y-2">
+          <p className="font-bold text-slate-800 mb-3 flex items-center gap-2"><Info className="h-4 w-4 sm:h-5 sm:w-5 text-[#00B4AC]" /> Catatan Penting:</p>
+          <ul className="list-disc pl-5 sm:pl-6 space-y-1">
             <li>Biaya sudah termasuk: akses materi, e-certificate, seminar kit, dan konsumsi.</li>
             <li><strong className="text-slate-800">Spesial:</strong> 200 pendaftar pertama berhak mendapatkan tiket gratis Gala Dinner.</li>
             <li>Semua pendaftar berbayar juga berhak mengikuti acara tambahan pada tanggal 8.</li>
@@ -215,15 +215,15 @@ export default function RegistrationFees({ onOpenRegister }: RegistrationFeesPro
         </div>
 
         {/* Large Central Call to Action */}
-        <div className="bg-gradient-to-r from-[#0B3D5E] to-[#00B4AC] rounded-3xl p-8 sm:p-12 text-center text-white shadow-xl max-w-4xl mx-auto">
-          <h3 className="text-xl sm:text-2xl font-bold mb-3">Siap Menjadi Bagian dari Konferensi Ini?</h3>
+        <div className="bg-gradient-to-r from-[#0B3D5E] to-[#00B4AC] rounded-2xl sm:rounded-3xl p-6 sm:p-12 text-center text-white shadow-xl max-w-4xl mx-auto">
+          <h3 className="text-lg sm:text-2xl font-bold mb-3">Siap Menjadi Bagian dari Konferensi Ini?</h3>
           <p className="text-xs sm:text-sm text-[#F8FAFC] max-w-xl mx-auto mb-6">
             Klik tombol di bawah ini untuk mengisi formulir pendaftaran. Proses pendaftaran hanya memakan waktu 3 menit dengan konfirmasi otomatis berdasarkan 3 digit kode unik.
           </p>
           <button
             id="fees-btn-daftar"
             onClick={onOpenRegister}
-            className="px-8 py-4 bg-[#C89A2E] hover:bg-[#F8FAFC] text-[#0B3D5E] hover:text-[#0B3D5E] font-extrabold text-base rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer"
+            className="px-6 sm:px-8 py-3.5 sm:py-4 bg-[#C89A2E] hover:bg-[#F8FAFC] text-[#0B3D5E] hover:text-[#0B3D5E] font-extrabold text-sm sm:text-base rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer"
           >
             Daftar Sekarang Secara Instan
           </button>

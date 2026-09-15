@@ -235,11 +235,11 @@ export default function Schedules() {
           </p>
 
           {/* Tab Buttons */}
-          <div className="inline-flex p-1 bg-[#F8FAFC] rounded-full shadow-inner border border-slate-100">
+          <div className="inline-flex flex-col sm:flex-row w-full sm:w-auto p-1 bg-[#F8FAFC] rounded-2xl sm:rounded-full shadow-inner border border-slate-100 gap-1 sm:gap-0 max-w-xs sm:max-w-none mx-auto">
             <button
               id="tab-btn-ilmiah"
               onClick={() => setActiveTab("ilmiah")}
-              className={`px-5 py-2.5 rounded-full text-xs sm:text-sm font-extrabold transition-all duration-300 cursor-pointer ${
+              className={`px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl sm:rounded-full text-xs sm:text-sm font-extrabold transition-all duration-300 cursor-pointer ${
                 activeTab === "ilmiah"
                   ? "bg-[#0B3D5E] text-white shadow"
                   : "text-slate-600 hover:text-[#0B3D5E]"
@@ -250,7 +250,7 @@ export default function Schedules() {
             <button
               id="tab-btn-rakyat"
               onClick={() => setActiveTab("pesta_rakyat")}
-              className={`px-5 py-2.5 rounded-full text-xs sm:text-sm font-extrabold transition-all duration-300 cursor-pointer ${
+              className={`px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl sm:rounded-full text-xs sm:text-sm font-extrabold transition-all duration-300 cursor-pointer ${
                 activeTab === "pesta_rakyat"
                   ? "bg-[#0B3D5E] text-white shadow"
                   : "text-slate-600 hover:text-[#0B3D5E]"

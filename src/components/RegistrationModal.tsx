@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, DragEvent } from "react";
-import { X, Calendar, User, Mail, Phone, CreditCard, Upload, Loader2, CheckCircle2, ChevronRight, ChevronLeft, Copy, Info, Download, ShieldCheck } from "lucide-react";
-import { KATEGORI_PESERTA, EVENT_INFO, REKENING_PEMBAYARAN, SLOT_WAKTU_CEK_GULA } from "../config";
+import { X, Calendar, User, Mail, Phone, CreditCard, Upload, Loader2, CheckCircle2, ChevronRight, ChevronLeft, Copy, Info, Download, ShieldCheck, Tag, AlertCircle } from "lucide-react";
+import { KATEGORI_PESERTA, EVENT_INFO, REKENING_PEMBAYARAN, SLOT_WAKTU_CEK_GULA, VOUCHER_DOKTER_UMUM_CONFIG } from "../config";
 import { RegistrationData } from "../types";
 import { QRCodeSVG } from "qrcode.react";
 import { toJpeg } from "html-to-image";
@@ -62,6 +62,13 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
   const [kotaKabupaten, setKotaKabupaten] = useState("");
   const [provinsi, setProvinsi] = useState("");
 
+  // Voucher Dokter Umum (FKTP) State
+  const [voucherInput, setVoucherInput] = useState("");
+  const [appliedVoucher, setAppliedVoucher] = useState<string | null>(null);
+  const [voucherLoading, setVoucherLoading] = useState(false);
+  const [voucherError, setVoucherError] = useState("");
+  const [voucherSuccess, setVoucherSuccess] = useState("");
+
   const [isHealthTalkAvailable, setIsHealthTalkAvailable] = useState(true);
 
   // Fetch settings
@@ -115,17 +122,31 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
   };
 
   // 1. Recalculate price when category or pilihanKegiatan changes
+  // Reset voucher if category is changed away from dokter_umum
+  useEffect(() => {
+    if (kategoriId !== "dokter_umum") {
+      setAppliedVoucher(null);
+      setVoucherInput("");
+      setVoucherError("");
+      setVoucherSuccess("");
+    }
+  }, [kategoriId]);
+
+  // 1. Recalculate price when category, options, or voucher changes
   useEffect(() => {
     const isEB = isEarlyBirdActive();
-    const isOnsite = isOnsiteActive();
     let price = 0;
 
     if (selectedKategori.akses === "ilmiah") {
-      const hargaObj = pilihanKegiatan === "Symposium" ? selectedKategori.hargaSymposium : selectedKategori.hargaSymposiumWorkshop;
-      if (hargaObj) {
-        price = isOnsite ? hargaObj.onsite : (isEB ? hargaObj.earlyBird : hargaObj.onsite); // If it's between EB and Onsite, what should it be? Let's use onsite price if it's after early bird, or maybe early bird? The prompt says "early bird (s.d 31 mei), onsite (mulai 1 agustus)". Let's assume regular price is onsite price if there's no intermediate price.
-        // Actually, the prompt says "early bird (s.d 31 mei), onsite (mulai 1 agustus)". There is a gap between June and July. I'll just use Onsite for anything after Early Bird as there's no middle price defined.
-        price = isEB ? hargaObj.earlyBird : hargaObj.onsite;
+      if (selectedKategori.id === "dokter_umum" && appliedVoucher) {
+        price = pilihanKegiatan === "Symposium"
+          ? VOUCHER_DOKTER_UMUM_CONFIG.hargaSymposium
+          : VOUCHER_DOKTER_UMUM_CONFIG.hargaSymposiumWorkshop;
+      } else {
+        const hargaObj = pilihanKegiatan === "Symposium" ? selectedKategori.hargaSymposium : selectedKategori.hargaSymposiumWorkshop;
+        if (hargaObj) {
+          price = isEB ? hargaObj.earlyBird : hargaObj.onsite;
+        }
       }
     } else {
       price = isEB ? (selectedKategori.hargaEarlyBird || 0) : (selectedKategori.hargaReguler || 0);
@@ -137,7 +158,58 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     }
 
     setHargaDasar(price);
-  }, [kategoriId, selectedKategori, pilihanKegiatan, ikutHealthTalk]);
+  }, [kategoriId, selectedKategori, pilihanKegiatan, ikutHealthTalk, appliedVoucher]);
+
+  const handleValidateVoucher = async () => {
+    const cleanCode = voucherInput.trim().toUpperCase();
+    if (!cleanCode) {
+      setVoucherError("Silakan ketikkan kode voucher.");
+      return;
+    }
+
+    setVoucherLoading(true);
+    setVoucherError("");
+    setVoucherSuccess("");
+
+    try {
+      if (isSupabaseConfigured) {
+        const { data, error: rpcErr } = await supabase.rpc('validate_voucher', {
+          p_code: cleanCode
+        });
+
+        if (rpcErr) throw rpcErr;
+
+        if (data && data.valid) {
+          setAppliedVoucher(data.code);
+          setVoucherSuccess(`Voucher ${data.code} berhasil diterapkan!`);
+          setVoucherError("");
+        } else {
+          setVoucherError(data?.message || "Kode voucher tidak valid atau sudah pernah digunakan.");
+        }
+      } else {
+        // Fallback testing local jika Supabase belum terkonfigurasi
+        if (cleanCode.startsWith(VOUCHER_DOKTER_UMUM_CONFIG.prefix)) {
+          setAppliedVoucher(cleanCode);
+          setVoucherSuccess(`Voucher ${cleanCode} berhasil diterapkan (Mode Uji Coba).`);
+          setVoucherError("");
+        } else {
+          setVoucherError(`Kode voucher harus diawali dengan '${VOUCHER_DOKTER_UMUM_CONFIG.prefix}'`);
+        }
+      }
+    } catch (err: any) {
+      console.error("Voucher validation error:", err);
+      setVoucherError("Gagal memeriksa voucher: " + (err.message || "Koneksi bermasalah"));
+    } finally {
+      setVoucherLoading(false);
+    }
+  };
+
+  const handleRemoveVoucher = () => {
+    setAppliedVoucher(null);
+    setVoucherInput("");
+    setVoucherError("");
+    setVoucherSuccess("");
+  };
 
   // 2. Generate unique code 100-999 once when proceeding to step 2
   const generateUniqueCode = (basePrice: number) => {
@@ -171,8 +243,8 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     if (fields.includes("tanggalLahir") && !tanggalLahir.trim()) return setError("Tanggal lahir wajib diisi.");
     if (fields.includes("jenisKelamin") && !jenisKelamin.trim()) return setError("Jenis kelamin wajib dipilih.");
     
-    // Validation for Masyarakat Umum who agrees to become a PERSADIA member
-    if (selectedKategori.id === "umum" && bersediaAnggotaPersadia) {
+    // Validation for participants who agree to become a PERSADIA member
+    if (selectedKategori.id !== "persadia" && bersediaAnggotaPersadia) {
       if (!alamatLengkap.trim()) return setError("Alamat lengkap (Jl / RT / RW / No) wajib diisi jika bersedia menjadi anggota PERSADIA.");
       if (!kelurahan.trim()) return setError("Kelurahan / Desa wajib diisi.");
       if (!kecamatan.trim()) return setError("Kecamatan wajib diisi.");
@@ -226,17 +298,18 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
           : (selectedKategori.id === "persadia" && ikutHealthTalk ? "Pesta Rakyat + Health Talk" : "-"),
         total_tagihan: finalTotal,
         ikut_health_talk: selectedKategori.id === "persadia" && ikutHealthTalk,
-        bersedia_anggota_persadia: selectedKategori.id === "umum" && bersediaAnggotaPersadia,
-        alamat_lengkap: (selectedKategori.id === "umum" && bersediaAnggotaPersadia) ? alamatLengkap : "-",
-        kelurahan: (selectedKategori.id === "umum" && bersediaAnggotaPersadia) ? kelurahan : "-",
-        kecamatan: (selectedKategori.id === "umum" && bersediaAnggotaPersadia) ? kecamatan : "-",
-        kota_kabupaten: (selectedKategori.id === "umum" && bersediaAnggotaPersadia) ? kotaKabupaten : "-",
-        provinsi: (selectedKategori.id === "umum" && bersediaAnggotaPersadia) ? provinsi : "-",
+        bersedia_anggota_persadia: selectedKategori.id !== "persadia" && bersediaAnggotaPersadia,
+        alamat_lengkap: (selectedKategori.id !== "persadia" && bersediaAnggotaPersadia) ? alamatLengkap : "-",
+        kelurahan: (selectedKategori.id !== "persadia" && bersediaAnggotaPersadia) ? kelurahan : "-",
+        kecamatan: (selectedKategori.id !== "persadia" && bersediaAnggotaPersadia) ? kecamatan : "-",
+        kota_kabupaten: (selectedKategori.id !== "persadia" && bersediaAnggotaPersadia) ? kotaKabupaten : "-",
+        provinsi: (selectedKategori.id !== "persadia" && bersediaAnggotaPersadia) ? provinsi : "-",
         institusi: selectedKategori.fieldTambahan.includes("institusi") ? institusi : "-",
         nim: selectedKategori.fieldTambahan.includes("nim") ? nim : "-",
         cabang_persadia: selectedKategori.fieldTambahan.includes("cabangPersadia") ? cabangPersadia : "-",
         tanggal_lahir: selectedKategori.fieldTambahan.includes("tanggalLahir") ? tanggalLahir : "-",
         jenis_kelamin: selectedKategori.fieldTambahan.includes("jenisKelamin") ? jenisKelamin : "-",
+        kode_voucher: appliedVoucher || "-",
       };
 
       if (isSupabaseConfigured) {
@@ -244,6 +317,18 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
         if (supabaseErr) {
           console.error("Gagal insert ke Supabase:", supabaseErr);
           throw new Error(`Peringatan Supabase: Gagal menyimpan ke database Supabase.\nPesan Error: ${supabaseErr.message}`);
+        }
+
+        // Claim voucher in database so it cannot be used again
+        if (appliedVoucher) {
+          try {
+            await supabase.rpc('claim_voucher', {
+              p_code: appliedVoucher,
+              p_no_reg: activeRegId
+            });
+          } catch (claimErr) {
+            console.warn("Gagal menandai voucher sebagai terpakai:", claimErr);
+          }
         }
       } else {
         console.warn("Supabase tidak dikonfigurasi. Data registrasi hanya disimpan di lokal/mock.");
@@ -292,6 +377,10 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     setKecamatan("");
     setKotaKabupaten("");
     setProvinsi("");
+    setAppliedVoucher(null);
+    setVoucherInput("");
+    setVoucherError("");
+    setVoucherSuccess("");
   };
 
   const handleSelesai = async () => {
@@ -369,29 +458,29 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     )}
     <div
       id="registration-modal-overlay"
-      className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6"
     >
       <div
         id="registration-modal-box"
-        className="relative bg-white rounded-3xl shadow-2xl max-w-xl w-full overflow-hidden border border-slate-100 flex flex-col max-h-[90vh]"
+        className="relative bg-white rounded-3xl shadow-2xl shadow-slate-950/40 max-w-xl w-full overflow-hidden border border-slate-100/80 flex flex-col max-h-[86vh] sm:max-h-[88vh] my-auto ring-1 ring-black/5"
       >
         {showThankYouPopup ? (
-          <div className="p-8 text-center space-y-6 flex-1 flex flex-col items-center justify-center bg-white min-h-[400px]">
+          <div className="p-6 sm:p-8 text-center space-y-6 flex-1 flex flex-col items-center justify-center bg-white min-h-[360px] sm:min-h-[400px]">
              <div className="p-4 bg-[#2D7A4F]/10 text-[#2D7A4F] rounded-full inline-block">
                 <CheckCircle2 className="h-16 w-16" />
              </div>
-             <h3 className="text-2xl font-black text-slate-800">Terima Kasih!</h3>
-             <p className="text-sm text-slate-600 max-w-sm mx-auto">Pendaftaran Anda telah selesai dan gambar E-Ticket (.jpg) berhasil diunduh. Sampai jumpa di acara Konas Persadia 2026!</p>
+             <h3 className="text-xl sm:text-2xl font-black text-slate-800">Terima Kasih!</h3>
+             <p className="text-xs sm:text-sm text-slate-600 max-w-sm mx-auto">Pendaftaran Anda telah selesai dan gambar E-Ticket (.jpg) berhasil diunduh. Sampai jumpa di acara Konas Persadia 2026!</p>
              
              {(selectedKategori.id === "persadia" || selectedKategori.id === "umum") && (
                <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl mt-4 w-full max-w-sm">
-                 <p className="text-sm text-emerald-800 font-bold mb-3">Informasi Khusus Pesta Rakyat</p>
+                 <p className="text-xs sm:text-sm text-emerald-800 font-bold mb-3">Informasi Khusus Pesta Rakyat</p>
                  <a 
                    href="https://chat.whatsapp.com/JK6wDcnHh27GhJTx8kUKBY" 
                    target="_blank" 
                    rel="noopener noreferrer" 
                    onClick={() => setHasClickedWa(true)}
-                   className="block w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 transition text-white rounded-lg font-bold text-sm"
+                   className="block w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 transition text-white rounded-lg font-bold text-xs sm:text-sm"
                  >
                    Masuk Komunitas WhatsApp
                  </a>
@@ -409,14 +498,16 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
         ) : (
           <>
         {/* Header Block */}
-        <div className="bg-[#0B3D5E] text-white p-6 flex justify-between items-center shrink-0">
+        <div className="bg-[#0B3D5E] text-white px-4 py-3.5 sm:p-6 flex justify-between items-center shrink-0">
           <div>
-            <h3 className="font-extrabold text-base sm:text-lg leading-tight">Formulir Pendaftaran</h3>
-            <p className="text-xs text-[#F8FAFC]/95 mt-0.5">Konas Persadia 2026 Online Portal</p>
+            <h3 className="font-extrabold text-sm sm:text-lg leading-tight">Formulir Pendaftaran</h3>
+            <p className="text-[11px] sm:text-xs text-[#F8FAFC]/90 mt-0.5">
+              Kendala registrasi? WA: <strong className="text-[#C89A2E] font-bold tracking-wide">085370716686</strong>
+            </p>
           </div>
           <button
             onClick={handleClose}
-            className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition text-white"
+            className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition text-white cursor-pointer"
             aria-label="Tutup Modal"
           >
             <X className="h-5 w-5" />
@@ -424,17 +515,17 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
         </div>
 
         {/* Dynamic Multi-Step Progress Tracker */}
-        <div className="bg-slate-50 border-b border-slate-100 px-6 py-3.5 flex justify-between items-center text-xs text-slate-500 font-bold shrink-0">
+        <div className="bg-slate-50 border-b border-slate-100 px-3 sm:px-6 py-2.5 sm:py-3.5 flex justify-between items-center text-[11px] sm:text-xs text-slate-500 font-bold shrink-0">
           <div className="flex items-center gap-1.5">
             <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step >= 1 ? "bg-[#0B3D5E] text-white" : "bg-slate-200"}`}>1</span>
             <span className={step === 1 ? "text-slate-800" : ""}>Biodata</span>
           </div>
-          <ChevronRight className="h-4 w-4 text-slate-300" />
+          <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-300" />
           <div className="flex items-center gap-1.5">
             <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step >= 2 ? "bg-[#0B3D5E] text-white" : "bg-slate-200"}`}>2</span>
             <span className={step === 2 ? "text-slate-800" : ""}>Pembayaran</span>
           </div>
-          <ChevronRight className="h-4 w-4 text-slate-300" />
+          <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-300" />
           <div className="flex items-center gap-1.5">
             <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step >= 3 ? "bg-[#2D7A4F] text-white animate-pulse" : "bg-slate-200"}`}>3</span>
             <span className={step === 3 ? "text-[#2D7A4F]" : ""}>Selesai</span>
@@ -443,7 +534,7 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
 
         {/* Scrollable Modal Content */}
         <div 
-          className="p-6 overflow-y-auto flex-1 space-y-4"
+          className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4"
         >
           {error && (
             <div className="p-3 bg-rose-50 border border-rose-100 text-rose-600 font-semibold rounded-xl text-xs flex items-start gap-2">
@@ -483,6 +574,83 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                     <option value="Symposium">Symposium Saja</option>
                     <option value="Symposium + Workshop">Symposium + Workshop</option>
                   </select>
+                </div>
+              )}
+
+              {/* Voucher Khusus Dokter Umum (FKTP) */}
+              {selectedKategori.id === "dokter_umum" && (
+                <div className="p-4 bg-amber-50/60 border border-amber-200 rounded-2xl space-y-2.5">
+                  <div className="flex flex-wrap items-center justify-between gap-1.5">
+                    <label className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                      <Tag className="h-3.5 w-3.5 text-amber-600" />
+                      Penatalaksanaan Diabetes Melitus Faskes Tingkat I
+                    </label>
+                    {appliedVoucher && (
+                      <span className="text-[10px] font-extrabold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-300 flex items-center gap-1">
+                        <CheckCircle2 className="h-3 w-3" /> Voucher Aktif
+                      </span>
+                    )}
+                  </div>
+
+                  {!appliedVoucher ? (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Masukan Voucher Anda"
+                        value={voucherInput}
+                        onChange={(e) => {
+                          setVoucherInput(e.target.value.toUpperCase());
+                          setVoucherError("");
+                        }}
+                        className="flex-1 px-3.5 py-2.5 bg-white border border-amber-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B4AC] text-xs font-mono font-bold text-slate-800 uppercase tracking-wider"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleValidateVoucher}
+                        disabled={voucherLoading || !voucherInput.trim()}
+                        className="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 disabled:bg-slate-300 text-white font-bold text-xs rounded-xl shadow-sm transition cursor-pointer flex items-center gap-1 shrink-0"
+                      >
+                        {voucherLoading ? (
+                          <>
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            Memeriksa...
+                          </>
+                        ) : (
+                          "Terapkan"
+                        )}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between bg-white p-3 rounded-xl border border-emerald-200 shadow-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                          <Tag className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-black text-slate-900 tracking-wider font-mono">{appliedVoucher}</p>
+                          <p className="text-[11px] text-emerald-700 font-semibold">Harga paket khusus FKTP berhasil diterapkan!</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleRemoveVoucher}
+                        className="text-xs text-rose-600 hover:text-rose-800 font-bold underline cursor-pointer ml-2"
+                      >
+                        Hapus
+                      </button>
+                    </div>
+                  )}
+
+                  {voucherError && (
+                    <p className="text-[11px] text-rose-600 font-medium flex items-center gap-1 mt-1">
+                      <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {voucherError}
+                    </p>
+                  )}
+                  {voucherSuccess && !appliedVoucher && (
+                    <p className="text-[11px] text-emerald-600 font-medium flex items-center gap-1 mt-1">
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> {voucherSuccess}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -633,7 +801,7 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                 </div>
               )}
 
-              {selectedKategori.id === "umum" && (
+              {selectedKategori.id !== "persadia" && (
                 <div className="pt-2 border-t border-slate-200 mt-2">
                   <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-3">
                     <label htmlFor="bersedia-persadia-checkbox" className="flex items-start gap-3 cursor-pointer">
@@ -648,7 +816,9 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                         <strong className="text-[#2D7A4F]">Bersedia Mendaftar sebagai Anggota PERSADIA</strong>
                         <span className="block text-slate-600 text-[11px] mt-0.5">
                           🎁 Dapatkan <strong>merchandise menarik</strong> saat acara berlangsung khusus bagi pendaftar yang bersedia menjadi anggota PERSADIA.
-                          <em className="block text-slate-500 not-italic mt-0.5">*(Jika tidak bersedia, Anda tetap diperbolehkan masuk dan mengikuti Pesta Rakyat).*</em>
+                          {selectedKategori.id === "umum" && (
+                            <em className="block text-slate-500 not-italic mt-0.5">*(Jika tidak bersedia, Anda tetap diperbolehkan masuk dan mengikuti Pesta Rakyat).*</em>
+                          )}
                         </span>
                       </span>
                     </label>
@@ -751,14 +921,23 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
           {step === 2 && (
             <div className="space-y-5 animate-fadeIn">
               <div className="bg-[#0B3D5E]/5 rounded-2xl p-4 border border-[#0B3D5E]/10">
-                <span className="text-[10px] font-black uppercase text-[#0B3D5E] tracking-wider">Kategori Dipilih</span>
-                <h4 className="font-extrabold text-slate-800 text-sm leading-tight mt-0.5">{selectedKategori.label}</h4>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <span className="text-[10px] font-black uppercase text-[#0B3D5E] tracking-wider">Kategori Dipilih</span>
+                    <h4 className="font-extrabold text-slate-800 text-sm leading-tight mt-0.5">{selectedKategori.label}</h4>
+                  </div>
+                  {appliedVoucher && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-md font-mono">
+                      <Tag className="h-3 w-3 text-amber-700" /> {appliedVoucher}
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Payment Details Container */}
               <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200/60 space-y-3">
                 <div className="flex justify-between items-center text-xs text-slate-500 font-bold uppercase">
-                  <span>Biaya Registrasi</span>
+                  <span>Biaya Registrasi {appliedVoucher ? "(Tarif Khusus FKTP)" : ""}</span>
                   <span>
                     {hargaDasar === 0 ? "Gratis" : new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(hargaDasar)}
                   </span>
@@ -906,6 +1085,12 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                   <span>Kategori Tiket:</span>
                   <strong className="text-slate-800">{selectedKategori.label}</strong>
                 </div>
+                {appliedVoucher && (
+                  <div className="flex justify-between text-amber-900 bg-amber-50 px-2 py-1 rounded-md border border-amber-200">
+                    <span className="font-bold">Voucher FKTP:</span>
+                    <strong className="font-mono">{appliedVoucher}</strong>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span>Akses Tiket:</span>
                   <strong className="text-slate-800 uppercase">{selectedKategori.akses === "ilmiah" ? "Sesi Ilmiah (Novotel)" : "Pesta Rakyat (GOR Pakansari)"}</strong>
@@ -924,15 +1109,15 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
         </div>
 
         {/* Modal Actions Footer */}
-        <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-between items-center shrink-0">
+        <div className="p-3.5 sm:p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2 shrink-0">
           {step === 1 && (
             <>
-              <span className="text-xs text-slate-400 font-bold">{hargaDasar === 0 ? "Pendaftaran Gratis" : "Masa Early Bird Terbuka"}</span>
+              <span className="text-[11px] sm:text-xs text-slate-400 font-bold leading-tight">{hargaDasar === 0 ? "Pendaftaran Gratis" : "Masa Early Bird Terbuka"}</span>
               <button
                 id="btn-step1-next"
                 onClick={handleNextStep1}
                 disabled={isSubmitting}
-                className={`px-6 py-3 ${hargaDasar === 0 ? 'bg-[#2D7A4F] hover:bg-[#1e603f]' : 'bg-[#0B3D5E] hover:bg-[#1e40af]'} disabled:bg-slate-300 text-white font-extrabold text-sm rounded-full shadow transition-all flex items-center gap-1.5 cursor-pointer`}
+                className={`px-4 sm:px-6 py-2.5 sm:py-3 ${hargaDasar === 0 ? 'bg-[#2D7A4F] hover:bg-[#1e603f]' : 'bg-[#0B3D5E] hover:bg-[#1e40af]'} disabled:bg-slate-300 text-white font-extrabold text-xs sm:text-sm rounded-full shadow transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap`}
               >
                 {isSubmitting ? (
                   <>
@@ -941,7 +1126,7 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                   </>
                 ) : (
                   <>
-                    {hargaDasar === 0 ? "Kirim Pendaftaran" : "Lanjutkan ke Pembayaran"}
+                    {hargaDasar === 0 ? "Kirim Pendaftaran" : "Lanjut ke Pembayaran"}
                     {hargaDasar === 0 ? <CheckCircle2 className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                   </>
                 )}
@@ -953,7 +1138,7 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
             <>
               <button
                 onClick={() => setStep(1)}
-                className="px-4 py-3 text-[#0B3D5E] hover:text-[#1e40af] font-bold text-sm flex items-center gap-1 cursor-pointer"
+                className="px-2.5 sm:px-4 py-2 sm:py-3 text-[#0B3D5E] hover:text-[#1e40af] font-bold text-xs sm:text-sm flex items-center gap-1 cursor-pointer"
               >
                 <ChevronLeft className="h-4 w-4" />
                 Kembali
@@ -962,7 +1147,7 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                 id="btn-step2-next"
                 onClick={handleSubmitRegistration}
                 disabled={isSubmitting || !hasConfirmedPayment}
-                className="px-6 py-3 bg-[#0B3D5E] hover:bg-[#1e40af] disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-extrabold text-sm rounded-full shadow flex items-center gap-1.5 transition-all duration-200"
+                className="px-4 sm:px-6 py-2.5 sm:py-3 bg-[#0B3D5E] hover:bg-[#1e40af] disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-extrabold text-xs sm:text-sm rounded-full shadow flex items-center gap-1.5 transition-all duration-200 whitespace-nowrap"
               >
                 {isSubmitting ? (
                   <>
@@ -983,7 +1168,7 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
             <button
               onClick={handleSelesai}
               disabled={isDownloading}
-              className="w-full py-3.5 bg-[#0B3D5E] hover:bg-[#1e40af] text-white font-extrabold text-sm rounded-xl text-center shadow-lg transition cursor-pointer flex items-center justify-center gap-2 disabled:bg-slate-400"
+              className="w-full py-3 sm:py-3.5 bg-[#0B3D5E] hover:bg-[#1e40af] text-white font-extrabold text-xs sm:text-sm rounded-xl text-center shadow-lg transition cursor-pointer flex items-center justify-center gap-2 disabled:bg-slate-400"
             >
               {isDownloading ? (
                 <>
@@ -1027,7 +1212,7 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
             {/* Header Band */}
             <div 
               className="px-6 pt-5 pb-5 text-white" 
-              style={{ backgroundColor: selectedKategori?.id === 'dokter_spesialis' ? '#0284c7' : selectedKategori?.id === 'dokter_umum' ? '#0d9488' : selectedKategori?.id === 'residen' ? '#4f46e5' : selectedKategori?.id === 'mahasiswa' ? '#059669' : selectedKategori?.id === 'persadia' ? '#ea580c' : '#0B3D5E' }}
+              style={{ backgroundColor: selectedKategori?.id === 'dokter_spesialis' ? '#0284c7' : selectedKategori?.id === 'dokter_umum' ? '#0d9488' : selectedKategori?.id === 'residen' ? '#4f46e5' : selectedKategori?.id === 'perawat' ? '#0891b2' : selectedKategori?.id === 'mahasiswa' ? '#059669' : selectedKategori?.id === 'persadia' ? '#ea580c' : '#0B3D5E' }}
             >
               <div className="flex justify-between items-center">
                 <div className="flex gap-3 items-center">
@@ -1066,8 +1251,8 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                 <div 
                   className="px-3.5 py-1 rounded-full border text-[11px] font-black uppercase tracking-wider"
                   style={{ 
-                    borderColor: selectedKategori?.id === 'dokter_spesialis' ? '#0284c7' : selectedKategori?.id === 'dokter_umum' ? '#0d9488' : selectedKategori?.id === 'residen' ? '#4f46e5' : selectedKategori?.id === 'mahasiswa' ? '#059669' : selectedKategori?.id === 'persadia' ? '#ea580c' : '#0B3D5E',
-                    color: selectedKategori?.id === 'dokter_spesialis' ? '#0284c7' : selectedKategori?.id === 'dokter_umum' ? '#0d9488' : selectedKategori?.id === 'residen' ? '#4f46e5' : selectedKategori?.id === 'mahasiswa' ? '#059669' : selectedKategori?.id === 'persadia' ? '#ea580c' : '#0B3D5E',
+                    borderColor: selectedKategori?.id === 'dokter_spesialis' ? '#0284c7' : selectedKategori?.id === 'dokter_umum' ? '#0d9488' : selectedKategori?.id === 'residen' ? '#4f46e5' : selectedKategori?.id === 'perawat' ? '#0891b2' : selectedKategori?.id === 'mahasiswa' ? '#059669' : selectedKategori?.id === 'persadia' ? '#ea580c' : '#0B3D5E',
+                    color: selectedKategori?.id === 'dokter_spesialis' ? '#0284c7' : selectedKategori?.id === 'dokter_umum' ? '#0d9488' : selectedKategori?.id === 'residen' ? '#4f46e5' : selectedKategori?.id === 'perawat' ? '#0891b2' : selectedKategori?.id === 'mahasiswa' ? '#059669' : selectedKategori?.id === 'persadia' ? '#ea580c' : '#0B3D5E',
                     backgroundColor: '#F8FAFC'
                   }}
                 >

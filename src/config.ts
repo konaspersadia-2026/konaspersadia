@@ -42,6 +42,15 @@ export const KATEGORI_PESERTA: KategoriPeserta[] = [
     fieldTambahan: ["institusi"],
   },
   {
+    id: "perawat",
+    label: "Perawat",
+    akses: "ilmiah",
+    // Placeholder harga: silakan sesuaikan nominal di bawah ini
+    hargaSymposium: { earlyBird: 8000000, onsite: 10000000 },
+    hargaSymposiumWorkshop: { earlyBird: 12000000, onsite: 15000000 },
+    fieldTambahan: ["institusi"],
+  },
+  {
     id: "mahasiswa",
     label: "Mahasiswa",
     akses: "ilmiah",
@@ -66,6 +75,14 @@ export const KATEGORI_PESERTA: KategoriPeserta[] = [
     fieldTambahan: ["tanggalLahir", "jenisKelamin"],
   },
 ];
+
+// Konfigurasi Paket Voucher Khusus Dokter Umum (FKTP)
+export const VOUCHER_DOKTER_UMUM_CONFIG = {
+  prefix: "FKTP-",
+  // Placeholder harga khusus voucher (silakan sesuaikan nominal):
+  hargaSymposium: 1000000,
+  hargaSymposiumWorkshop: 1800000,
+};
 
 export const REKENING_PEMBAYARAN: RekeningPembayaran = {
   bank: "Bank Victoria",
