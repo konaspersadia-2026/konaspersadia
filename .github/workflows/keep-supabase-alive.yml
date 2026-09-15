@@ -1,0 +1,45 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # Berjalan setiap 3 hari sekali pada jam 00:00 UTC
+    - cron: '0 17 */3 * *'
+  workflow_dispatch: # Tombol manual trigger dari tab Actions di GitHub
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase Database
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "❌ Error: Secrets VITE_SUPABASE_URL atau VITE_SUPABASE_ANON_KEY belum diatur di Repository Secrets!"
+            exit 1
+          fi
+          
+          # Bersihkan trailing slash jika ada
+          CLEAN_URL=$(echo "$SUPABASE_URL" | sed 's/\/$//')
+          
+          # Jika user mengisi hanya Project ID (tanpa https://)
+          if [[ ! "$CLEAN_URL" =~ ^http ]]; then
+            CLEAN_URL="https://${CLEAN_URL}.supabase.co"
+          fi
+          
+          echo "🔍 Mengirim query ping ke Supabase REST API: $CLEAN_URL"
+          
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            "$CLEAN_URL/rest/v1/pendaftar?select=no_registrasi&limit=1")
+            
+          echo "📡 HTTP Response Status: $HTTP_STATUS"
+          
+          if [ "$HTTP_STATUS" -eq 200 ] || [ "$HTTP_STATUS" -eq 206 ]; then
+            echo "✅ Sukses! Supabase tetap aktif dan merespon request."
+          else
+            echo "⚠️ Gagal/Peringatan: Supabase merespons dengan status $HTTP_STATUS"
+            exit 1
+          fi
