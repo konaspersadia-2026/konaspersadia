@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, DragEvent } from "react";
-import { X, Calendar, User, Mail, Phone, CreditCard, Upload, Loader2, CheckCircle2, ChevronRight, ChevronLeft, Copy, Info, Download, ShieldCheck, Tag, AlertCircle } from "lucide-react";
-import { KATEGORI_PESERTA, EVENT_INFO, REKENING_PEMBAYARAN, SLOT_WAKTU_CEK_GULA, VOUCHER_DOKTER_UMUM_CONFIG } from "../config";
+import { X, Calendar, User, Mail, Phone, CreditCard, Upload, Loader2, CheckCircle2, ChevronRight, ChevronLeft, Copy, Info, Download, ShieldCheck, Tag, AlertCircle, Clock, MessageCircle } from "lucide-react";
+import { KATEGORI_PESERTA, EVENT_INFO, REKENING_PEMBAYARAN, SLOT_WAKTU_CEK_GULA, VOUCHER_DOKTER_UMUM_CONFIG, DIABETES_HEALTH_FORUM_CONFIG, HEALTH_TALK_CONFIG } from "../config";
 import { RegistrationData } from "../types";
 import { QRCodeSVG } from "qrcode.react";
 import { toJpeg } from "html-to-image";
@@ -36,7 +36,7 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
 
   // Form Fields
   const [kategoriId, setKategoriId] = useState(KATEGORI_PESERTA[0].id);
-  const [pilihanKegiatan, setPilihanKegiatan] = useState<"Symposium" | "Symposium + Workshop">("Symposium");
+  const [pilihanKegiatan, setPilihanKegiatan] = useState<"Symposium" | "Symposium + Workshop" | "Workshop">("Symposium");
   const [namaLengkap, setNamaLengkap] = useState("");
   const [email, setEmail] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
@@ -121,24 +121,32 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     return now >= deadline;
   };
 
-  // 1. Recalculate price when category or pilihanKegiatan changes
-  // Reset voucher if category is changed away from dokter_umum
+  // 1. Reset voucher & health talk on category change
   useEffect(() => {
-    if (kategoriId !== "dokter_umum") {
-      setAppliedVoucher(null);
-      setVoucherInput("");
-      setVoucherError("");
-      setVoucherSuccess("");
+    setAppliedVoucher(null);
+    setVoucherInput("");
+    setVoucherError("");
+    setVoucherSuccess("");
+    setIkutHealthTalk(false);
+    if (kategoriId === "perawat") {
+      setPilihanKegiatan("Workshop");
+    } else if (pilihanKegiatan === "Workshop") {
+      setPilihanKegiatan("Symposium");
     }
   }, [kategoriId]);
 
-  // 1. Recalculate price when category, options, or voucher changes
+  // Recalculate price when category, options, or voucher changes
   useEffect(() => {
     const isEB = isEarlyBirdActive();
     let price = 0;
 
     if (selectedKategori.akses === "ilmiah") {
-      if (selectedKategori.id === "dokter_umum" && appliedVoucher) {
+      if (selectedKategori.id === "perawat") {
+        const hargaObj = selectedKategori.hargaWorkshop || selectedKategori.hargaSymposiumWorkshop;
+        if (hargaObj) {
+          price = isEB ? hargaObj.earlyBird : hargaObj.onsite;
+        }
+      } else if (selectedKategori.id === "dokter_umum" && appliedVoucher) {
         price = pilihanKegiatan === "Symposium"
           ? VOUCHER_DOKTER_UMUM_CONFIG.hargaSymposium
           : VOUCHER_DOKTER_UMUM_CONFIG.hargaSymposiumWorkshop;
@@ -152,9 +160,13 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
       price = isEB ? (selectedKategori.hargaEarlyBird || 0) : (selectedKategori.hargaReguler || 0);
     }
     
-    // Add Health Talk Price for Persadia members
-    if (selectedKategori.id === "persadia" && ikutHealthTalk) {
-      price += 300000;
+    // Add Health Talk Price for Persadia members or Umum (with voucher)
+    if (ikutHealthTalk) {
+      if (selectedKategori.id === "persadia") {
+        price += appliedVoucher ? HEALTH_TALK_CONFIG.hargaKhususVoucher : HEALTH_TALK_CONFIG.hargaNormal;
+      } else if (selectedKategori.id === "umum" && appliedVoucher) {
+        price += HEALTH_TALK_CONFIG.hargaKhususVoucher;
+      }
     }
 
     setHargaDasar(price);
@@ -171,10 +183,26 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     setVoucherError("");
     setVoucherSuccess("");
 
+    // Validasi prefix agar voucher FKTP tidak bisa dipakai di Health Talk dan sebaliknya
+    if (selectedKategori.id === "dokter_umum") {
+      if (!cleanCode.startsWith(VOUCHER_DOKTER_UMUM_CONFIG.prefix)) {
+        setVoucherError(`Kode voucher Dokter Umum harus diawali dengan '${VOUCHER_DOKTER_UMUM_CONFIG.prefix}'`);
+        setVoucherLoading(false);
+        return;
+      }
+    } else {
+      if (!cleanCode.startsWith("DHF-") && !cleanCode.startsWith("HT-")) {
+        setVoucherError("Kode voucher Diabetes Health Forum harus diawali dengan 'DHF-' atau 'HT-' (Contoh: DHF-XXXX)");
+        setVoucherLoading(false);
+        return;
+      }
+    }
+
     try {
       if (isSupabaseConfigured) {
         const { data, error: rpcErr } = await supabase.rpc('validate_voucher', {
-          p_code: cleanCode
+          p_code: cleanCode,
+          p_kategori: selectedKategori.id
         });
 
         if (rpcErr) throw rpcErr;
@@ -183,17 +211,34 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
           setAppliedVoucher(data.code);
           setVoucherSuccess(`Voucher ${data.code} berhasil diterapkan!`);
           setVoucherError("");
+          if (selectedKategori.id === "umum") {
+            setIkutHealthTalk(true);
+          }
         } else {
           setVoucherError(data?.message || "Kode voucher tidak valid atau sudah pernah digunakan.");
         }
       } else {
         // Fallback testing local jika Supabase belum terkonfigurasi
-        if (cleanCode.startsWith(VOUCHER_DOKTER_UMUM_CONFIG.prefix)) {
-          setAppliedVoucher(cleanCode);
-          setVoucherSuccess(`Voucher ${cleanCode} berhasil diterapkan (Mode Uji Coba).`);
-          setVoucherError("");
+        if (selectedKategori.id === "dokter_umum") {
+          if (cleanCode.startsWith(VOUCHER_DOKTER_UMUM_CONFIG.prefix)) {
+            setAppliedVoucher(cleanCode);
+            setVoucherSuccess(`Voucher ${cleanCode} berhasil diterapkan (Mode Uji Coba).`);
+            setVoucherError("");
+          } else {
+            setVoucherError(`Kode voucher harus diawali dengan '${VOUCHER_DOKTER_UMUM_CONFIG.prefix}'`);
+          }
         } else {
-          setVoucherError(`Kode voucher harus diawali dengan '${VOUCHER_DOKTER_UMUM_CONFIG.prefix}'`);
+          // persadia or umum (Diabetes Health Forum)
+          if (cleanCode.startsWith("DHF-") || cleanCode.startsWith("HT-") || cleanCode.startsWith("DIABETES") || cleanCode.startsWith("HEALTH") || cleanCode.startsWith("PERSADIA") || cleanCode.startsWith("VOUCHER")) {
+            setAppliedVoucher(cleanCode);
+            setVoucherSuccess(`Voucher ${cleanCode} berhasil diterapkan (Mode Uji Coba).`);
+            setVoucherError("");
+            if (selectedKategori.id === "umum") {
+              setIkutHealthTalk(true);
+            }
+          } else {
+            setVoucherError("Kode voucher tidak valid. (Uji coba: gunakan awalan 'DHF-' atau 'HT-')");
+          }
         }
       }
     } catch (err: any) {
@@ -209,6 +254,9 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     setVoucherInput("");
     setVoucherError("");
     setVoucherSuccess("");
+    if (selectedKategori.id === "umum") {
+      setIkutHealthTalk(false);
+    }
   };
 
   // 2. Generate unique code 100-999 once when proceeding to step 2
@@ -250,6 +298,11 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
       if (!kecamatan.trim()) return setError("Kecamatan wajib diisi.");
       if (!kotaKabupaten.trim()) return setError("Kota / Kabupaten wajib diisi.");
       if (!provinsi.trim()) return setError("Provinsi wajib diisi.");
+    }
+
+    // Validation for Umum category participating in Diabetes Health Forum
+    if (selectedKategori.id === "umum" && ikutHealthTalk && !appliedVoucher) {
+      return setError("Keikutsertaan sesi Diabetes Health Forum untuk kategori Masyarakat Umum memerlukan voucher khusus dari panitia.");
     }
 
     if (!turnstileToken) {
@@ -294,10 +347,10 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
         whatsapp: whatsapp,
         kategori_peserta: selectedKategori.label,
         pilihan_kegiatan: selectedKategori.akses === "ilmiah" 
-          ? pilihanKegiatan 
-          : (selectedKategori.id === "persadia" && ikutHealthTalk ? "Pesta Rakyat + Health Talk" : "-"),
+          ? (selectedKategori.id === "perawat" ? "Workshop" : pilihanKegiatan)
+          : ((selectedKategori.id === "persadia" || selectedKategori.id === "umum") && ikutHealthTalk ? "Pesta Rakyat + Diabetes Health Forum" : "-"),
         total_tagihan: finalTotal,
-        ikut_health_talk: selectedKategori.id === "persadia" && ikutHealthTalk,
+        ikut_health_talk: (selectedKategori.id === "persadia" || selectedKategori.id === "umum") && ikutHealthTalk,
         bersedia_anggota_persadia: selectedKategori.id !== "persadia" && bersediaAnggotaPersadia,
         alamat_lengkap: (selectedKategori.id !== "persadia" && bersediaAnggotaPersadia) ? alamatLengkap : "-",
         kelurahan: (selectedKategori.id !== "persadia" && bersediaAnggotaPersadia) ? kelurahan : "-",
@@ -362,7 +415,7 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     setEmail("");
     setWhatsapp("");
     setInstitusi("");
-    setNoKTP("");
+    setNim("");
     setCabangPersadia("");
     setTanggalLahir("");
     setJenisKelamin("Laki-laki");
@@ -383,7 +436,15 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     setVoucherSuccess("");
   };
 
+  const isPaidRegistration = Boolean(
+    successData && (Number(successData.totalAkhir) > 0 || selectedKategori.akses === "ilmiah")
+  );
+
   const handleSelesai = async () => {
+    if (isPaidRegistration) {
+      handleClose();
+      return;
+    }
     setIsDownloading(true);
     const badgeElement = document.getElementById('badge-print-area');
     if (badgeElement) {
@@ -566,14 +627,26 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
               {selectedKategori.akses === "ilmiah" && (
                 <div>
                   <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">Pilihan Kegiatan</label>
-                  <select
-                    value={pilihanKegiatan}
-                    onChange={(e) => setPilihanKegiatan(e.target.value as any)}
-                    className="w-full px-4 py-3 bg-[#F8FAFC]/40 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B4AC] text-sm text-slate-800 font-medium cursor-pointer"
-                  >
-                    <option value="Symposium">Symposium Saja</option>
-                    <option value="Symposium + Workshop">Symposium + Workshop</option>
-                  </select>
+                  {selectedKategori.id === "perawat" ? (
+                    <div className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-[#00B4AC]" />
+                        Workshop
+                      </span>
+                      <span className="text-[11px] font-bold bg-[#00B4AC]/10 text-[#00B4AC] px-2.5 py-0.5 rounded-full border border-[#00B4AC]/20">
+                        Khusus Perawat
+                      </span>
+                    </div>
+                  ) : (
+                    <select
+                      value={pilihanKegiatan}
+                      onChange={(e) => setPilihanKegiatan(e.target.value as any)}
+                      className="w-full px-4 py-3 bg-[#F8FAFC]/40 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B4AC] text-sm text-slate-800 font-medium cursor-pointer"
+                    >
+                      <option value="Symposium">Symposium Saja</option>
+                      <option value="Symposium + Workshop">Symposium + Workshop</option>
+                    </select>
+                  )}
                 </div>
               )}
 
@@ -769,20 +842,23 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                 </div>
               )}
 
+              {/* Sesi Diabetes Health Forum untuk Anggota PERSADIA */}
               {selectedKategori.id === "persadia" && (
                 <div className="pt-2 border-t border-slate-200 mt-2">
-                  <div className="p-4 bg-[#0B3D5E]/5 border border-[#0B3D5E]/20 rounded-xl">
-                    <h4 className="text-sm font-bold text-[#0B3D5E] mb-2 flex items-center justify-between">
-                      <span>Health Talk bersama 6 Tokoh (Opsional)</span>
-                      <span className="text-xs bg-[#0B3D5E] text-white px-2 py-1 rounded-full">
-                        Kuota Terbatas 200 Orang
+                  <div className="p-4 bg-[#0B3D5E]/5 border border-[#0B3D5E]/20 rounded-xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-bold text-[#0B3D5E]">
+                        Diabetes Health Forum bersama 6 Tokoh (Opsional)
+                      </h4>
+                      <span className="text-[11px] font-bold bg-[#0B3D5E] text-white px-2.5 py-0.5 rounded-full">
+                        Kuota {HEALTH_TALK_CONFIG.kuotaMaksimal} Orang
                       </span>
-                    </h4>
-                    <p className="text-xs text-slate-600 mb-3">
-                      Ikuti sesi diskusi kesehatan eksklusif di hari pertama acara bersama pakar terkemuka. 
-                      Biaya pendaftaran: <strong className="text-emerald-700">Rp 300.000</strong>
+                    </div>
+
+                    <p className="text-xs text-slate-600">
+                      Ikuti sesi diskusi kesehatan eksklusif di hari pertama bersama suksesor diabetisi. Tersedia penawaran khusus bagi peserta yang memiliki voucher resmi dari panitia.
                     </p>
-                    
+
                     <label className={`flex items-start gap-3 cursor-pointer p-3 border rounded-xl transition-colors ${ikutHealthTalk ? 'bg-blue-50 border-blue-300' : 'bg-white border-slate-200 hover:bg-slate-50'} ${!isHealthTalkAvailable ? 'opacity-50 cursor-not-allowed' : ''}`}>
                       <input
                         type="checkbox"
@@ -792,11 +868,192 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                         className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer shrink-0 disabled:cursor-not-allowed"
                       />
                       <span className="text-xs text-slate-800 font-medium">
-                        {!isHealthTalkAvailable ? 'Maaf, Kuota Health Talk Sudah Penuh / Ditutup' : (
-                          <>Ya, saya bersedia dan ingin mengikuti sesi <strong>Health Talk</strong>.</>
+                        {!isHealthTalkAvailable ? 'Maaf, Kuota Diabetes Health Forum Sudah Penuh / Ditutup' : (
+                          <>Ya, saya bersedia dan ingin mengikuti sesi <strong>Diabetes Health Forum</strong>.</>
                         )}
                       </span>
                     </label>
+
+                    {ikutHealthTalk && isHealthTalkAvailable && (
+                      <div className="pt-2 border-t border-blue-200/60 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                            <Tag className="h-3.5 w-3.5 text-blue-600" />
+                            Punya Voucher Khusus Panitia?
+                          </label>
+                          {appliedVoucher && (
+                            <span className="text-[10px] font-extrabold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-300 flex items-center gap-1">
+                              <CheckCircle2 className="h-3 w-3" /> Voucher Diterapkan
+                            </span>
+                          )}
+                        </div>
+
+                        {!appliedVoucher ? (
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              placeholder="Masukkan Kode Voucher"
+                              value={voucherInput}
+                              onChange={(e) => {
+                                setVoucherInput(e.target.value.toUpperCase());
+                                setVoucherError("");
+                              }}
+                              className="flex-1 px-3.5 py-2 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B4AC] text-xs font-mono font-bold text-slate-800 uppercase tracking-wider"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleValidateVoucher}
+                              disabled={voucherLoading || !voucherInput.trim()}
+                              className="px-4 py-2 bg-[#0B3D5E] hover:bg-[#0B3D5E]/90 disabled:bg-slate-300 text-white font-bold text-xs rounded-xl shadow-sm transition cursor-pointer flex items-center gap-1 shrink-0"
+                            >
+                              {voucherLoading ? (
+                                <>
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  Cek...
+                                </>
+                              ) : (
+                                "Terapkan"
+                              )}
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between bg-white p-2.5 rounded-xl border border-emerald-300 shadow-sm">
+                            <div className="flex items-center gap-2">
+                              <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                                <Tag className="h-3.5 w-3.5" />
+                              </div>
+                              <div>
+                                <p className="text-xs font-black text-slate-900 tracking-wider font-mono">{appliedVoucher}</p>
+                                <p className="text-[11px] text-emerald-700 font-semibold">
+                                  Voucher aktif! Tarif khusus akan dihitung pada rincian pembayaran.
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handleRemoveVoucher}
+                              className="text-xs text-rose-600 hover:text-rose-800 font-bold underline cursor-pointer ml-2"
+                            >
+                              Hapus
+                            </button>
+                          </div>
+                        )}
+
+                        {voucherError && (
+                          <p className="text-[11px] text-rose-600 font-medium flex items-center gap-1 mt-1">
+                            <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {voucherError}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Sesi Diabetes Health Forum untuk Masyarakat Umum (Hanya dengan Voucher) */}
+              {selectedKategori.id === "umum" && (
+                <div className="pt-2 border-t border-slate-200 mt-2">
+                  <div className="p-4 bg-amber-50/70 border border-amber-200/80 rounded-xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-bold text-amber-950 flex items-center gap-1.5">
+                        <span>Diabetes Health Forum bersama 6 Tokoh</span>
+                        <span className="text-[10px] font-extrabold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-md">
+                          Khusus Voucher
+                        </span>
+                      </h4>
+                      <span className="text-[11px] font-bold bg-[#0B3D5E] text-white px-2 py-0.5 rounded-full">
+                        Kuota {HEALTH_TALK_CONFIG.kuotaMaksimal}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Sesi Diabetes Health Forum eksklusif bersama 6 tokoh suksesor diabetisi.
+                      Untuk kategori Masyarakat Umum, keikutsertaan <strong>hanya dapat diakses melalui voucher khusus dari panitia</strong>.
+                    </p>
+
+                    {!isHealthTalkAvailable ? (
+                      <div className="p-2.5 bg-slate-100 rounded-xl text-xs text-slate-500 font-medium">
+                        Maaf, Kuota Diabetes Health Forum Sudah Penuh / Ditutup.
+                      </div>
+                    ) : !appliedVoucher ? (
+                      <div className="space-y-2">
+                        <label className="text-[11px] font-bold text-slate-700 uppercase flex items-center gap-1">
+                          <Tag className="h-3.5 w-3.5 text-amber-600" />
+                          Punya Voucher Khusus Diabetes Health Forum?
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            placeholder="Ketikkan Voucher Panitia"
+                            value={voucherInput}
+                            onChange={(e) => {
+                              setVoucherInput(e.target.value.toUpperCase());
+                              setVoucherError("");
+                            }}
+                            className="flex-1 px-3.5 py-2 bg-white border border-amber-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B4AC] text-xs font-mono font-bold text-slate-800 uppercase tracking-wider"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleValidateVoucher}
+                            disabled={voucherLoading || !voucherInput.trim()}
+                            className="px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-slate-300 text-white font-bold text-xs rounded-xl shadow-sm transition cursor-pointer flex items-center gap-1 shrink-0"
+                          >
+                            {voucherLoading ? (
+                              <>
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                Cek...
+                              </>
+                            ) : (
+                              "Aktifkan"
+                            )}
+                          </button>
+                        </div>
+                        {voucherError && (
+                          <p className="text-[11px] text-rose-600 font-medium flex items-center gap-1 mt-1">
+                            <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {voucherError}
+                          </p>
+                        )}
+                        <p className="text-[11px] text-slate-500 italic">
+                          *Jika tidak memiliki voucher khusus, Anda tetap dapat mendaftar Pesta Rakyat secara gratis.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between bg-white p-3 rounded-xl border border-emerald-300 shadow-sm">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                              <CheckCircle2 className="h-4 w-4" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-black text-slate-900 font-mono tracking-wider">{appliedVoucher}</span>
+                                <span className="text-[9px] font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">Voucher Terverifikasi</span>
+                              </div>
+                              <p className="text-[11px] text-emerald-700 font-medium">
+                                Akses sesi Diabetes Health Forum berhasil diaktifkan.
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleRemoveVoucher}
+                            className="text-xs text-rose-600 hover:text-rose-800 font-bold underline cursor-pointer ml-2"
+                          >
+                            Hapus
+                          </button>
+                        </div>
+
+                        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                          <div className="text-xs">
+                            <p className="font-bold">Akses Sesi Diabetes Health Forum Aktif</p>
+                            <p className="text-[11px] text-emerald-700 mt-0.5">
+                              Tarif khusus Rp 200.000 otomatis diterapkan untuk sesi eksklusif bersama 6 Tokoh. Untuk membatalkan keikutsertaan sesi ini, silakan klik tombol <strong>Hapus</strong> pada kupon voucher di atas.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -925,6 +1182,16 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                   <div>
                     <span className="text-[10px] font-black uppercase text-[#0B3D5E] tracking-wider">Kategori Dipilih</span>
                     <h4 className="font-extrabold text-slate-800 text-sm leading-tight mt-0.5">{selectedKategori.label}</h4>
+                    {selectedKategori.akses === "ilmiah" && (
+                      <span className="inline-block mt-1 text-[11px] font-bold text-teal-800 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-md mr-1">
+                        Kegiatan: {selectedKategori.id === "perawat" ? "Workshop" : pilihanKegiatan}
+                      </span>
+                    )}
+                    {ikutHealthTalk && (
+                      <span className="inline-block mt-1 text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
+                        + Sesi Diabetes Health Forum (6 Tokoh)
+                      </span>
+                    )}
                   </div>
                   {appliedVoucher && (
                     <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-md font-mono">
@@ -937,7 +1204,7 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
               {/* Payment Details Container */}
               <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200/60 space-y-3">
                 <div className="flex justify-between items-center text-xs text-slate-500 font-bold uppercase">
-                  <span>Biaya Registrasi {appliedVoucher ? "(Tarif Khusus FKTP)" : ""}</span>
+                  <span>Biaya Registrasi {appliedVoucher ? (selectedKategori.id === "dokter_umum" ? "(Tarif Khusus FKTP)" : "(Tarif Khusus Voucher)") : ""}</span>
                   <span>
                     {hargaDasar === 0 ? "Gratis" : new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(hargaDasar)}
                   </span>
@@ -1050,60 +1317,159 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
 
           {/* STEP 3: SUCCESS CONFIRMATION */}
           {step === 3 && successData && (
-            <div className="text-center py-6 space-y-6 animate-scaleIn">
-              <div className="p-3 bg-[#2D7A4F] text-white rounded-full inline-block mx-auto">
-                <CheckCircle2 className="h-12 w-12" />
-              </div>
-
-              <div className="space-y-1">
-                <h4 className="text-xl font-black text-slate-800">Registrasi Berhasil Terkirim!</h4>
-                <p className="text-xs text-slate-500">Formulir pendaftaran Anda telah tercatat di database kami.</p>
-              </div>
-
-              {/* Registration Code Display Box */}
-              <div className="bg-[#F8FAFC] p-5 rounded-2xl border border-slate-200/70 inline-block w-full max-w-sm">
-                <span className="text-[10px] font-black text-slate-400 block uppercase tracking-wider">No. Registrasi</span>
-                <div className="flex flex-col items-center justify-center gap-4 mt-3 mb-2">
-                  <QRCodeSVG 
-                    value={`${window.location.origin}/scanner.html?id=${successData.id}`} 
-                    size={120} 
-                    level="H" 
-                    includeMargin={true}
-                  />
-                  <strong className="text-xl font-black text-[#0B3D5E] tracking-widest">{successData.id}</strong>
-                  
-                </div>
-              </div>
-
-              {/* Summary details */}
-              <div className="text-xs text-slate-600 space-y-1 max-w-sm mx-auto text-left bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <div className="flex justify-between">
-                  <span>Nama Lengkap:</span>
-                  <strong className="text-slate-800">{namaLengkap}</strong>
-                </div>
-                <div className="flex justify-between">
-                  <span>Kategori Tiket:</span>
-                  <strong className="text-slate-800">{selectedKategori.label}</strong>
-                </div>
-                {appliedVoucher && (
-                  <div className="flex justify-between text-amber-900 bg-amber-50 px-2 py-1 rounded-md border border-amber-200">
-                    <span className="font-bold">Voucher FKTP:</span>
-                    <strong className="font-mono">{appliedVoucher}</strong>
+            <div className="text-center py-6 space-y-5 animate-scaleIn">
+              {isPaidRegistration ? (
+                /* Peserta Berbayar: Menunggu Verifikasi Pembayaran oleh Admin */
+                <>
+                  <div className="p-3.5 bg-amber-100 text-amber-600 rounded-full inline-block mx-auto">
+                    <Clock className="h-10 w-10 sm:h-12 sm:w-12 animate-pulse" />
                   </div>
-                )}
-                <div className="flex justify-between">
-                  <span>Akses Tiket:</span>
-                  <strong className="text-slate-800 uppercase">{selectedKategori.akses === "ilmiah" ? "Sesi Ilmiah (Novotel)" : "Pesta Rakyat (GOR Pakansari)"}</strong>
-                </div>
-                <div className="flex justify-between pt-1 border-t border-slate-200 mt-1">
-                  <span>Total Transfer:</span>
-                  <strong className="text-[#0B3D5E]">{successData.totalAkhir === 0 ? "Gratis" : new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(successData.totalAkhir)}</strong>
-                </div>
-              </div>
 
-              <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed px-4">
-                Terima kasih atas partisipasi Anda.
-              </p>
+                  <div className="space-y-1.5">
+                    <h4 className="text-xl font-black text-slate-800">Pendaftaran Berhasil Dikirim!</h4>
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-800 text-xs font-bold rounded-full border border-amber-200">
+                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                      Status: Menunggu Verifikasi Admin
+                    </div>
+                    <p className="text-xs text-slate-500 pt-1 max-w-sm mx-auto leading-relaxed">
+                      Formulir dan konfirmasi pembayaran Anda telah tercatat. Tim admin/bendahara kami akan segera memverifikasi mutasi transfer Anda.
+                    </p>
+                  </div>
+
+                  {/* Registration Code Display Box (Tanpa QR Code) */}
+                  <div className="bg-[#F8FAFC] p-4 sm:p-5 rounded-2xl border border-slate-200/70 inline-block w-full max-w-sm mx-auto">
+                    <span className="text-[10px] font-black text-slate-400 block uppercase tracking-wider mb-1">
+                      Nomor Registrasi Anda
+                    </span>
+                    <div className="flex items-center justify-center gap-2 my-2">
+                      <strong className="text-xl sm:text-2xl font-mono font-black text-[#0B3D5E] tracking-widest">
+                        {successData.id}
+                      </strong>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(successData.id)}
+                        className="p-1.5 hover:bg-slate-200 text-slate-500 rounded-lg transition"
+                        title="Salin No. Registrasi"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-slate-400">
+                      Simpan nomor registrasi ini sebagai bukti pendaftaran & referensi konfirmasi.
+                    </p>
+                  </div>
+
+                  {/* Summary details */}
+                  <div className="text-xs text-slate-600 space-y-1 max-w-sm mx-auto text-left bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <div className="flex justify-between">
+                      <span>Nama Lengkap:</span>
+                      <strong className="text-slate-800">{namaLengkap}</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Kategori Tiket:</span>
+                      <strong className="text-slate-800">{selectedKategori.label}</strong>
+                    </div>
+                    {ikutHealthTalk && (
+                      <div className="flex justify-between text-blue-900 bg-blue-50 px-2 py-1 rounded-md border border-blue-200">
+                        <span>Sesi Tambahan:</span>
+                        <strong className="font-semibold">Diabetes Health Forum</strong>
+                      </div>
+                    )}
+                    {appliedVoucher && (
+                      <div className="flex justify-between text-amber-900 bg-amber-50 px-2 py-1 rounded-md border border-amber-200">
+                        <span className="font-bold">{selectedKategori.id === "dokter_umum" ? "Voucher FKTP:" : "Kode Voucher:"}</span>
+                        <strong className="font-mono">{appliedVoucher}</strong>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span>Akses Kegiatan:</span>
+                      <strong className="text-slate-800 uppercase">{selectedKategori.akses === "ilmiah" ? (selectedKategori.id === "perawat" ? "Workshop (Novotel)" : "Sesi Ilmiah (Novotel)") : "Pesta Rakyat (GOR Pakansari)"}</strong>
+                    </div>
+                    <div className="flex justify-between pt-1 border-t border-slate-200 mt-1">
+                      <span>Total Tagihan:</span>
+                      <strong className="text-[#0B3D5E]">{new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(successData.totalAkhir)}</strong>
+                    </div>
+                    <div className="flex justify-between pt-1 text-amber-700">
+                      <span>Status Pembayaran:</span>
+                      <strong className="font-bold">Menunggu Verifikasi</strong>
+                    </div>
+                  </div>
+
+                  {/* Petunjuk Verifikasi & Kontak Panitia */}
+                  <div className="bg-blue-50/80 border border-blue-100 p-4 rounded-xl text-left max-w-sm mx-auto space-y-2 text-xs text-slate-700">
+                    <div className="flex items-start gap-2 text-blue-900 font-bold">
+                      <Info className="h-4 w-4 shrink-0 mt-0.5 text-blue-600" />
+                      <span>Alur Penerbitan E-Tiket:</span>
+                    </div>
+                    <p className="text-[11px] leading-relaxed text-slate-600">
+                      E-Tiket resmi dengan QR Code Check-in akan diterbitkan setelah pembayaran Anda diverifikasi oleh bendahara panitia. E-Tiket akan dikirimkan langsung ke nomor WhatsApp Anda (<strong>{whatsapp}</strong>).
+                    </p>
+                    <div className="pt-2 border-t border-blue-100/60">
+                      <a
+                        href={`https://wa.me/6285370716686?text=${encodeURIComponent(
+                          `Halo Panitia KONAS PERSADIA 2026, saya telah mendaftar dengan No. Registrasi: ${successData.id} atas nama: ${namaLengkap} (${selectedKategori.label}) sejumlah ${new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(successData.totalAkhir)}. Mohon bantuan verifikasi pembayarannya. Terima kasih.`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs flex items-center justify-center gap-1.5 transition shadow-sm"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                        Konfirmasi Bukti Transfer via WhatsApp
+                      </a>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                /* Peserta Gratis (Rp 0 - Pesta Rakyat): E-Tiket Langsung Diterbitkan */
+                <>
+                  <div className="p-3 bg-[#2D7A4F] text-white rounded-full inline-block mx-auto">
+                    <CheckCircle2 className="h-12 w-12" />
+                  </div>
+
+                  <div className="space-y-1">
+                    <h4 className="text-xl font-black text-slate-800">Registrasi Berhasil Terkirim!</h4>
+                    <p className="text-xs text-slate-500">Formulir pendaftaran Anda telah tercatat di database kami.</p>
+                  </div>
+
+                  {/* Registration Code Display Box With QR Code */}
+                  <div className="bg-[#F8FAFC] p-5 rounded-2xl border border-slate-200/70 inline-block w-full max-w-sm">
+                    <span className="text-[10px] font-black text-slate-400 block uppercase tracking-wider">No. Registrasi</span>
+                    <div className="flex flex-col items-center justify-center gap-4 mt-3 mb-2">
+                      <QRCodeSVG 
+                        value={`${window.location.origin}/scanner.html?id=${successData.id}`} 
+                        size={120} 
+                        level="H" 
+                        includeMargin={true}
+                      />
+                      <strong className="text-xl font-black text-[#0B3D5E] tracking-widest">{successData.id}</strong>
+                    </div>
+                  </div>
+
+                  {/* Summary details */}
+                  <div className="text-xs text-slate-600 space-y-1 max-w-sm mx-auto text-left bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <div className="flex justify-between">
+                      <span>Nama Lengkap:</span>
+                      <strong className="text-slate-800">{namaLengkap}</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Kategori Tiket:</span>
+                      <strong className="text-slate-800">{selectedKategori.label}</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Akses Tiket:</span>
+                      <strong className="text-slate-800 uppercase">Pesta Rakyat (GOR Pakansari)</strong>
+                    </div>
+                    <div className="flex justify-between pt-1 border-t border-slate-200 mt-1">
+                      <span>Total:</span>
+                      <strong className="text-[#2D7A4F]">Gratis</strong>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed px-4">
+                    Silakan unduh E-Tiket Anda untuk ditunjukkan saat check-in di lokasi acara.
+                  </p>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -1165,23 +1531,33 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
           )}
 
           {step === 3 && (
-            <button
-              onClick={handleSelesai}
-              disabled={isDownloading}
-              className="w-full py-3 sm:py-3.5 bg-[#0B3D5E] hover:bg-[#1e40af] text-white font-extrabold text-xs sm:text-sm rounded-xl text-center shadow-lg transition cursor-pointer flex items-center justify-center gap-2 disabled:bg-slate-400"
-            >
-              {isDownloading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Mengunduh E-Ticket (.jpg)...
-                </>
-              ) : (
-                <>
-                  <Download className="h-4 w-4" />
-                  Download E-Ticket
-                </>
-              )}
-            </button>
+            isPaidRegistration ? (
+              <button
+                onClick={handleClose}
+                className="w-full py-3 sm:py-3.5 bg-[#0B3D5E] hover:bg-[#1e40af] text-white font-extrabold text-xs sm:text-sm rounded-xl text-center shadow-lg transition cursor-pointer flex items-center justify-center gap-2"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                Selesai & Tutup
+              </button>
+            ) : (
+              <button
+                onClick={handleSelesai}
+                disabled={isDownloading}
+                className="w-full py-3 sm:py-3.5 bg-[#0B3D5E] hover:bg-[#1e40af] text-white font-extrabold text-xs sm:text-sm rounded-xl text-center shadow-lg transition cursor-pointer flex items-center justify-center gap-2 disabled:bg-slate-400"
+              >
+                {isDownloading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Mengunduh E-Ticket (.jpg)...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4" />
+                    Download E-Ticket
+                  </>
+                )}
+              </button>
+            )
           )}
         </div>
         </>
@@ -1189,8 +1565,8 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
       </div>
     </div>
 
-    {/* Hidden Paperless E-Ticket Print/Image Area */}
-      {successData && (
+    {/* Hidden Paperless E-Ticket Print/Image Area (Hanya untuk peserta gratis yang diterbitkan langsung) */}
+      {successData && !isPaidRegistration && (
         <div 
           id="badge-print-area" 
           className="absolute bg-[#ffffff]"

@@ -45,9 +45,9 @@ export const KATEGORI_PESERTA: KategoriPeserta[] = [
     id: "perawat",
     label: "Perawat",
     akses: "ilmiah",
-    // Placeholder harga: silakan sesuaikan nominal di bawah ini
-    hargaSymposium: { earlyBird: 8000000, onsite: 10000000 },
-    hargaSymposiumWorkshop: { earlyBird: 12000000, onsite: 15000000 },
+    // Khusus Perawat hanya dapat mengikuti kegiatan Workshop
+    hargaWorkshop: { earlyBird: 400000, onsite: 400000 },
+    hargaSymposiumWorkshop: { earlyBird: 400000, onsite: 400000 },
     fieldTambahan: ["institusi"],
   },
   {
@@ -80,9 +80,20 @@ export const KATEGORI_PESERTA: KategoriPeserta[] = [
 export const VOUCHER_DOKTER_UMUM_CONFIG = {
   prefix: "FKTP-",
   // Placeholder harga khusus voucher (silakan sesuaikan nominal):
-  hargaSymposium: 1000000,
-  hargaSymposiumWorkshop: 1800000,
+  hargaSymposium: 6000000,
+  hargaSymposiumWorkshop: 6000000,
 };
+
+// Konfigurasi Sesi Diabetes Health Forum (Anggota PERSADIA & Masyarakat Umum)
+export const DIABETES_HEALTH_FORUM_CONFIG = {
+  hargaNormal: 300000,
+  hargaKhususVoucher: 200000,
+  prefixVoucher: "DHF-",
+  kuotaMaksimal: 200,
+};
+
+// Alias kompatibilitas kode
+export const HEALTH_TALK_CONFIG = DIABETES_HEALTH_FORUM_CONFIG;
 
 export const REKENING_PEMBAYARAN: RekeningPembayaran = {
   bank: "Bank Victoria",

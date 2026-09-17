@@ -20,6 +20,7 @@ export interface KategoriPeserta {
   akses: "ilmiah" | "pesta_rakyat";
   hargaSymposium?: HargaKegiatan;
   hargaSymposiumWorkshop?: HargaKegiatan;
+  hargaWorkshop?: HargaKegiatan;
   hargaEarlyBird?: number; // untuk pesta_rakyat
   hargaReguler?: number; // untuk pesta_rakyat
   fieldTambahan: Array<"noSTR" | "institusi" | "noKTP" | "cabangPersadia" | "slotWaktuCekGula" | "nim" | "tanggalLahir" | "jenisKelamin">;
@@ -55,7 +56,7 @@ export interface Speaker {
 export interface RegistrationData {
   id?: string;
   kategoriId: string;
-  pilihanKegiatan?: "Symposium" | "Symposium + Workshop";
+  pilihanKegiatan?: "Symposium" | "Symposium + Workshop" | "Workshop";
   namaLengkap: string;
   email: string;
   whatsapp: string;

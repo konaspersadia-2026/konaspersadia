@@ -202,7 +202,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
       if (allData) {
         let htCount = 0;
         allData.forEach(row => {
-          if (row.ikut_health_talk === true || (row.pilihan_kegiatan && row.pilihan_kegiatan.includes('Health Talk'))) {
+          if (row.ikut_health_talk === true || (row.pilihan_kegiatan && (row.pilihan_kegiatan.includes('Diabetes Health Forum') || row.pilihan_kegiatan.includes('Health Talk')))) {
             htCount++;
           }
         });
@@ -261,7 +261,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
       if (error) throw error;
       setIsHealthTalkEnabled(newValue);
     } catch (err: any) {
-      alert("Gagal mengubah status Health Talk: " + err.message);
+      alert("Gagal mengubah status Diabetes Health Forum: " + err.message);
     } finally {
       setIsTogglingHT(false);
     }
@@ -582,7 +582,7 @@ _Panitia KONAS PERSADIA 2026_`;
         color="indigo"
       />
       <StatCard
-        title="Pendaftaran Health Talk"
+        title="Pendaftaran Diabetes Health Forum"
         value={`${healthTalkCount} orang`}
         icon={<Activity className="h-4 w-4 sm:h-5 sm:w-5" />}
         color="purple"
@@ -594,7 +594,7 @@ _Panitia KONAS PERSADIA 2026_`;
             <button
               onClick={handleToggleHealthTalk}
               disabled={isTogglingHT}
-              title={isHealthTalkEnabled ? 'Klik untuk menutup pendaftaran Health Talk' : 'Klik untuk membuka pendaftaran Health Talk'}
+              title={isHealthTalkEnabled ? 'Klik untuk menutup pendaftaran Diabetes Health Forum' : 'Klik untuk membuka pendaftaran Diabetes Health Forum'}
               className={`relative inline-flex h-4.5 w-8 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${
                 isHealthTalkEnabled ? 'bg-emerald-500' : 'bg-slate-300'
               } ${isTogglingHT ? 'opacity-50 cursor-wait' : ''}`}

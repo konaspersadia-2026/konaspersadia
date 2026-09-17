@@ -232,7 +232,6 @@ function App() {
           "Kategori Peserta": row.kategori_peserta || "-",
           "Registrasi_OnSite": row.registrasi_onsite,
           "Makan_Siang_Hari_1": row.makan_siang_hari_1,
-          "Makan_Siang_Hari_2": row.makan_siang_hari_2,
           "Makan_Siang_Pesta_Rakyat": row.makan_siang_pesta_rakyat,
           "Seminar_Kit": row.seminar_kit,
           "Cek_Gula_Darah": row.cek_gula_darah,

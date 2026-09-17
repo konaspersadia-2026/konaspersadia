@@ -96,7 +96,8 @@ export default function RegistrationFees({ onOpenRegister }: RegistrationFeesPro
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {ilmiahCategories.map((kategori) => (
+                {/* Sesi Symposium (Semua kategori ilmiah kecuali Perawat) */}
+                {ilmiahCategories.filter(k => k.id !== "perawat").map((kategori) => (
                   <tr key={`${kategori.id}-symposium`} className="hover:bg-[#F8FAFC]/30 transition duration-150">
                     <td className="p-4 font-extrabold text-slate-800 text-sm pl-6 max-w-xs">{kategori.label}</td>
                     <td className="p-4 font-bold text-[#00B4AC] text-sm">Symposium</td>
@@ -112,7 +113,9 @@ export default function RegistrationFees({ onOpenRegister }: RegistrationFeesPro
                     </td>
                   </tr>
                 ))}
-                {ilmiahCategories.map((kategori) => (
+
+                {/* Sesi Symposium + Workshop (Kategori dokter, residen, mahasiswa) */}
+                {ilmiahCategories.filter(k => k.id !== "perawat").map((kategori) => (
                   <tr key={`${kategori.id}-workshop`} className="hover:bg-[#F8FAFC]/30 transition duration-150 bg-slate-50/50">
                     <td className="p-4 font-extrabold text-slate-800 text-sm pl-6 max-w-xs">{kategori.label}</td>
                     <td className="p-4 font-bold text-[#C89A2E] text-sm">Symposium + Workshop</td>
@@ -124,6 +127,27 @@ export default function RegistrationFees({ onOpenRegister }: RegistrationFeesPro
                     <td className="p-4 text-center">
                       <span className={`text-sm font-bold ${isOnsiteActive() ? "text-rose-600 bg-rose-50 px-2.5 py-1 rounded-md" : "text-slate-500"}`}>
                         {formatRupiah(kategori.hargaSymposiumWorkshop?.onsite || 0)}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+
+                {/* Sesi Khusus Perawat: Hanya Workshop */}
+                {ilmiahCategories.filter(k => k.id === "perawat").map((kategori) => (
+                  <tr key={`${kategori.id}-workshop-only`} className="hover:bg-[#F8FAFC]/30 transition duration-150 bg-teal-50/40">
+                    <td className="p-4 font-extrabold text-slate-800 text-sm pl-6 max-w-xs">
+                      {kategori.label}
+                      <span className="block text-[11px] font-bold text-[#00B4AC]">Khusus Workshop</span>
+                    </td>
+                    <td className="p-4 font-bold text-[#00B4AC] text-sm">Workshop</td>
+                    <td className="p-4 text-center">
+                      <span className={`text-sm font-bold ${isEarlyBirdActive() ? "text-[#2D7A4F] bg-[#E6F4EA] px-2.5 py-1 rounded-md" : "text-slate-500"}`}>
+                        {formatRupiah(kategori.hargaWorkshop?.earlyBird || kategori.hargaSymposiumWorkshop?.earlyBird || 400000)}
+                      </span>
+                    </td>
+                    <td className="p-4 text-center">
+                      <span className={`text-sm font-bold ${isOnsiteActive() ? "text-rose-600 bg-rose-50 px-2.5 py-1 rounded-md" : "text-slate-500"}`}>
+                        {formatRupiah(kategori.hargaWorkshop?.onsite || kategori.hargaSymposiumWorkshop?.onsite || 400000)}
                       </span>
                     </td>
                   </tr>
@@ -153,32 +177,51 @@ export default function RegistrationFees({ onOpenRegister }: RegistrationFeesPro
         <div className="md:hidden max-w-5xl mx-auto space-y-4 mb-6">
           {ilmiahCategories.map((kategori) => (
             <div key={`${kategori.id}-mobile`} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-              <div className="bg-[#0B3D5E] text-white p-3 font-bold text-sm">
-                {kategori.label}
+              <div className="bg-[#0B3D5E] text-white p-3 font-bold text-sm flex justify-between items-center">
+                <span>{kategori.label}</span>
+                {kategori.id === "perawat" && (
+                  <span className="text-[10px] bg-[#00B4AC] text-white px-2 py-0.5 rounded-full font-bold">Khusus Workshop</span>
+                )}
               </div>
               <div className="p-4 space-y-4">
-                <div className="space-y-2">
-                  <div className="font-bold text-[#00B4AC] border-b pb-1">Symposium</div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-slate-500">Early Bird:</span>
-                    <span className="font-bold">{formatRupiah(kategori.hargaSymposium?.earlyBird || 0)}</span>
+                {kategori.id === "perawat" ? (
+                  <div className="space-y-2">
+                    <div className="font-bold text-[#00B4AC] border-b pb-1">Workshop</div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-500">Early Bird:</span>
+                      <span className="font-bold">{formatRupiah(kategori.hargaWorkshop?.earlyBird || kategori.hargaSymposiumWorkshop?.earlyBird || 400000)}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-500">Onsite:</span>
+                      <span className="font-bold">{formatRupiah(kategori.hargaWorkshop?.onsite || kategori.hargaSymposiumWorkshop?.onsite || 400000)}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-slate-500">Onsite:</span>
-                    <span className="font-bold">{formatRupiah(kategori.hargaSymposium?.onsite || 0)}</span>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="font-bold text-[#C89A2E] border-b pb-1">Symposium + Workshop</div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-slate-500">Early Bird:</span>
-                    <span className="font-bold">{formatRupiah(kategori.hargaSymposiumWorkshop?.earlyBird || 0)}</span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-slate-500">Onsite:</span>
-                    <span className="font-bold">{formatRupiah(kategori.hargaSymposiumWorkshop?.onsite || 0)}</span>
-                  </div>
-                </div>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <div className="font-bold text-[#00B4AC] border-b pb-1">Symposium</div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-500">Early Bird:</span>
+                        <span className="font-bold">{formatRupiah(kategori.hargaSymposium?.earlyBird || 0)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-500">Onsite:</span>
+                        <span className="font-bold">{formatRupiah(kategori.hargaSymposium?.onsite || 0)}</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="font-bold text-[#C89A2E] border-b pb-1">Symposium + Workshop</div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-500">Early Bird:</span>
+                        <span className="font-bold">{formatRupiah(kategori.hargaSymposiumWorkshop?.earlyBird || 0)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-500">Onsite:</span>
+                        <span className="font-bold">{formatRupiah(kategori.hargaSymposiumWorkshop?.onsite || 0)}</span>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           ))}
