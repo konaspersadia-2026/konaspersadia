@@ -77,6 +77,16 @@ export default function Location() {
                       <strong className="text-slate-800 block">ibis Styles Bogor Raya</strong>
                       <span className="text-slate-500">Bersebelahan langsung dengan Novotel, opsi akomodasi modern &amp; terjangkau.</span>
                     </div>
+                    <div className="col-span-1 sm:col-span-2 pt-1">
+                      <a
+                        href="#akomodasi"
+                        onClick={() => window.scrollTo(0, 0)}
+                        className="inline-flex items-center justify-center gap-1.5 w-full py-2.5 px-4 bg-[#0B3D5E]/5 hover:bg-[#0B3D5E] text-[#0B3D5E] hover:text-white rounded-xl text-xs font-bold border border-[#0B3D5E]/20 transition-all duration-200 shadow-xs"
+                      >
+                        <Hotel className="h-4 w-4" />
+                        Lihat Tarif Khusus Peserta &amp; Foto Kamar (Novotel &amp; Ibis Styles) →
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>

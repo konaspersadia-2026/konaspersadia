@@ -7,14 +7,26 @@ import {
 } from 'recharts';
 import {
   Users, DollarSign, CheckCircle, Clock, Search, ChevronLeft, ChevronRight, ShieldAlert,
-  Loader2, LogOut, CheckSquare, XCircle, MessageCircle, Activity, X
+  Loader2, LogOut, CheckSquare, XCircle, MessageCircle, Activity, X,
+  Ticket, Copy, Check, Plus, RefreshCw, Share2, Sparkles, Trash2, Filter
 } from 'lucide-react';
 
 interface AdminDashboardProps {
   onNavigateHome: () => void;
 }
 
+interface VoucherItem {
+  id?: number | string;
+  code: string;
+  kategori_target?: string | null;
+  is_used: boolean;
+  used_by?: string | null;
+  used_at?: string | null;
+  created_at?: string | null;
+}
+
 interface Pendaftar {
+  id?: number;
   Timestamp: string;
   "No. Registrasi": string;
   "Status Pembayaran": string;
@@ -25,7 +37,35 @@ interface Pendaftar {
   "Akses Kegiatan": string;
   "Total Bayar": number | string;
   Institusi: string;
+  nim?: string;
+  tanggal_lahir?: string;
+  jenis_kelamin?: string;
+  registrasi_onsite?: string | null;
+  waktu_registrasi_onsite?: string | null;
+  tinggi_badan?: number | null;
+  berat_badan?: number | null;
+  tensi?: string | null;
+  lingkar_perut?: string | null;
+  cek_gula_darah?: string | null;
+  gula_darah?: string | null;
+  makan_siang_pesta_rakyat?: string | null;
+  ikut_health_talk?: boolean | null;
+  bersedia_anggota_persadia?: boolean | null;
+  alamat_lengkap?: string | null;
+  kelurahan?: string | null;
+  kecamatan?: string | null;
+  kota_kabupaten?: string | null;
+  provinsi?: string | null;
+  kesediaan_data?: string | null;
+  gejala_neuropati?: string | null;
+  pengambilan_merchandise?: string | null;
+  kode_voucher?: string | null;
+  makan_siang_hari_1?: string | null;
+  nama_ketua_cabang?: string | null;
+  // Aliases for compatibility
   KodeVoucher?: string;
+  CabangPersadia?: string;
+  NamaKetuaCabang?: string;
   BersediaAnggota?: boolean;
   AlamatLengkap?: string;
   Kelurahan?: string;
@@ -60,6 +100,20 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
   const [actionError, setActionError] = useState<string | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{isOpen: boolean; id: string; status: string}>({ isOpen: false, id: "", status: "" });
 
+  // Voucher management state
+  const [vouchers, setVouchers] = useState<VoucherItem[]>([]);
+  const [loadingVouchers, setLoadingVouchers] = useState(false);
+  const [isVoucherModalOpen, setIsVoucherModalOpen] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [voucherSearch, setVoucherSearch] = useState("");
+  const [voucherTab, setVoucherTab] = useState<"fktp_tersedia" | "terpakai" | "semua">("fktp_tersedia");
+  const [newVoucherInput, setNewVoucherInput] = useState("FKTP-");
+  const [isAddingVoucher, setIsAddingVoucher] = useState(false);
+  const [voucherActionMsg, setVoucherActionMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isGeneratingBatch, setIsGeneratingBatch] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -73,6 +127,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
         setIsAuthenticated(true);
         setCurrentUserEmail(session.user?.email || null);
         fetchData();
+        fetchVouchers();
       }
     });
 
@@ -84,6 +139,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
         setIsAuthenticated(false);
         setCurrentUserEmail(null);
         setData([]);
+        setVouchers([]);
       }
     });
 
@@ -121,6 +177,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
         setIsAuthenticated(true);
         setCurrentUserEmail(authData.session.user?.email || null);
         fetchData();
+        fetchVouchers();
       }
     } catch (err: any) {
       setAuthError("Terjadi kesalahan saat login: " + err.message);
@@ -138,6 +195,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
     setEmail("");
     setPassword("");
     setData([]);
+    setVouchers([]);
   };
 
   const fetchData = async () => {
@@ -160,26 +218,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
       while (hasMore) {
         const { data: supabaseData, error: supabaseError } = await supabase
         .from('pendaftar')
-        .select(`
-          timestamp,
-          no_registrasi,
-          status_pembayaran,
-          nama_lengkap,
-          email,
-          whatsapp,
-          kategori_peserta,
-          pilihan_kegiatan,
-          total_tagihan,
-          institusi,
-          kode_voucher,
-          bersedia_anggota_persadia,
-          alamat_lengkap,
-          kelurahan,
-          kecamatan,
-          kota_kabupaten,
-          provinsi,
-          ikut_health_talk
-        `)
+        .select('*')
         .order('timestamp', { ascending: false })
         .range(page * pageSize, (page + 1) * pageSize - 1);
 
@@ -219,6 +258,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
 
         // Map to existing Pendaftar interface format
         const mappedData: Pendaftar[] = allData.map((row: any) => ({
+          id: row.id,
           Timestamp: row.timestamp || new Date().toISOString(),
           "No. Registrasi": row.no_registrasi || "-",
           "Status Pembayaran": row.status_pembayaran || "Menunggu Verifikasi",
@@ -229,6 +269,8 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
           "Akses Kegiatan": row.pilihan_kegiatan || "-",
           "Total Bayar": row.total_tagihan || 0,
           Institusi: row.institusi || "-",
+          CabangPersadia: row.cabang_persadia || "-",
+          NamaKetuaCabang: row.nama_ketua_cabang || "-",
           KodeVoucher: row.kode_voucher || "-",
           BersediaAnggota: row.bersedia_anggota_persadia === true || row.bersedia_anggota_persadia === 'true' || row.bersedia_anggota_persadia === 'Ya',
           AlamatLengkap: row.alamat_lengkap || "-",
@@ -236,12 +278,32 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
           Kecamatan: row.kecamatan || "-",
           KotaKabupaten: row.kota_kabupaten || "-",
           Provinsi: row.provinsi || "-",
+          nim: row.nim || "-",
+          tanggal_lahir: row.tanggal_lahir || "-",
+          jenis_kelamin: row.jenis_kelamin || "-",
+          registrasi_onsite: row.registrasi_onsite || null,
+          waktu_registrasi_onsite: row.waktu_registrasi_onsite || null,
+          tinggi_badan: row.tinggi_badan,
+          berat_badan: row.berat_badan,
+          tensi: row.tensi,
+          lingkar_perut: row.lingkar_perut,
+          cek_gula_darah: row.cek_gula_darah,
+          gula_darah: row.gula_darah,
+          makan_siang_pesta_rakyat: row.makan_siang_pesta_rakyat,
+          ikut_health_talk: row.ikut_health_talk,
+          kesediaan_data: row.kesediaan_data,
+          gejala_neuropati: row.gejala_neuropati,
+          pengambilan_merchandise: row.pengambilan_merchandise,
+          kode_voucher: row.kode_voucher || "-",
+          makan_siang_hari_1: row.makan_siang_hari_1,
+          nama_ketua_cabang: row.nama_ketua_cabang || "-",
         }));
 
         setData(mappedData);
       } else {
         setData([]);
       }
+      fetchVouchers();
     } catch (err: any) {
       console.error(err);
       setError("Terjadi kesalahan saat mengambil data dari Supabase: " + err.message);
@@ -364,6 +426,289 @@ _Panitia KONAS PERSADIA 2026_`;
     window.open(waUrl, "_blank");
   };
 
+  const fetchVouchers = async () => {
+    if (!isSupabaseConfigured) return;
+    setLoadingVouchers(true);
+    try {
+      // 1. Coba lewat RPC get_vouchers terlebih dahulu (SECURITY DEFINER)
+      const { data: rpcData, error: rpcError } = await supabase.rpc('get_vouchers');
+      if (!rpcError && rpcData && Array.isArray(rpcData)) {
+        setVouchers(rpcData);
+        return;
+      }
+
+      // 2. Fallback ke query tabel langsung
+      const { data: voucherData, error: voucherError } = await supabase
+        .from('vouchers')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (voucherError) {
+        console.error('Error fetching vouchers:', voucherError);
+        if (voucherError.code === '42501' || voucherError.message?.toLowerCase().includes('permission')) {
+          setVoucherActionMsg({
+            type: 'error',
+            text: 'Izin akses tabel vouchers ditolak di Supabase. Silakan jalankan script SQL supabase/fix_vouchers_permission.sql di SQL Editor.'
+          });
+        }
+      } else if (voucherData) {
+        setVouchers(voucherData);
+      }
+    } catch (err: any) {
+      console.error('Failed to load vouchers:', err);
+    } finally {
+      setLoadingVouchers(false);
+    }
+  };
+
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 3000);
+  };
+
+  const isFktpVoucher = (v: VoucherItem) => {
+    const code = (v.code || '').trim().toUpperCase();
+    const target = (v.kategori_target || '').trim().toLowerCase();
+    return code.startsWith('FKTP-') || target === 'dokter_umum' || target === 'fktp';
+  };
+
+  const isVoucherActuallyUsed = (v: VoucherItem) => {
+    if (v.is_used) return true;
+    const code = (v.code || '').trim().toUpperCase();
+    return data.some(p => p.KodeVoucher && p.KodeVoucher !== '-' && p.KodeVoucher.trim().toUpperCase() === code);
+  };
+
+  const availableFktpVouchers = vouchers.filter(v => isFktpVoucher(v) && !isVoucherActuallyUsed(v));
+  const usedFktpVouchers = vouchers.filter(v => isFktpVoucher(v) && isVoucherActuallyUsed(v));
+  const nextAvailableFktpVoucher = availableFktpVouchers.length > 0 ? availableFktpVouchers[0] : null;
+
+  const getUsedVoucherRegistrant = (voucher: VoucherItem) => {
+    const code = (voucher.code || '').trim().toUpperCase();
+    const byReg = voucher.used_by ? voucher.used_by.trim() : '';
+
+    return data.find(p => 
+      (p.KodeVoucher && p.KodeVoucher.trim().toUpperCase() === code) ||
+      (byReg && p["No. Registrasi"] && p["No. Registrasi"].trim() === byReg)
+    ) || null;
+  };
+
+  const getVoucherWaMessage = (code: string) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://konaspersadia2026.com';
+    return `Yth. Dokter,\n\nBerikut kami sampaikan kode voucher khusus Dokter Umum (FKTP) untuk pendaftaran *${EVENT_INFO.namaAcara}*:\n\n🎟️ Kode Voucher: *${code}*\n\nSilakan gunakan kode voucher di atas saat mengisi formulir pendaftaran kategori *Dokter Umum (FKTP)* melalui website resmi:\n${origin}\n\n*Catatan:* Kode voucher ini bersifat unik dan hanya berlaku untuk 1 kali pendaftaran.\n\nSalam hangat,\n_Panitia KONAS PERSADIA 2026_`;
+  };
+
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedKey(code);
+    showToast(`Kode ${code} berhasil disalin!`);
+    setTimeout(() => setCopiedKey(null), 2500);
+  };
+
+  const handleCopyWaMessage = (code: string) => {
+    const msg = getVoucherWaMessage(code);
+    navigator.clipboard.writeText(msg);
+    setCopiedKey(`wa_${code}`);
+    showToast(`Template pesan WhatsApp untuk ${code} berhasil disalin!`);
+    setTimeout(() => setCopiedKey(null), 2500);
+  };
+
+  const handleShareWa = (code: string) => {
+    const msg = getVoucherWaMessage(code);
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(waUrl, '_blank');
+  };
+
+  const handleAddVoucher = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanCode = newVoucherInput.trim().toUpperCase();
+    if (!cleanCode) return;
+
+    setIsAddingVoucher(true);
+    setVoucherActionMsg(null);
+
+    try {
+      // 1. Coba RPC create_voucher terlebih dahulu (SECURITY DEFINER)
+      const { data: rpcData, error: rpcErr } = await supabase.rpc('create_voucher', {
+        p_code: cleanCode,
+        p_kategori: 'dokter_umum',
+      });
+
+      if (!rpcErr && rpcData) {
+        const newV = Array.isArray(rpcData) ? rpcData[0] : rpcData;
+        if (newV) {
+          setVouchers(prev => [newV, ...prev]);
+        } else {
+          await fetchVouchers();
+        }
+        setVoucherActionMsg({ type: 'success', text: `Voucher ${cleanCode} berhasil dibuat!` });
+        setNewVoucherInput('FKTP-');
+        showToast(`Voucher ${cleanCode} berhasil dibuat!`);
+        return;
+      }
+
+      // 2. Fallback insert langsung ke tabel
+      const { data: newV, error: insertError } = await supabase
+        .from('vouchers')
+        .insert([
+          {
+            code: cleanCode,
+            kategori_target: 'dokter_umum',
+            is_used: false,
+          }
+        ])
+        .select()
+        .single();
+
+      if (insertError) {
+        if (insertError.code === '42501' || insertError.message?.toLowerCase().includes('permission')) {
+          throw new Error('Izin ditolak (Permission denied) di Supabase. Silakan jalankan script supabase/fix_vouchers_permission.sql di SQL Editor Supabase.');
+        }
+        throw insertError;
+      }
+
+      if (newV) {
+        setVouchers(prev => [newV, ...prev]);
+      } else {
+        await fetchVouchers();
+      }
+      setVoucherActionMsg({ type: 'success', text: `Voucher ${cleanCode} berhasil dibuat!` });
+      setNewVoucherInput('FKTP-');
+      showToast(`Voucher ${cleanCode} berhasil dibuat!`);
+    } catch (err: any) {
+      setVoucherActionMsg({ type: 'error', text: `Gagal membuat voucher: ${err.message}` });
+    } finally {
+      setIsAddingVoucher(false);
+    }
+  };
+
+  const generateRandomSuffix = (len = 6) => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let res = '';
+    for (let i = 0; i < len; i++) {
+      res += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return res;
+  };
+
+  const handleBatchGenerate = async (count: number) => {
+    setIsGeneratingBatch(true);
+    setVoucherActionMsg(null);
+
+    try {
+      // 1. Coba RPC generate_fktp_vouchers terlebih dahulu (SECURITY DEFINER)
+      const { data: rpcData, error: rpcErr } = await supabase.rpc('generate_fktp_vouchers', {
+        p_count: count
+      });
+
+      if (!rpcErr && rpcData && Array.isArray(rpcData) && rpcData.length > 0) {
+        setVouchers(prev => [...rpcData, ...prev]);
+        setVoucherActionMsg({ type: 'success', text: `Berhasil generate ${rpcData.length} voucher FKTP baru!` });
+        showToast(`${rpcData.length} Voucher FKTP baru berhasil dibuat!`);
+        return;
+      }
+
+      // 2. Fallback ke insert batch langsung
+      const existingCodes = new Set(vouchers.map(v => (v.code || '').toUpperCase().trim()));
+      const newItems = [];
+
+      for (let i = 0; i < count; i++) {
+        let code = '';
+        let attempts = 0;
+        do {
+          code = `FKTP-${generateRandomSuffix(6)}`;
+          attempts++;
+        } while (existingCodes.has(code) && attempts < 25);
+
+        existingCodes.add(code);
+        newItems.push({
+          code,
+          kategori_target: 'dokter_umum',
+          is_used: false,
+        });
+      }
+
+      const { data: insertedData, error: batchError } = await supabase
+        .from('vouchers')
+        .insert(newItems)
+        .select();
+
+      if (batchError) {
+        if (batchError.code === '42501' || batchError.message?.toLowerCase().includes('permission')) {
+          throw new Error('Izin ditolak (Permission denied) di Supabase. Silakan jalankan script supabase/fix_vouchers_permission.sql di SQL Editor Supabase.');
+        }
+        throw batchError;
+      }
+
+      if (insertedData) {
+        setVouchers(prev => [...insertedData, ...prev]);
+        setVoucherActionMsg({ type: 'success', text: `Berhasil membuat ${insertedData.length} voucher FKTP baru!` });
+        showToast(`${insertedData.length} Voucher FKTP baru berhasil dibuat!`);
+      } else {
+        await fetchVouchers();
+      }
+    } catch (err: any) {
+      setVoucherActionMsg({ type: 'error', text: `Gagal generate voucher: ${err.message}` });
+    } finally {
+      setIsGeneratingBatch(false);
+    }
+  };
+
+  const handleDeleteVoucher = async (code: string) => {
+    if (!window.confirm(`Hapus voucher ${code}? Tindakan ini tidak dapat dibatalkan.`)) return;
+
+    try {
+      // 1. Coba RPC delete_voucher terlebih dahulu (SECURITY DEFINER)
+      const { error: rpcErr } = await supabase.rpc('delete_voucher', { p_code: code });
+      if (!rpcErr) {
+        setVouchers(prev => prev.filter(v => v.code !== code));
+        showToast(`Voucher ${code} berhasil dihapus.`);
+        return;
+      }
+
+      // 2. Fallback ke delete langsung tabel
+      const { error: delError } = await supabase
+        .from('vouchers')
+        .delete()
+        .eq('code', code);
+
+      if (delError) {
+        if (delError.code === '42501' || delError.message?.toLowerCase().includes('permission')) {
+          throw new Error('Izin ditolak (Permission denied) di Supabase. Silakan jalankan script supabase/fix_vouchers_permission.sql di SQL Editor Supabase.');
+        }
+        throw delError;
+      }
+
+      setVouchers(prev => prev.filter(v => v.code !== code));
+      showToast(`Voucher ${code} berhasil dihapus.`);
+    } catch (err: any) {
+      alert(`Gagal menghapus voucher: ${err.message}`);
+    }
+  };
+
+  const filteredVouchers = vouchers.filter(v => {
+    const isUsed = isVoucherActuallyUsed(v);
+    if (voucherTab === 'fktp_tersedia') {
+      if (!isFktpVoucher(v) || isUsed) return false;
+    } else if (voucherTab === 'terpakai') {
+      if (!isUsed) return false;
+    }
+
+    if (!voucherSearch.trim()) return true;
+    const q = voucherSearch.toLowerCase();
+    const codeMatch = (v.code || '').toLowerCase().includes(q);
+    const targetMatch = (v.kategori_target || '').toLowerCase().includes(q);
+    const usedByMatch = (v.used_by || '').toLowerCase().includes(q);
+
+    const registrant = getUsedVoucherRegistrant(v);
+    const regNameMatch = registrant ? (registrant["Nama Lengkap"] || '').toLowerCase().includes(q) : false;
+    const regInstMatch = registrant ? (registrant.Institusi || '').toLowerCase().includes(q) : false;
+    const regNoMatch = registrant ? (registrant["No. Registrasi"] || '').toLowerCase().includes(q) : false;
+
+    return codeMatch || targetMatch || usedByMatch || regNameMatch || regInstMatch || regNoMatch;
+  });
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
@@ -478,7 +823,12 @@ _Panitia KONAS PERSADIA 2026_`;
       (item["No. WhatsApp"] || "").toLowerCase().includes(q) ||
       (item.Institusi || "").toLowerCase().includes(q) ||
       (item.KodeVoucher || "").toLowerCase().includes(q) ||
-      (item["Kategori Peserta"] || "").toLowerCase().includes(q);
+      (item.CabangPersadia || "").toLowerCase().includes(q) ||
+      (item.NamaKetuaCabang || "").toLowerCase().includes(q) ||
+      (item["Kategori Peserta"] || "").toLowerCase().includes(q) ||
+      (item.nim || "").toLowerCase().includes(q) ||
+      (item.kota_kabupaten || "").toLowerCase().includes(q) ||
+      (item.provinsi || "").toLowerCase().includes(q);
 
     const matchesStatus = statusFilter === "Semua" ? true : item["Status Pembayaran"] === statusFilter;
 
@@ -518,21 +868,37 @@ _Panitia KONAS PERSADIA 2026_`;
     </div>
     </div>
     </div>
-    <div className="flex items-center space-x-4">
-    <button
-    onClick={fetchData}
-    className="text-sm font-medium text-slate-600 hover:text-blue-600 flex items-center"
-    >
-    {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-    Refresh Data
-    </button>
-    <button
-    onClick={handleLogout}
-    className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-    title="Keluar"
-    >
-    <LogOut className="h-5 w-5" />
-    </button>
+    <div className="flex items-center space-x-2.5 sm:space-x-4">
+      <button
+        onClick={() => setIsVoucherModalOpen(true)}
+        className="inline-flex items-center px-2.5 sm:px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+        title="Kelola & Salin Voucher FKTP"
+      >
+        <Ticket className="h-4 w-4 mr-1.5 text-amber-600" />
+        <span className="hidden sm:inline">Voucher FKTP</span>
+        <span className="sm:hidden">FKTP</span>
+        <span className="ml-1.5 px-1.5 py-0.2 bg-amber-200 text-amber-900 rounded-full text-[10px] font-bold">
+          {availableFktpVouchers.length}
+        </span>
+      </button>
+
+      <button
+        onClick={() => {
+          fetchData();
+          fetchVouchers();
+        }}
+        className="text-xs sm:text-sm font-medium text-slate-600 hover:text-blue-600 flex items-center cursor-pointer"
+      >
+        {(loading || loadingVouchers) && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}
+        Refresh Data
+      </button>
+      <button
+        onClick={handleLogout}
+        className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors cursor-pointer"
+        title="Keluar"
+      >
+        <LogOut className="h-5 w-5" />
+      </button>
     </div>
     </div>
     </header>
@@ -676,6 +1042,120 @@ _Panitia KONAS PERSADIA 2026_`;
       </div>
       </div>
 
+      {/* Quick Action: Voucher FKTP Bar */}
+      <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-blue-500/5 border border-amber-200/90 rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-xs">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          {/* Left: Info */}
+          <div className="flex items-start sm:items-center gap-3.5">
+            <div className="h-11 w-11 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+              <Ticket className="h-6 w-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-bold text-slate-800 text-base sm:text-lg">Voucher Khusus FKTP (Dokter Umum)</h3>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                  {availableFktpVouchers.length} Siap Pakai
+                </span>
+                {usedFktpVouchers.length > 0 && (
+                  <span className="text-xs text-slate-500 font-medium">
+                    ({usedFktpVouchers.length} sudah digunakan)
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-600 mt-0.5">
+                Salin dan berikan kode voucher aktif ini kepada dokter FKTP untuk mendapatkan tarif khusus registrasi.
+              </p>
+            </div>
+          </div>
+
+          {/* Right: Quick Copy & Actions */}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+            {nextAvailableFktpVoucher ? (
+              <div className="flex flex-wrap items-center gap-2 bg-white/90 backdrop-blur-xs p-1.5 sm:p-2 rounded-xl border border-amber-200 shadow-xs">
+                <div className="px-2.5 sm:px-3 py-1.5 bg-amber-50 rounded-lg border border-amber-100 flex items-center gap-1.5 sm:gap-2">
+                  <span className="text-[10px] uppercase font-bold text-amber-600 tracking-wider">Voucher:</span>
+                  <span className="font-mono font-bold text-sm sm:text-base text-amber-900 tracking-wider select-all">
+                    {nextAvailableFktpVoucher.code}
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => handleCopyCode(nextAvailableFktpVoucher.code)}
+                  className="inline-flex items-center px-3 py-1.5 sm:py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-xs cursor-pointer"
+                  title="Salin Kode Voucher ke Clipboard"
+                >
+                  {copiedKey === nextAvailableFktpVoucher.code ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 mr-1.5 text-white" />
+                      Tersalin!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5 mr-1.5" />
+                      Salin Kode
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => handleCopyWaMessage(nextAvailableFktpVoucher.code)}
+                  className="inline-flex items-center px-3 py-1.5 sm:py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                  title="Salin Template Teks WhatsApp Lengkap"
+                >
+                  {copiedKey === `wa_${nextAvailableFktpVoucher.code}` ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 mr-1.5 text-emerald-600" />
+                      Pesan Tersalin!
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="w-3.5 h-3.5 mr-1.5 text-slate-600" />
+                      Salin Pesan WA
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => handleShareWa(nextAvailableFktpVoucher.code)}
+                  className="inline-flex items-center px-3 py-1.5 sm:py-2 bg-[#25D366] hover:bg-[#128C7E] text-white text-xs font-semibold rounded-lg transition-colors shadow-xs cursor-pointer"
+                  title="Buka WhatsApp untuk kirim kode voucher langsung"
+                >
+                  <MessageCircle className="w-3.5 h-3.5 mr-1.5" />
+                  Kirim WA
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs text-slate-500 italic bg-white px-3 py-2 rounded-lg border border-slate-200">
+                  {vouchers.length === 0 ? "Belum ada voucher FKTP di database." : "Semua voucher FKTP telah digunakan."}
+                </span>
+                <button
+                  onClick={() => handleBatchGenerate(5)}
+                  disabled={isGeneratingBatch}
+                  className="inline-flex items-center px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-xs cursor-pointer disabled:opacity-50"
+                >
+                  {isGeneratingBatch ? (
+                    <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                  )}
+                  + Buat 5 Voucher FKTP
+                </button>
+              </div>
+            )}
+
+            <button
+              onClick={() => setIsVoucherModalOpen(true)}
+              className="inline-flex items-center px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-semibold rounded-xl transition-all shadow-xs cursor-pointer ml-auto lg:ml-0"
+              title="Buka Panel Lengkap Manajemen Voucher"
+            >
+              <Ticket className="w-3.5 h-3.5 mr-1.5 text-amber-600" />
+              Kelola Voucher ({vouchers.length})
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Table Section - Frozen Toolbar & Header */}
       <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-200 flex flex-col">
       {/* Sticky Toolbar: Daftar Pendaftar + Search + Filter */}
@@ -693,7 +1173,7 @@ _Panitia KONAS PERSADIA 2026_`;
       </div>
       <input
       type="text"
-      placeholder="Cari nama atau no. reg..."
+      placeholder="Cari nama, cabang, no. reg..."
       value={searchQuery}
       onChange={(e) => setSearchQuery(e.target.value)}
       className="pl-9 pr-3 py-1.5 w-full sm:w-60 rounded-lg border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-xs sm:text-sm bg-white"
@@ -757,7 +1237,12 @@ _Panitia KONAS PERSADIA 2026_`;
           </td>
           <td className="px-4 sm:px-6 py-2.5 sm:py-3">
           <div className="font-medium text-slate-800 text-xs sm:text-sm">{row["Nama Lengkap"]}</div>
-          <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5">
+          {row.Institusi && row.Institusi !== '-' && (
+            <div className="text-[11px] text-slate-500 font-medium truncate max-w-[200px]" title={row.Institusi}>
+              🏛️ {row.Institusi}
+            </div>
+          )}
+          <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
           {row["No. WhatsApp"]}
           {row["No. WhatsApp"] && row["No. WhatsApp"] !== "-" && (
             <a
@@ -769,6 +1254,11 @@ _Panitia KONAS PERSADIA 2026_`;
             >
             <MessageCircle className="h-3 w-3" />
             </a>
+          )}
+          {row.nim && row.nim !== '-' && (
+            <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded font-mono border border-slate-200">
+              NIM: {row.nim}
+            </span>
           )}
           </div>
           <div className="text-[11px] text-slate-400 mt-0.5 truncate max-w-[200px]">{row.Email}</div>
@@ -784,12 +1274,47 @@ _Panitia KONAS PERSADIA 2026_`;
                   🎟️ {row.KodeVoucher}
                 </span>
               )}
+              {row.CabangPersadia && row.CabangPersadia !== '-' && (
+                <span 
+                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-blue-50 text-blue-800 border border-blue-200 rounded text-[10px] font-medium"
+                  title={`Cabang PERSADIA: ${row.CabangPersadia}${row.NamaKetuaCabang && row.NamaKetuaCabang !== '-' ? ` | Ketua: ${row.NamaKetuaCabang}` : ''}`}
+                >
+                  🏢 {row.CabangPersadia}
+                  {row.NamaKetuaCabang && row.NamaKetuaCabang !== '-' && (
+                    <span className="text-blue-600 font-normal"> ({row.NamaKetuaCabang})</span>
+                  )}
+                </span>
+              )}
               {row.BersediaAnggota && (
                 <span 
                   className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-300 rounded text-[10px] font-semibold cursor-help"
                   title={row.AlamatLengkap && row.AlamatLengkap !== '-' ? `Alamat: ${row.AlamatLengkap}, ${row.Kelurahan}, ${row.Kecamatan}, ${row.KotaKabupaten}, ${row.Provinsi}` : 'Bersedia mendaftar anggota PERSADIA'}
                 >
                   🎁 Anggota PERSADIA
+                </span>
+              )}
+              {row.registrasi_onsite === 'Ya' && (
+                <span 
+                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-300 rounded text-[10px] font-bold"
+                  title={row.waktu_registrasi_onsite ? `Check-in: ${new Date(row.waktu_registrasi_onsite).toLocaleString('id-ID')}` : 'Check-in Onsite'}
+                >
+                  ✅ Onsite
+                </span>
+              )}
+              {row.cek_gula_darah === 'Ya' && (
+                <span 
+                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-purple-50 text-purple-800 border border-purple-300 rounded text-[10px] font-medium"
+                  title={`Gula Darah: ${row.gula_darah || '-'} | Tensi: ${row.tensi || '-'}`}
+                >
+                  🩸 Cek Gula: {row.gula_darah || 'Ya'}
+                </span>
+              )}
+              {row.pengambilan_merchandise === 'Ya' && (
+                <span 
+                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-50 text-amber-800 border border-amber-300 rounded text-[10px] font-medium"
+                  title="Merchandise sudah diambil"
+                >
+                  🎁 Merchandise
                 </span>
               )}
             </div>
@@ -976,6 +1501,374 @@ _Panitia KONAS PERSADIA 2026_`;
         </div>
         </div>
         </div>
+    )}
+
+    {/* Voucher Management Modal */}
+    {isVoucherModalOpen && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full flex flex-col max-h-[92vh] overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200">
+          
+          {/* Modal Header */}
+          <div className="px-5 sm:px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/80">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 bg-amber-500 rounded-xl flex items-center justify-center text-white shadow-xs">
+                <Ticket className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-base sm:text-lg font-bold text-slate-800">Manajemen Voucher FKTP (Dokter Umum)</h3>
+                  <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                    {availableFktpVouchers.length} Siap Pakai
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Salin atau bagikan kode voucher aktif kepada dokter FKTP dengan satu kali klik.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsVoucherModalOpen(false)}
+              className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-full transition-colors cursor-pointer"
+              title="Tutup"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Modal Toolbar: Search, Tabs & Quick Actions */}
+          <div className="p-4 sm:p-5 border-b border-slate-200 bg-white space-y-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              
+              {/* Search Bar */}
+              <div className="relative flex-1">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-4 w-4 text-slate-400" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Cari voucher, nama dokter, institusi, no. reg..."
+                  value={voucherSearch}
+                  onChange={(e) => setVoucherSearch(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none text-xs sm:text-sm bg-slate-50/50"
+                />
+                {voucherSearch && (
+                  <button
+                    onClick={() => setVoucherSearch("")}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 flex-wrap justify-end">
+                <button
+                  onClick={() => handleBatchGenerate(5)}
+                  disabled={isGeneratingBatch}
+                  className="inline-flex items-center px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                  title="Generate 5 kode voucher FKTP baru secara otomatis"
+                >
+                  {isGeneratingBatch ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 mr-1.5 text-amber-600" />}
+                  +5 Acak
+                </button>
+
+                <button
+                  onClick={() => handleBatchGenerate(10)}
+                  disabled={isGeneratingBatch}
+                  className="inline-flex items-center px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                  title="Generate 10 kode voucher FKTP baru secara otomatis"
+                >
+                  {isGeneratingBatch ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 mr-1.5 text-amber-600" />}
+                  +10 Acak
+                </button>
+
+                <button
+                  onClick={() => setShowAddForm(!showAddForm)}
+                  className={`inline-flex items-center px-3 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
+                    showAddForm ? 'bg-slate-800 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                  }`}
+                >
+                  <Plus className="w-3.5 h-3.5 mr-1" />
+                  Manual
+                </button>
+
+                <button
+                  onClick={fetchVouchers}
+                  disabled={loadingVouchers}
+                  className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer border border-slate-200"
+                  title="Refresh Data Voucher"
+                >
+                  <RefreshCw className={`w-4 h-4 ${loadingVouchers ? 'animate-spin text-amber-600' : ''}`} />
+                </button>
+              </div>
+            </div>
+
+            {/* Filter Tabs */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+              <button
+                onClick={() => setVoucherTab("fktp_tersedia")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer ${
+                  voucherTab === "fktp_tersedia"
+                    ? "bg-amber-600 text-white shadow-xs"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                Tersedia ({availableFktpVouchers.length})
+              </button>
+              <button
+                onClick={() => setVoucherTab("terpakai")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer ${
+                  voucherTab === "terpakai"
+                    ? "bg-amber-600 text-white shadow-xs"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                Sudah Digunakan ({usedFktpVouchers.length})
+              </button>
+              <button
+                onClick={() => setVoucherTab("semua")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer ${
+                  voucherTab === "semua"
+                    ? "bg-amber-600 text-white shadow-xs"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                Semua Voucher ({vouchers.length})
+              </button>
+            </div>
+
+            {/* Inline Add Manual Voucher Form */}
+            {showAddForm && (
+              <form onSubmit={handleAddVoucher} className="p-3 bg-amber-50/70 border border-amber-200 rounded-xl flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="flex-1">
+                  <label className="block text-[11px] font-bold text-amber-900 mb-1">Kode Voucher Baru:</label>
+                  <input
+                    type="text"
+                    required
+                    value={newVoucherInput}
+                    onChange={(e) => setNewVoucherInput(e.target.value.toUpperCase())}
+                    placeholder="Contoh: FKTP-BOGOR01"
+                    className="w-full px-3 py-1.5 rounded-lg border border-amber-300 bg-white focus:ring-1 focus:ring-amber-500 outline-none font-mono text-xs font-bold text-slate-800"
+                  />
+                </div>
+                <div className="sm:self-end">
+                  <button
+                    type="submit"
+                    disabled={isAddingVoucher}
+                    className="w-full sm:w-auto px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+                  >
+                    {isAddingVoucher ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Simpan Voucher"}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {voucherActionMsg && (
+              <div className={`p-2.5 rounded-lg text-xs font-medium ${
+                voucherActionMsg.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'
+              }`}>
+                {voucherActionMsg.text}
+              </div>
+            )}
+          </div>
+
+          {/* Voucher List Content */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-5 max-h-[55vh] divide-y divide-slate-100">
+            {loadingVouchers && vouchers.length === 0 ? (
+              <div className="py-12 flex flex-col items-center justify-center text-slate-400">
+                <Loader2 className="w-8 h-8 text-amber-500 animate-spin mb-2" />
+                <p className="text-xs">Memuat daftar voucher...</p>
+              </div>
+            ) : filteredVouchers.length === 0 ? (
+              <div className="py-12 flex flex-col items-center justify-center text-center">
+                <div className="h-12 w-12 bg-amber-50 rounded-full flex items-center justify-center text-amber-600 mb-3">
+                  <Ticket className="h-6 w-6" />
+                </div>
+                <h4 className="text-sm font-bold text-slate-800 mb-1">Tidak ada voucher yang sesuai</h4>
+                <p className="text-xs text-slate-500 max-w-sm mb-4">
+                  {voucherSearch ? `Tidak ditemukan voucher yang sesuai dengan kata kunci "${voucherSearch}".` : "Belum ada voucher pada kategori filter ini."}
+                </p>
+                {voucherTab === 'fktp_tersedia' && (
+                  <button
+                    onClick={() => handleBatchGenerate(5)}
+                    disabled={isGeneratingBatch}
+                    className="inline-flex items-center px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-xl transition-colors shadow-xs cursor-pointer"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                    + Buat 5 Voucher FKTP Sekarang
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filteredVouchers.map((v, idx) => {
+                  const isUsed = isVoucherActuallyUsed(v);
+                  const registrant = getUsedVoucherRegistrant(v);
+                  return (
+                    <div
+                      key={v.id || v.code || idx}
+                      className={`p-3.5 sm:p-4 rounded-xl border transition-all ${
+                        isUsed
+                          ? 'bg-slate-50/70 border-slate-200'
+                          : 'bg-white border-amber-200 hover:border-amber-300 shadow-xs'
+                      }`}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        {/* Voucher Info */}
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-mono font-bold text-sm sm:text-base text-slate-800 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-lg tracking-wider">
+                              {v.code}
+                            </span>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              isUsed
+                                ? 'bg-slate-200 text-slate-700'
+                                : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                            }`}>
+                              {isUsed ? 'Sudah Digunakan' : 'Siap Digunakan'}
+                            </span>
+                            <span className="text-[11px] text-slate-500 font-medium">
+                              Target: {v.kategori_target === 'dokter_umum' ? 'Dokter Umum (FKTP)' : (v.kategori_target || 'Umum')}
+                            </span>
+                          </div>
+
+                          {/* Detail of who redeemed if used */}
+                          {isUsed && (
+                            <div className="mt-2 p-2.5 bg-white border border-slate-200 rounded-lg text-xs space-y-1">
+                              <div className="font-semibold text-slate-800 flex items-center gap-1.5 flex-wrap">
+                                <span className="text-slate-500">Pengguna:</span>
+                                <span className="text-blue-700 font-bold">{registrant ? registrant["Nama Lengkap"] : (v.used_by || "Peserta")}</span>
+                                {registrant && (
+                                  <span className="font-mono text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200">
+                                    {registrant["No. Registrasi"]}
+                                  </span>
+                                )}
+                              </div>
+                              {registrant?.Institusi && registrant.Institusi !== '-' && (
+                                <div className="text-slate-600 text-[11px]">Institusi: {registrant.Institusi}</div>
+                              )}
+                              <div className="flex items-center gap-3 text-slate-500 text-[11px] flex-wrap pt-0.5">
+                                {v.used_at && (
+                                  <span>Klaim: {new Date(v.used_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                                )}
+                                {registrant?.["No. WhatsApp"] && registrant["No. WhatsApp"] !== '-' && (
+                                  <a
+                                    href={`https://wa.me/${registrant["No. WhatsApp"].replace(/\D/g, '').replace(/^0/, '62')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center text-emerald-600 hover:text-emerald-700 font-medium"
+                                  >
+                                    <MessageCircle className="w-3 h-3 mr-1" />
+                                    WA: {registrant["No. WhatsApp"]}
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-1.5 sm:gap-2 self-end sm:self-center shrink-0 flex-wrap">
+                          {!isUsed ? (
+                            <>
+                              <button
+                                onClick={() => handleCopyCode(v.code)}
+                                className="inline-flex items-center px-2.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-xs cursor-pointer"
+                                title="Salin Kode Voucher"
+                              >
+                                {copiedKey === v.code ? (
+                                  <>
+                                    <Check className="w-3.5 h-3.5 mr-1" />
+                                    Tersalin!
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="w-3.5 h-3.5 mr-1" />
+                                    Salin Kode
+                                  </>
+                                )}
+                              </button>
+
+                              <button
+                                onClick={() => handleCopyWaMessage(v.code)}
+                                className="inline-flex items-center px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                                title="Salin Template Pesan WhatsApp"
+                              >
+                                {copiedKey === `wa_${v.code}` ? (
+                                  <>
+                                    <Check className="w-3.5 h-3.5 mr-1 text-emerald-600" />
+                                    Teks Tersalin!
+                                  </>
+                                ) : (
+                                  <>
+                                    <Share2 className="w-3.5 h-3.5 mr-1 text-slate-600" />
+                                    Salin Pesan WA
+                                  </>
+                                )}
+                              </button>
+
+                              <button
+                                onClick={() => handleShareWa(v.code)}
+                                className="inline-flex items-center px-2.5 py-1.5 bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#128C7E] text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                                title="Buka WhatsApp untuk Kirim Langsung"
+                              >
+                                <MessageCircle className="w-3.5 h-3.5 mr-1" />
+                                Kirim WA
+                              </button>
+
+                              <button
+                                onClick={() => handleDeleteVoucher(v.code)}
+                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                                title="Hapus Voucher Ini"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </>
+                          ) : (
+                            registrant?.["No. WhatsApp"] && registrant["No. WhatsApp"] !== '-' && (
+                              <a
+                                href={`https://wa.me/${registrant["No. WhatsApp"].replace(/\D/g, '').replace(/^0/, '62')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg transition-colors"
+                              >
+                                <MessageCircle className="w-3.5 h-3.5 mr-1 text-emerald-600" />
+                                Hubungi Dokter
+                              </a>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Modal Footer */}
+          <div className="px-5 sm:px-6 py-3.5 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-600">
+            <span>
+              Menampilkan <strong className="text-slate-800 font-semibold">{filteredVouchers.length}</strong> dari <strong className="text-slate-800 font-semibold">{vouchers.length}</strong> voucher
+            </span>
+            <button
+              onClick={() => setIsVoucherModalOpen(false)}
+              className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-xl transition-colors cursor-pointer"
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Floating Toast Notification */}
+    {toastMessage && (
+      <div className="fixed bottom-6 right-6 z-50 bg-slate-900/95 text-white text-xs sm:text-sm font-medium px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 animate-in fade-in slide-in-from-bottom-3 duration-200 border border-slate-800 backdrop-blur-xs">
+        <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0" />
+        <span>{toastMessage}</span>
+      </div>
     )}
     </div>
   );

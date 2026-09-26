@@ -33,7 +33,7 @@ jobs:
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "apikey: $SUPABASE_ANON_KEY" \
             -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
-            "$CLEAN_URL/rest/v1/pendaftar?select=no_registrasi&limit=1")
+            "$CLEAN_URL/rest/v1/vouchers?select=id&limit=1")
             
           echo "📡 HTTP Response Status: $HTTP_STATUS"
           

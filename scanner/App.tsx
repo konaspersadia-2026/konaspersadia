@@ -233,7 +233,7 @@ function App() {
           "Registrasi_OnSite": row.registrasi_onsite,
           "Makan_Siang_Hari_1": row.makan_siang_hari_1,
           "Makan_Siang_Pesta_Rakyat": row.makan_siang_pesta_rakyat,
-          "Seminar_Kit": row.seminar_kit,
+          "Pengambilan_Merchandise": row.pengambilan_merchandise,
           "Cek_Gula_Darah": row.cek_gula_darah,
           ...row
         }));
@@ -443,6 +443,10 @@ function App() {
       const updatePayload: Record<string, string | null> = {
         [checkpointId.toLowerCase()]: newValue ? "Ya" : null
       };
+
+      if (checkpointId.toLowerCase() === 'registrasi_onsite') {
+        updatePayload['waktu_registrasi_onsite'] = newValue ? new Date().toISOString() : null;
+      }
 
       extraColumns.forEach(col => {
         updatePayload[col.toLowerCase()] = newValue ? "Ya" : null;

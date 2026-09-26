@@ -14,6 +14,7 @@ import RegistrationModal from "./components/RegistrationModal";
 import Sponsors from "./components/Sponsors";
 import AdminDashboard from "./components/Admin/AdminDashboard";
 import SponsorshipPage from "./components/SponsorshipPage";
+import AccommodationPage from "./components/AccommodationPage";
 
 export default function App() {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
@@ -23,7 +24,7 @@ export default function App() {
 
   // Sync scroll position with navbar links if on home page
   useEffect(() => {
-    if (currentHash === "#admin" || currentHash === "#sponsorship") return;
+    if (currentHash === "#admin" || currentHash === "#sponsorship" || currentHash === "#akomodasi" || currentHash === "#hotel") return;
     if (currentPath !== "/" && currentPath !== "/index.html") return;
 
     const handleScroll = () => {
@@ -121,6 +122,10 @@ export default function App() {
 
   if (currentHash === "#sponsorship") {
     return <SponsorshipPage onNavigateHome={handleBackToHome} />;
+  }
+
+  if (currentHash === "#akomodasi" || currentHash === "#hotel") {
+    return <AccommodationPage onNavigateHome={handleBackToHome} />;
   }
 
   return (

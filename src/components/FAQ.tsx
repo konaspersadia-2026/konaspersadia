@@ -15,7 +15,7 @@ export default function FAQ() {
     },
     {
       q: "Apakah pendaftaran Pesta Rakyat di GOR Pakansari wajib membayar?",
-      a: "Pendaftaran Pesta Rakyat bagi Anggota PERSADIA maupun Masyarakat Umum adalah sepenuhnya Gratis (tidak dipungut biaya), baik selama periode pendaftaran Early Bird maupun Onsite. Semua pendaftar Pesta Rakyat akan mendapatkan fasilitas seperti konsumsi pagi, makan siang, kaos, kupon undian doorprize, serta pemeriksaan gula darah gratis."
+      a: "Pendaftaran Pesta Rakyat bagi Anggota PERSADIA adalah Gratis (Rp 0) dengan mencantumkan nama ketua cabang saat registrasi. Bagi Masyarakat Umum, pendaftaran Pesta Rakyat tersedia dalam dua pilihan: Akses Gratis (Rp 0) untuk senam massal, cek gula darah gratis, & panggung hiburan; atau Paket Berbayar (Rp 100.000) yang mendapatkan fasilitas tambahan Kaos Eksklusif Pesta Rakyat KONAS PERSADIA 2026, goodie bag, dan snack."
     },
     {
       q: "Apakah saya mendapatkan e-sertifikat setelah acara selesai?",

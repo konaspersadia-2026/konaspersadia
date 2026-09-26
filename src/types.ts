@@ -23,7 +23,7 @@ export interface KategoriPeserta {
   hargaWorkshop?: HargaKegiatan;
   hargaEarlyBird?: number; // untuk pesta_rakyat
   hargaReguler?: number; // untuk pesta_rakyat
-  fieldTambahan: Array<"noSTR" | "institusi" | "noKTP" | "cabangPersadia" | "slotWaktuCekGula" | "nim" | "tanggalLahir" | "jenisKelamin">;
+  fieldTambahan: Array<"noSTR" | "institusi" | "noKTP" | "cabangPersadia" | "namaKetuaCabang" | "slotWaktuCekGula" | "nim" | "tanggalLahir" | "jenisKelamin">;
 }
 
 export interface RekeningPembayaran {
@@ -51,6 +51,8 @@ export interface Speaker {
   institution: string;
   imageUrl: string;
   topics: string[];
+  role?: string;
+  category?: "plenary" | "symposium" | "workshop" | "health_forum" | "moderator";
 }
 
 export interface RegistrationData {
@@ -66,6 +68,7 @@ export interface RegistrationData {
   nim?: string;
   noKTP?: string;
   cabangPersadia?: string;
+  namaKetuaCabang?: string;
   slotWaktuCekGula?: string;
   tanggalLahir?: string;
   jenisKelamin?: string;
@@ -74,4 +77,24 @@ export interface RegistrationData {
   totalAkhir: number;
   status: "Menunggu Verifikasi" | "Terverifikasi" | "Ditolak";
   timestamp?: string;
+}
+
+export interface HotelRoom {
+  id: string;
+  name: string;
+  price: number;
+  bedType?: string;
+  description: string;
+  facilities: string[];
+  images: string[];
+}
+
+export interface HotelOption {
+  id: string;
+  name: string;
+  location: string;
+  distance: string;
+  description: string;
+  coverImage?: string;
+  rooms: HotelRoom[];
 }
