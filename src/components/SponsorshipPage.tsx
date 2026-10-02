@@ -164,7 +164,7 @@ export default function SponsorshipPage({ onNavigateHome }: SponsorshipPageProps
       id: "pendukung",
       name: "PENDUKUNG (UMKM)",
       badge: "Khusus Mitra UMKM",
-      price: "Rp 3.000.000",
+      price: "Rp 1.500.000 / Rp 3.000.000",
       icon: <Briefcase className="h-8 w-8 text-indigo-600" />,
       color: "border-indigo-200 bg-gradient-to-br from-indigo-50/60 to-white",
       headerBg: "bg-gradient-to-r from-indigo-800 to-indigo-600 text-white",
@@ -172,7 +172,8 @@ export default function SponsorshipPage({ onNavigateHome }: SponsorshipPageProps
       accentColor: "bg-indigo-600",
       description: "Bentuk dukungan agar pelaku usaha lokal dapat turut ambil bagian, memperkenalkan produk, dan membangun jejaring dengan tenaga kesehatan & masyarakat.",
       benefits: [
-        "Area / Space Only ukuran 3x3 meter (tidak termasuk listrik) pada Symposium/Workshop dan Pesta Rakyat."
+        "Pilihan Tenda (Rp 3.000.000): Stand booth ukuran 3x3 meter termasuk tenda (tidak termasuk listrik) pada Symposium/Workshop dan Pesta Rakyat.",
+        "Pilihan Meja Saja (Rp 1.500.000): Fasilitas stand dengan hanya meja saja pada Symposium/Workshop dan Pesta Rakyat."
       ]
     }
   ];

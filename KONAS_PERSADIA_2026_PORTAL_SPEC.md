@@ -250,8 +250,9 @@ Acara ini membuka kemitraan industri yang dikelola langsung bersama Seksi Kemitr
 #### E. Paket Topaz — Rp 25.000.000
 *   **Fasilitas Utama:** Booth 1 hari di lokasi Novotel Bogor. 1 voucher konsumsi panitia, dan 5 tiket undangan dinner symposium.
 
-#### F. Paket Pendukung (Mitra Lokal / UMKM) — Rp 3.000.000
-*   **Fasilitas Utama:** *Area/space only* ukuran 3x3m (tanpa instalasi listrik) di area pameran Novotel Bogor & GOR Pakansari untuk mempromosikan produk lokal terpercaya.
+#### F. Paket Pendukung (Mitra Lokal / UMKM) — Rp 1.500.000 / Rp 3.000.000
+*   **Pilihan Tenda (Rp 3.000.000):** Stand booth ukuran 3x3m termasuk tenda (tanpa instalasi listrik) di area pameran Novotel Bogor & GOR Pakansari.
+*   **Pilihan Meja Saja (Rp 1.500.000):** Fasilitas stand dengan hanya meja saja di area pameran Novotel Bogor & GOR Pakansari.
 
 ### 9.3 Aturan & Ketentuan Sponsorship
 *   **Batas Waktu Pembayaran:** Paling lambat tanggal **23 Oktober 2026** (2 minggu sebelum acara).
