@@ -389,6 +389,29 @@ Mohon informasi ketersediaan slot kamar dan instruksi pembayarannya. Terima kasi
           </div>
         </div>
 
+        {/* Rekomendasi Hotel Dekat Stadion Pakansari (Hari Ke-2) */}
+        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold mb-1 border border-emerald-200">
+              <Building2 className="h-3.5 w-3.5 text-emerald-600" />
+              Rekomendasi Dekat Stadion Pakansari (Hari Ke-2)
+            </div>
+            <h3 className="text-lg sm:text-xl font-black text-slate-800">Hotel M-One</h3>
+            <p className="text-xs sm:text-sm text-slate-600">
+              Lokasi strategis dekat dengan venue Pesta Rakyat (Stadion Pakansari). Pilihan ideal bagi peserta yang memprioritaskan kemudahan akses menuju lokasi acara Hari Ke-2.
+            </p>
+          </div>
+          <a
+            href={`https://wa.me/${KONTAK_AKOMODASI.whatsappNumber}?text=${encodeURIComponent("Halo Panitia KONAS PERSADIA 2026, saya ingin menanyakan informasi dan rekomendasi akomodasi Hotel M-One dekat Stadion Pakansari.")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-5 py-3 bg-[#0B3D5E] hover:bg-[#00B4AC] text-white text-xs sm:text-sm font-extrabold rounded-xl transition-all shadow-md flex items-center gap-2 shrink-0 cursor-pointer whitespace-nowrap"
+          >
+            <MessageCircle className="h-4 w-4" />
+            Tanya Panitia via WA
+          </a>
+        </div>
+
         {/* Important Terms & Information */}
         <div className="bg-amber-50/80 border border-amber-200/90 rounded-3xl p-6 sm:p-8 text-amber-900 space-y-4">
           <div className="flex items-center gap-2 text-sm sm:text-base font-extrabold">

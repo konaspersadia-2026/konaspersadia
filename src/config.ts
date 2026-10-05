@@ -9,9 +9,9 @@ export const EVENT_INFO: EventInfo = {
   tema: "Pesta Rakyat Persadia, Menyehatkan Indonesia",
   tanggalMulai: "2026-11-07",
   tanggalSelesai: "2026-11-08",
-  batasEarlyBird: "2026-09-30",
-  batasOnsite: "2026-10-01",
-  deadlinePembayaranPeserta: "2026-10-20",
+  batasEarlyBird: "2026-10-31",
+  batasOnsite: "2026-11-01",
+  deadlinePembayaranPeserta: "2026-10-31",
   // URL Logo Gabungan Acara. Anda bisa mengganti ini dengan URL ImgBB atau link CDN gambar tunggal Anda
   eventLogoUrl: "https://i.ibb.co.com/TqcrNyd9/logo.webp",
 };
@@ -19,43 +19,43 @@ export const EVENT_INFO: EventInfo = {
 export const KATEGORI_PESERTA: KategoriPeserta[] = [
   {
     id: "dokter_umum",
-    label: "Dokter Umum",
+    label: "Dokter Umum (Praktisi FKTP / Puskesmas / Klinik)",
     akses: "ilmiah",
-    hargaSymposium: { earlyBird: 1500000, onsite: 1800000 },
-    hargaSymposiumWorkshop: { earlyBird: 2400000, onsite: 2800000 },
+    hargaSymposium: { earlyBird: 1500000, onsite: 1500000 },
+    hargaSymposiumWorkshop: { earlyBird: 1500000, onsite: 1500000 },
     fieldTambahan: ["institusi"],
   },
   {
     id: "dokter_spesialis",
-    label: "Dokter Spesialis",
+    label: "Dokter Spesialis (Sp.PD, Sp.PD-KEMD)",
     akses: "ilmiah",
-    hargaSymposium: { earlyBird: 2200000, onsite: 2600000 },
-    hargaSymposiumWorkshop: { earlyBird: 3200000, onsite: 3700000 },
+    hargaSymposium: { earlyBird: 2500000, onsite: 2500000 },
+    hargaSymposiumWorkshop: { earlyBird: 2500000, onsite: 2500000 },
     fieldTambahan: ["institusi"],
   },
   {
     id: "residen",
-    label: "Residen",
+    label: "Residen / PPDS (Pendidikan Dokter Spesialis)",
     akses: "ilmiah",
-    hargaSymposium: { earlyBird: 1000000, onsite: 1300000 },
-    hargaSymposiumWorkshop: { earlyBird: 1700000, onsite: 2000000 },
+    hargaSymposium: { earlyBird: 1000000, onsite: 1000000 },
+    hargaSymposiumWorkshop: { earlyBird: 1000000, onsite: 1000000 },
     fieldTambahan: ["institusi"],
   },
   {
     id: "perawat",
-    label: "Perawat",
+    label: "Perawat, Ahli Gizi & Edukator Diabetes",
     akses: "ilmiah",
-    // Khusus Perawat hanya dapat mengikuti kegiatan Workshop
+    // Khusus Perawat, Ahli Gizi & Edukator mengikuti kegiatan Workshop Medis Terapan
     hargaWorkshop: { earlyBird: 400000, onsite: 400000 },
     hargaSymposiumWorkshop: { earlyBird: 400000, onsite: 400000 },
     fieldTambahan: ["institusi"],
   },
   {
     id: "mahasiswa",
-    label: "Mahasiswa",
+    label: "Mahasiswa Kedokteran S1",
     akses: "ilmiah",
-    hargaSymposium: { earlyBird: 600000, onsite: 800000 },
-    hargaSymposiumWorkshop: { earlyBird: 1000000, onsite: 1300000 },
+    hargaSymposium: { earlyBird: 400000, onsite: 400000 },
+    hargaSymposiumWorkshop: { earlyBird: 400000, onsite: 400000 },
     fieldTambahan: ["institusi", "nim"],
   },
   {
@@ -80,8 +80,8 @@ export const KATEGORI_PESERTA: KategoriPeserta[] = [
 export const VOUCHER_DOKTER_UMUM_CONFIG = {
   prefix: "FKTP-",
   // Placeholder harga khusus voucher (silakan sesuaikan nominal):
-  hargaSymposium: 6000000,
-  hargaSymposiumWorkshop: 6000000,
+  hargaSymposium: 600000,
+  hargaSymposiumWorkshop: 600000,
 };
 
 // Konfigurasi Sesi Diabetes Health Forum (Anggota PERSADIA & Masyarakat Umum)

@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 3000",
-    "build": "python3 scripts/generate_rundown_pdf.py && vite build",
+    "generate:pdf": "python3 scripts/generate_symposium_pdf.py && python3 scripts/generate_rundown_pdf.py",
+    "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit"

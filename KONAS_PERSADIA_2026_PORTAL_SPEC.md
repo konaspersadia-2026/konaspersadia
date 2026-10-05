@@ -251,8 +251,9 @@ Acara ini membuka kemitraan industri yang dikelola langsung bersama Seksi Kemitr
 *   **Fasilitas Utama:** Booth 1 hari di lokasi Novotel Bogor. 1 voucher konsumsi panitia, dan 5 tiket undangan dinner symposium.
 
 #### F. Paket Pendukung (Mitra Lokal / UMKM) — Rp 1.500.000 / Rp 3.000.000
-*   **Pilihan Tenda (Rp 3.000.000):** Stand booth ukuran 3x3m termasuk tenda (tanpa instalasi listrik) di area pameran Novotel Bogor & GOR Pakansari.
-*   **Pilihan Meja Saja (Rp 1.500.000):** Fasilitas stand dengan hanya meja saja di area pameran Novotel Bogor & GOR Pakansari.
+Tersedia dua pilihan booth berukuran 3 × 3 meter *(tidak termasuk listrik)*:
+*   **Tenda Sarnafil (Rp 3.000.000):** Lokasi di area depan.
+*   **Tenda Kerucut (Rp 1.500.000):** Lokasi di area belakang.
 
 ### 9.3 Aturan & Ketentuan Sponsorship
 *   **Batas Waktu Pembayaran:** Paling lambat tanggal **23 Oktober 2026** (2 minggu sebelum acara).

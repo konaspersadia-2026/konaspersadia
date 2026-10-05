@@ -10,21 +10,29 @@ import Location from "./components/Location";
 import FAQ from "./components/FAQ";
 import Committee from "./components/Committee";
 import Footer from "./components/Footer";
-import RegistrationModal from "./components/RegistrationModal";
+import RegistrationPage from "./components/RegistrationPage";
 import Sponsors from "./components/Sponsors";
 import AdminDashboard from "./components/Admin/AdminDashboard";
 import SponsorshipPage from "./components/SponsorshipPage";
 import AccommodationPage from "./components/AccommodationPage";
 
 export default function App() {
-  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("beranda");
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
   const [currentHash, setCurrentHash] = useState(window.location.hash);
 
   // Sync scroll position with navbar links if on home page
   useEffect(() => {
-    if (currentHash === "#admin" || currentHash === "#sponsorship" || currentHash === "#akomodasi" || currentHash === "#hotel") return;
+    if (
+      currentHash === "#admin" || 
+      currentHash === "#sponsorship" || 
+      currentHash === "#akomodasi" || 
+      currentHash === "#hotel" ||
+      currentHash.startsWith("#pendaftaran") ||
+      currentHash.startsWith("#register") ||
+      currentPath === "/pendaftaran" ||
+      currentPath === "/register"
+    ) return;
     if (currentPath !== "/" && currentPath !== "/index.html") return;
 
     const handleScroll = () => {
@@ -108,12 +116,16 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleOpenRegister = () => {
-    setIsRegisterOpen(true);
-  };
+  const isRegisterPage =
+    currentHash.startsWith("#pendaftaran") ||
+    currentHash.startsWith("#register") ||
+    currentPath === "/pendaftaran" ||
+    currentPath === "/register";
 
-  const handleCloseRegister = () => {
-    setIsRegisterOpen(false);
+  const handleOpenRegister = () => {
+    window.location.hash = "#pendaftaran";
+    setCurrentHash("#pendaftaran");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   if (currentHash === "#admin") {
@@ -126,6 +138,14 @@ export default function App() {
 
   if (currentHash === "#akomodasi" || currentHash === "#hotel") {
     return <AccommodationPage onNavigateHome={handleBackToHome} />;
+  }
+
+  if (isRegisterPage) {
+    return (
+      <RegistrationPage
+        onNavigateHome={handleBackToHome}
+      />
+    );
   }
 
   return (
@@ -178,12 +198,6 @@ export default function App() {
 
       {/* Footer Block */}
       <Footer />
-
-      {/* Multi-step Registration Modal */}
-      <RegistrationModal
-        isOpen={isRegisterOpen}
-        onClose={handleCloseRegister}
-      />
     </div>
   );
 }

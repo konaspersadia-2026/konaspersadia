@@ -63,19 +63,19 @@ class PDFBuilder:
 def get_char_width(c, font_size, is_bold=False):
     """Estimate proportional character width for Helvetica in points."""
     if c in "ijl:;.,!|' ":
-        base = 0.27
+        base = 0.28
     elif c in "frtI()[]-`":
-        base = 0.35
+        base = 0.38
     elif c in "mwMW@":
-        base = 0.80
+        base = 0.85
     elif c.isupper():
-        base = 0.64
+        base = 0.68
     elif c in "0123456789":
-        base = 0.54
+        base = 0.56
     else:
-        base = 0.50
+        base = 0.55
     if is_bold:
-        base *= 1.10
+        base *= 1.12
     return base * font_size
 
 
@@ -174,9 +174,9 @@ class PDFPage:
         # Accent teal line
         self.rect(x, y, w, 3.5, fill_rgb=(0.000, 0.706, 0.675))
 
-        self.text(x + 16, y + 45, "SUSUNAN / RUNDOWN ACARA RESMI", font="F2", size=14, rgb=(1, 1, 1))
-        self.text(x + 16, y + 29, "KONGRES NASIONAL PERSADIA XI & KONFERENSI GABUNGAN 2026", font="F2", size=9, rgb=(0.85, 0.95, 1.0))
-        self.text(x + 16, y + 14, "Novotel Bogor Golf Resort & GOR Pakansari Cibinong  |  7 - 8 November 2026", font="F1", size=8, rgb=(0.75, 0.9, 0.95))
+        self.text(x + 16, y + 45, "SUSUNAN / RUNDOWN ACARA RESMI", font="F2", size=13, rgb=(1, 1, 1))
+        self.text(x + 16, y + 29, "KONGRES NASIONAL PERSADIA 2026 (PB PERSADIA • PP PEDI • PB PERKENI)", font="F2", size=8.5, rgb=(0.85, 0.95, 1.0))
+        self.text(x + 16, y + 14, "Novotel Bogor & Stadion Pakansari, Cibinong, Kabupaten Bogor  |  7 - 8 November 2026", font="F1", size=7.5, rgb=(0.75, 0.9, 0.95))
         self.curr_y = y - 14
 
     def draw_page_top_bar(self, title):
@@ -201,7 +201,7 @@ class PDFPage:
         else:
             self.curr_y = y - 6
 
-    def draw_table_header(self):
+    def draw_table_header(self, c1="WAKTU", c2="SESI & RUANGAN", c3="AGENDA / MATERI & NARASUMBER"):
         w = self.width - 70
         x = 35
         h = 16
@@ -213,9 +213,9 @@ class PDFPage:
         self.line(x + c1_w, y, x + c1_w, y + h, stroke_rgb=(0.82, 0.86, 0.90), line_width=0.75)
         self.line(x + c1_w + c2_w, y, x + c1_w + c2_w, y + h, stroke_rgb=(0.82, 0.86, 0.90), line_width=0.75)
         
-        self.text(x + 6, y + 4.5, "WAKTU", font="F2", size=7.5, rgb=(0.1, 0.2, 0.3))
-        self.text(x + c1_w + 6, y + 4.5, "SESI & RUANGAN", font="F2", size=7.5, rgb=(0.1, 0.2, 0.3))
-        self.text(x + c1_w + c2_w + 6, y + 4.5, "AGENDA / MATERI & NARASUMBER", font="F2", size=7.5, rgb=(0.1, 0.2, 0.3))
+        self.text(x + 6, y + 4.5, c1, font="F2", size=7.5, rgb=(0.1, 0.2, 0.3))
+        self.text(x + c1_w + 6, y + 4.5, c2, font="F2", size=7.5, rgb=(0.1, 0.2, 0.3))
+        self.text(x + c1_w + c2_w + 6, y + 4.5, c3, font="F2", size=7.5, rgb=(0.1, 0.2, 0.3))
         self.curr_y = y
 
     def draw_table_row(self, time_str, col2_title, col2_sub, lines, bg_alt=False):
@@ -227,7 +227,7 @@ class PDFPage:
         c1_w = 80
         c2_w = 115
         c3_w = w - c1_w - c2_w  # 525 - 80 - 115 = 330 pt
-        c3_max_text_w = c3_w - 14 # 316 pt max text width
+        c3_max_text_w = c3_w - 18 # 312 pt max text width with generous cell padding
 
         # 1. Prepare Column 2 lines (Wrap if needed)
         c2_title_wrapped = wrap_text_line(col2_title, c2_w - 12, 8, is_bold=True)
@@ -294,7 +294,7 @@ class PDFPage:
         y = 18
         self.line(x, y + 14, x + w, y + 14, stroke_rgb=(0.85, 0.88, 0.92), line_width=0.5)
         self.text(x, y + 7, "* Jadwal dan susunan pembicara dapat berubah sewaktu-waktu tanpa pemberitahuan terlebih dahulu.", font="F1", size=6.5, rgb=(0.6, 0.4, 0.15))
-        self.text(x, y, "Kongres Nasional PERSADIA XI & Konferensi Gabungan 2026", font="F1", size=7, rgb=(0.45, 0.5, 0.55))
+        self.text(x, y, "Kongres Nasional PERSADIA 2026 • Novotel Bogor & Stadion Pakansari", font="F1", size=7, rgb=(0.45, 0.5, 0.55))
         page_str = f"Halaman {self.page_num} dari {total_pages}"
         self.text(x + w - 75, y, page_str, font="F2", size=7, rgb=(0.4, 0.45, 0.5))
 
@@ -312,63 +312,74 @@ def build_pdf():
         "A. JADWAL SIMPOSIUM & WORKSHOP MEDIS (SABTU, 7 NOV 2026)",
         "Venue: Novotel Bogor Golf Resort  |  Room Gede & Room Pangrango"
     )
-    p1.draw_table_header()
+    p1.draw_table_header("WAKTU", "AGENDA / SESI", "DETAIL ACARA & NARASUMBER")
 
     p1.draw_table_row(
-        "08.00 - 08.30", "Registrasi", "Foyer Novotel",
-        ["Registrasi Ulang Peserta Simposium & Workshop Medis di Foyer Novotel Bogor"],
+        "08.00 - 08.30", "Registrasi Peserta", "Foyer Ballroom Novotel",
+        ["Re-registrasi peserta Simposium & Workshop"],
         bg_alt=True
     )
 
     p1.draw_table_row(
-        "08.30 - 09.00", "SESI 1: Plenary", "Room Gede",
+        "08.30 - 08.50", "SESI 1: Plenary Lecture", "Room Gede",
         [
             "Topik: Good Habit for a Better Life",
-            "Speaker: Prof. dr. Putu Moda Arsana, SpPD-KEMD",
-            "MC: Dr. dr. Rudy Kurniawan, SpPD, MM, MARS, Dip.TH, DCD",
-            "08.50 - 09.00: Opening Ceremony Resmi KONAS PERSADIA 2026"
+            "Narasumber: Prof. dr. Putu Moda Arsana, SpPD-KEMD (Konsil Kedokteran Indonesia / PB PERKENI)",
+            "MC: Dr. dr. Rudy Kurniawan, SpPD, MM, MARS, Dip.TH, DCD (Sobat Diabet)"
         ]
     )
 
     p1.draw_table_row(
-        "09.00 - 10.30", "SESI 2: Presidents", "Room Gede",
+        "08.50 - 09.00", "Opening Ceremony", "Room Gede",
+        ["Pembukaan resmi Kongres Nasional PERSADIA & Konferensi Gabungan 2026 oleh Pimpinan Pengurus Pusat & Tamu Kehormatan"],
+        bg_alt=True
+    )
+
+    p1.draw_table_row(
+        "09.00 - 10.00", "SESI 2: Presidents' Lecture", "Room Gede",
         [
-            "09.00 - 09.20: Obesity - Prof. dr. Sidartawan Soegondo, SpPD-KEMD",
-            "09.20 - 09.40: Tirzepatide: Beyond Numbers - Dr. dr. K. Heri Nugroho, SpPD-KEMD",
-            "09.40 - 10.00: Diabetes Update Treatment - Prof. Dr. dr. Achmad Rudijanto, SpPD-KEMD",
             "Moderator: dr. Fauzia Kirana, SpPD",
-            "10.00 - 10.30: DISCUSSION + COFFEE BREAK"
-        ],
+            "• 09.00 - 09.20: Obesity: The Growing Metabolic Challenge - Prof. Dr. dr. Sidartawan Soegondo, SpPD-KEMD (FKUI - RSCM / PB PERKENI)",
+            "• 09.20 - 09.40: Tirzepatide: Beyond the Numbers (Dual GIP/GLP-1) - Dr. dr. K. Heri Nugroho Harioseno, SpPD-KEMD (UNDIP / RSUP Dr. Kariadi)",
+            "• 09.40 - 10.00: Diabetes Update Treatment: Janus, The First and After - Prof. Dr. dr. Achmad Rudijanto, SpPD-KEMD (Universitas Brawijaya / PB PERKENI)"
+        ]
+    )
+
+    p1.draw_table_row(
+        "10.00 - 10.30", "Coffee Break & Diskusi", "Foyer Novotel",
+        ["Tanya jawab interaktif bersama pembicara Presidents' Lecture & Rehat Kopi/Kudapan Pagi di Foyer Novotel Bogor"],
         bg_alt=True
     )
 
     p1.draw_table_row(
         "10.30 - 11.30", "SESI 3: Dokter FKTP", "Room Gede",
         [
-            "10.30 - 10.50: My Life in FKTP - dr. Baringin T A Manik, MKM",
-            "10.50 - 11.10: Diabetes Approach in FKTP - dr. Dicky Levenus Tahapary, SpPD-KEMD, PhD",
-            "Moderator: dr. Maria Sen",
-            "11.10 - 11.30: DISCUSSION & Tanya Jawab Kasus Layanan Primer"
+            "Moderator: dr. Nur Rusyda Kuddah, SpPD-KEMD",
+            "• 10.30 - 10.35: Opening Speech - Prof. Dr. dr. Sidartawan Soegondo, SpPD-KEMD",
+            "• 10.35 - 10.50: My Life in FKTP: Realita & Dedikasi Layanan Primer - dr. Baringin T A Manik, MKM (Dokter Praktisi Layanan Primer)",
+            "• 10.50 - 11.10: Diabetes Approach in FKTP: Deteksi Cepat & Tatalaksana - dr. Dicky Levenus Tahapary, SpPD-KEMD, PhD (FKUI - RSCM / PB PERSADIA)",
+            "• 11.10 - 11.30: Diskusi & Tanya Jawab"
         ]
     )
 
     p1.draw_table_row(
-        "11.30 - 12.30", "SESI 4: Paralel", "Room Gede & Pangrango",
+        "11.30 - 12.30", "SESI 4: Paralel Sesi", "Room Gede & Pangrango",
         [
             "ROOM GEDE: Footsteps Leading to Neuropathy",
-            "• Upstream (Endocrinologist POV): dr. Roy Panusunan Sibarani, SpPD-KEMD",
-            "• Downstream (Neurologist POV): dr. Gloria Tanjung, SpN (Mod: dr. William Djauhari)",
+            "• 11.30 - 11.50: From Upstream: dr. Roy Panusunan Sibarani, SpPD-KEMD (Ketua Panitia / RS EMC Sentul)",
+            "• 11.50 - 12.10: To Downstream: dr. Gloria Tanjung, SpN (PERDOSNI) - Mod: dr. William Djauhari",
+            "• 12.10 - 12.30: Diskusi & Tanya Jawab",
             "ROOM PANGRANGO: Workshop 1 - Diabetes Technology: CGM",
-            "• Doctor's POV: dr. Johanes Purwoto, SpPD-KEMD (AGP reports, clinical decisions in T1D/T2D)",
-            "• Patient's POV: Daniel Surbakti",
-            "• HANDS ON: Case-based CGM Workshop - Solving real-world glycemic profiles"
-        ]
+            "• 11.30 - 12.00: Doctor's POV: dr. Johanes Purwoto, SpPD-KEMD (RS Mandaya Royal Puri / DII)",
+            "• 12.00 - 12.10: Patient's POV: Daniel Surbakti (Patient Advocate / Pegiat Diabetes)",
+            "• 12.10 - 12.30: HANDS ON: Simulasi pemecahan kasus profil glikemik nyata & artefak sensor"
+        ],
+        bg_alt=True
     )
 
     p1.draw_table_row(
-        "12.30 - 14.00", "ISHOMA", "Restoran / Ballroom 2",
-        ["Istirahat, Sholat, dan Makan Siang Bersama"],
-        bg_alt=True
+        "12.30 - 14.00", "ISHOMA", "Restoran Novotel",
+        ["Istirahat, Sholat Dzuhur, dan Makan Siang Buffet di Restoran Novotel Bogor"]
     )
 
     # ================= PAGE 2 =================
@@ -385,11 +396,11 @@ def build_pdf():
         "14.00 - 15.00", "SESI 5: Paralel WS", "Room Gede & Pangrango",
         [
             "ROOM GEDE: Workshop 2 - Semaglutide on Prediabetes",
-            "• Speaker: dr. Sony Wibisono Mudjanarko, SpPD-KEMD (Metabolic risk & dosing)",
+            "• Narasumber: dr. Sony Wibisono Mudjanarko, SpPD-KEMD (UNAIR / RSUD Dr. Soetomo)",
             "• HANDS ON: Navigating Real-World Prediabetes with Semaglutide",
             "ROOM PANGRANGO: Workshop 3 - Nutrition in Diabetes",
-            "• Speaker: dr. Santi Syafril, SpPD-KEMD (Mediterranean, Low-Carb, IF, Carb Counting)",
-            "• HANDS ON: Meal planning & case-based diets (shift worker, obesity, elderly)"
+            "• Narasumber: dr. Santi Syafril, SpPD-KEMD (USU / RSUP H. Adam Malik Medan)",
+            "• HANDS ON: Meal planning & case-based practical diets"
         ]
     )
 
@@ -397,10 +408,10 @@ def build_pdf():
         "15.00 - 16.00", "SESI 6: Paralel WS", "Room Gede & Pangrango",
         [
             "ROOM GEDE: Workshop 4 - Investigating Hypoglycemia",
-            "• Speaker: Dr. dr. Yuanita Langi, SpPD-KEMD (Unawareness, special populations)",
+            "• Narasumber: Dr. dr. Yuanita Langi, SpPD-KEMD (UNSRAT / RSUP Prof. Kandou)",
             "• HANDS ON: Case-based complex hypoglycemia (dr. Henny Megawati, SpPD)",
             "ROOM PANGRANGO: Workshop 5 - Pre-Diabetes: Counting the Time",
-            "• Speaker: Dr. dr. Made Ratna Saraswati, SpPD-KEMD (Early detection & balance)",
+            "• Narasumber: Dr. dr. Made Ratna Saraswati, SpPD-KEMD (UNUD / RSUP Prof. Ngoerah)",
             "• HANDS ON: Personalizing prediabetes management (dr. Pandu Sakti, SpPD, AIFO-K)"
         ],
         bg_alt=True
@@ -408,15 +419,15 @@ def build_pdf():
 
     p2.draw_table_row(
         "16.00 - 18.30", "ISHOMA", "Novotel Bogor",
-        ["Istirahat, Sholat & Persiapan Acara Malam Keakraban"]
+        ["Istirahat, Sholat, dan Persiapan Acara Malam"]
     )
 
     p2.draw_table_row(
         "18.30 - 21.00", "Malam Keakraban", "Grand Ballroom Novotel",
         [
-            "Gala Dinner, Kata Sambutan Pimpinan & Dewan Penasehat",
-            "Sesi Diskusi Reflektif & Ramah Tamah Lintas Cabang",
-            "Penampilan Lagu dan Tari Lilin-Lilin Kecil (Host: Tamara Geraldine)"
+            "Gala Dinner, Sambutan Pimpinan & Dewan Penasehat",
+            "Ramah Tamah Nasional Lintas Cabang se-Indonesia",
+            "Pagelaran Seni Budaya Lagu dan Tari Lilin-Lilin Kecil"
         ],
         bg_alt=True
     )
@@ -425,46 +436,61 @@ def build_pdf():
         "B. DIABETES HEALTH FORUM (SABTU, 7 NOV 2026)",
         "Venue: Ballroom 2 Novotel Bogor  |  Khusus Awam, Keluarga & Komunitas"
     )
-    p2.draw_table_header()
+    p2.draw_table_header("WAKTU", "KEGIATAN", "KETERANGAN & DETAIL ACARA")
 
     p2.draw_table_row(
         "08.30 - 08.40", "Pembukaan", "Ballroom 2",
-        ["Pembukaan Resmi Diabetes Health Forum oleh MC & Tim Edukasi PERSADIA"]
+        ["Pembukaan resmi oleh Panitia Pelaksana & MC"]
     )
 
     p2.draw_table_row(
-        "08.40 - 09.55", "Sesi Edukasi & Q&A", "Ballroom 2",
+        "08.40 - 09.25", "Sesi Edukasi", "Ballroom 2",
         [
-            "Topik: 'Masih muda, kok diabetes?' - Mengupas lonjakan diabetes usia muda",
-            "Faktor risiko gaya hidup vs genetik & langkah preventif dini",
-            "09.25 - 09.55: Sesi Tanya Jawab Interaktif Narasumber & Peserta"
+            "Topik: 'Masih muda, kok diabetes?'",
+            "Membedah tren peningkatan diabetes pada usia produktif"
         ],
         bg_alt=True
     )
 
     p2.draw_table_row(
-        "09.55 - 10.35", "Bincang & Break", "Ballroom 2",
-        [
-            "Temu 6 Tokoh Senior Penyandang Diabetes: Kiat Hidup Berkualitas & Mandiri",
-            "10.25 - 10.35: Coffee Break & Kudapan Sehat Seimbang"
-        ]
+        "09.25 - 09.55", "Tanya Jawab", "Ballroom 2",
+        ["Sesi interaktif tanya jawab narasumber dan peserta"]
     )
 
     p2.draw_table_row(
-        "10.35 - 11.50", "Talkshow Spesial", "Ballroom 2",
+        "09.55 - 10.25", "Temu 6 Tokoh Senior", "Ballroom 2",
+        ["Inspirasi & keteladanan hidup sehat berkualitas puluhan tahun bersama diabetes"],
+        bg_alt=True
+    )
+
+    p2.draw_table_row(
+        "10.25 - 10.35", "Coffee Break", "Ballroom 2",
+        ["Rehat & kudapan sehat"]
+    )
+
+    p2.draw_table_row(
+        "10.35 - 11.20", "Talkshow Spesial", "Ballroom 2",
         [
             "Topik: 'Cantik, Bugar, Bergairah'",
-            "Narasumber: dr. Boyke Dian Nugraha, SpOG, MARS (Pakar Seksologi & Pasutri)",
-            "11.20 - 11.50: Tanya Jawab Terbuka Seputar Vitalitas & Keharmonisan Pasutri"
+            "Narasumber: dr. Boyke Dian Nugraha, SpOG, MARS"
         ],
         bg_alt=True
     )
 
     p2.draw_table_row(
-        "11.50 - Selesai", "Penutupan & Lunch", "Ballroom 2 / Restoran",
-        [
-            "Penutupan, Sesi Foto Bersama, Ramah Tamah dan Makan Siang Bersama"
-        ]
+        "11.20 - 11.50", "Tanya Jawab dr. Boyke", "Ballroom 2",
+        ["Tanya jawab seputar keharmonisan keluarga, kesehatan seksual & vitalitas"]
+    )
+
+    p2.draw_table_row(
+        "11.50 - 12.00", "Penutupan & Foto", "Ballroom 2",
+        ["Penyerahan plakat dan dokumentasi bersama"],
+        bg_alt=True
+    )
+
+    p2.draw_table_row(
+        "12.00 - Selesai", "Makan Siang & Ramah Tamah", "Ballroom 2 / Restoran",
+        ["Ramah tamah dan makan siang bersama di Ballroom 2 / Restoran Novotel"]
     )
 
     # ================= PAGE 3 =================
@@ -475,10 +501,10 @@ def build_pdf():
         "C. JADWAL RAPAT ORGANISASI PERSADIA, PEDI & PERKENI",
         "Venue: Novotel Bogor  |  Sabtu, 7 November 2026"
     )
-    p3.draw_table_header()
+    p3.draw_table_header("WAKTU", "ORGANISASI / RUANG", "DETAIL AGENDA KERJA")
 
     p3.draw_table_row(
-        "14.00 - 17.00", "Raker PERSADIA", "Karang-Sanggar",
+        "14.00 - 17.00", "PERSADIA", "Karang-Sanggar",
         [
             "Rapat Kerja Nasional PERSADIA",
             "Ruang Breakout Sidang: Ruang Karang, Ruang Sanggar, Ruang Geulis"
@@ -486,78 +512,79 @@ def build_pdf():
     )
 
     p3.draw_table_row(
-        "14.00 - 15.00", "KONKER Bersama", "Ballroom 2 Novotel",
+        "14.00 - 17.00", "PEDI", "Ruang Kencana",
         [
-            "Konferensi Kerja Koordinasi Bersama Pengurus Pusat PERSADIA & PEDI"
+            "Rapat Kerja Pengurus Perkumpulan Edukator Diabetes Indonesia (PEDI)"
         ],
         bg_alt=True
     )
 
     p3.draw_table_row(
-        "14.00 - 17.00", "Raker PEDI", "Ruang Kencana",
+        "18.00 - 19.00", "PERKENI", "Ballroom 2 Novotel",
         [
-            "Rapat Kerja Perkumpulan Edukator Diabetes Indonesia (PEDI)"
+            "Rapat Kerja Perkumpulan Endokrinologi Indonesia (PERKENI)"
         ]
-    )
-
-    p3.draw_table_row(
-        "18.00 - 19.00", "Sinergi Organisasi", "Ballroom 2 Novotel",
-        [
-            "Rapat Koordinasi & Sinergi Program Kerja PB PERKENI & PEDI"
-        ],
-        bg_alt=True
     )
 
     p3.draw_section_heading(
         "D. PESTA RAKYAT & SENAM SEHAT NUSANTARA",
-        "Venue: GOR Pakansari Cibinong, Kabupaten Bogor  |  Minggu, 8 November 2026"
+        "Venue: Stadion Pakansari, Cibinong, Kabupaten Bogor  |  Minggu, 8 November 2026"
     )
-    p3.draw_table_header()
+    p3.draw_table_header("WAKTU", "KEGIATAN", "KETERANGAN & DETAIL ACARA")
 
     p3.draw_table_row(
-        "05.00 - 06.00", "Registrasi", "Pintu 8 Pakansari",
-        ["Pengambilan snack pagi dan Goodie Bag Peserta per koordinator wilayah"]
+        "05.00 - 06.00", "Registrasi Peserta", "Pintu 8 Pakansari",
+        ["Pengambilan snack box & paket peserta di Pintu 8 Stadion Pakansari"]
     )
 
     p3.draw_table_row(
-        "06.00 - 07.00", "Parade & Skrining", "Area Lapangan GOR",
+        "06.00 - 07.00", "Parade Cabang & Skrining", "Area Stadion",
         [
-            "Parade Kontingen Cabang PERSADIA se-Indonesia (Yell-yell & Mars)",
-            "Pemeriksaan Gula Darah Massal Gratis Target 5.000 Peserta"
+            "Parade Kontingen Cabang PERSADIA se-Indonesia & Defile",
+            "Pemeriksaan Gula Darah Massal Gratis (Target 7.000 Peserta)"
         ],
         bg_alt=True
     )
 
     p3.draw_table_row(
-        "07.00 - 07.30", "Pembukaan Resmi", "Panggung Utama",
-        ["Menyanyikan Indonesia Raya, Sambutan Pimpinan PERSADIA & Pejabat Daerah"]
+        "07.00 - 07.30", "Pembukaan Acara", "Panggung Utama",
+        ["Menyanyikan Lagu Kebangsaan Indonesia Raya, Sambutan Pimpinan & Tamu Kehormatan"]
     )
 
     p3.draw_table_row(
-        "07.30 - 08.30", "Senam Bersama", "Lapangan Utama",
-        ["Senam Sehat Diabetesi Nusantara bersama instruktur profesional KORMI & PERSADIA"],
+        "07.30 - 08.30", "Senam Bugar Massal", "Lapangan Utama",
+        [
+            "Senam Bugar Diabetes Nasional Massal bersama instruktur profesional",
+            "(Paralel Skrining Massal Gula Darah)"
+        ],
         bg_alt=True
     )
 
     p3.draw_table_row(
-        "08.30 - 10.00", "Showcase Senam", "Panggung & Lapangan",
-        ["Peragaan Variasi Senam Kesehatan Daerah perwakilan delegasi cabang"]
+        "08.30 - 10.00", "Showcase Senam Daerah", "Panggung & Lapangan",
+        [
+            "Peragaan variasi senam kebugaran perwakilan cabang daerah",
+            "(Paralel Skrining Massal Gula Darah)"
+        ]
     )
 
     p3.draw_table_row(
-        "10.00 - 11.00", "Panggung Hiburan", "Panggung Utama",
-        ["Pertunjukan Musik, Panggung Gembira & Pengundian Doorprize Utama"],
+        "10.00 - 11.00", "Panggung Hiburan Rakyat", "Panggung Utama",
+        [
+            "Hiburan musik & pengumuman pemenang doorprize hadiah utama",
+            "(Paralel Skrining Massal Gula Darah)"
+        ],
         bg_alt=True
     )
 
     p3.draw_table_row(
         "11.00 - 12.00", "Makan Siang", "Area Tribun & Lapangan",
-        ["Pembagian dan Santap Makan Siang Bersama Seluruh Peserta"]
+        ["Pembagian dan santap makan siang bersama seluruh peserta"]
     )
 
     p3.draw_table_row(
-        "12.00 - Selesai", "Penutupan Resmi", "GOR Pakansari",
-        ["Acara Pesta Rakyat Selesai Resmi. Sampai jumpa di event PERSADIA berikutnya!"],
+        "12.00 - Selesai", "Penutupan Acara", "Stadion Pakansari",
+        ["Penutupan resmi Pesta Rakyat KONAS PERSADIA 2026"],
         bg_alt=True
     )
 

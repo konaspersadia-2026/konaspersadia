@@ -495,7 +495,7 @@ _Panitia KONAS PERSADIA 2026_`;
   };
 
   const getVoucherWaMessage = (code: string) => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://konaspersadia2026.com';
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://konaspersadia.com';
     return `Yth. Dokter,\n\nBerikut kami sampaikan kode voucher khusus Dokter Umum (FKTP) untuk pendaftaran *${EVENT_INFO.namaAcara}*:\n\n🎟️ Kode Voucher: *${code}*\n\nSilakan gunakan kode voucher di atas saat mengisi formulir pendaftaran kategori *Dokter Umum (FKTP)* melalui website resmi:\n${origin}\n\n*Catatan:* Kode voucher ini bersifat unik dan hanya berlaku untuk 1 kali pendaftaran.\n\nSalam hangat,\n_Panitia KONAS PERSADIA 2026_`;
   };
 

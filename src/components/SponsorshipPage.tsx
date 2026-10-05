@@ -31,15 +31,16 @@ export default function SponsorshipPage({ onNavigateHome }: SponsorshipPageProps
       id: "nusantara",
       name: "NUSANTARA",
       badge: "Sponsor Tunggal / Utama",
+      price: "Negosiasi (Hubungi Panitia)",
       icon: <Star className="h-8 w-8 text-amber-500" />,
       color: "border-amber-400/60 bg-gradient-to-br from-amber-50/80 via-amber-100/30 to-white",
       headerBg: "bg-gradient-to-r from-amber-600 to-amber-500 text-white",
       textColor: "text-amber-800",
       accentColor: "bg-amber-500",
-      description: "Kategori sponsorship eksklusif tertinggi sebagai Sponsor Tunggal Pelaksanaan Pesta Rakyat PERSADIA (8 November 2026) di Stadion Pakansari dengan target 5.000++ peserta.",
+      description: "Kategori sponsorship eksklusif tertinggi sebagai Sponsor Tunggal Pelaksanaan Pesta Rakyat PERSADIA (8 November 2026) di Stadion Pakansari dengan target 7.000 peserta.",
       benefits: [
         "Kolaborasi strategis bersama panitia dalam menghadirkan aktivitas promosi yang terintegrasi (aktivasi & eksposur disesuaikan dengan tujuan komunikasi sponsor).",
-        "Mendukung pembiayaan utama peserta Pesta Rakyat: Kaos resmi untuk 5.000 peserta, Topi resmi untuk 5.000 peserta, dan Konsumsi untuk 5.000 peserta.",
+        "Mendukung pembiayaan utama peserta Pesta Rakyat: Kaos resmi untuk 7.000 peserta, Topi resmi untuk 7.000 peserta, dan Konsumsi untuk 7.000 peserta.",
         "Mendapatkan karya seni eksklusif hasil kreasi Tamara Geraldine / Wendy Septarina."
       ],
       bonus: "Karya seni eksklusif kreasi Tamara Geraldine / Wendy Septarina"
@@ -48,6 +49,7 @@ export default function SponsorshipPage({ onNavigateHome }: SponsorshipPageProps
       id: "diamond",
       name: "DIAMOND",
       badge: "Terbatas (Max 3 Sponsor)",
+      price: "Rp 350.000.000",
       icon: <Diamond className="h-8 w-8 text-cyan-600" />,
       color: "border-slate-300 bg-gradient-to-br from-slate-50 via-cyan-50/30 to-white",
       headerBg: "bg-gradient-to-r from-slate-800 to-slate-700 text-white",
@@ -75,6 +77,7 @@ export default function SponsorshipPage({ onNavigateHome }: SponsorshipPageProps
       id: "sapphire",
       name: "SAPPHIRE",
       badge: "Pilihan Favorit",
+      price: "Rp 250.000.000",
       icon: <Gem className="h-8 w-8 text-white" />,
       color: "border-blue-300 bg-gradient-to-br from-blue-50/80 via-white to-blue-50/50 shadow-blue-500/20 shadow-xl scale-[1.02]",
       headerBg: "bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-500 text-white",
@@ -101,6 +104,7 @@ export default function SponsorshipPage({ onNavigateHome }: SponsorshipPageProps
       id: "ruby",
       name: "RUBY",
       badge: "Nilai Optimal",
+      price: "Rp 150.000.000",
       icon: <Shield className="h-8 w-8 text-rose-600" />,
       color: "border-rose-200 bg-gradient-to-br from-rose-50/60 to-white",
       headerBg: "bg-gradient-to-r from-rose-700 to-rose-600 text-white",
@@ -125,6 +129,7 @@ export default function SponsorshipPage({ onNavigateHome }: SponsorshipPageProps
       id: "emerald",
       name: "EMERALD",
       badge: "Promosi Tepat Sasaran",
+      price: "Rp 50.000.000",
       icon: <Medal className="h-8 w-8 text-emerald-600" />,
       color: "border-emerald-200 bg-gradient-to-br from-emerald-50/60 to-white",
       headerBg: "bg-gradient-to-r from-emerald-800 to-emerald-600 text-white",
@@ -142,12 +147,14 @@ export default function SponsorshipPage({ onNavigateHome }: SponsorshipPageProps
         "2 voucher konsumsi.",
         "Gratis undangan 20 orang pada Dinner Symposium.",
         "Sponsor menanggung biaya akomodasi, transportasi, dan honorarium pembicara/moderator yang terlibat dalam sesi yang dipilih."
-      ]
+      ],
+      bonus: undefined
     },
     {
       id: "topaz",
       name: "TOPAZ",
       badge: "Paket Stand Booth",
+      price: "Rp 25.000.000",
       icon: <Medal className="h-8 w-8 text-amber-600" />,
       color: "border-amber-200 bg-gradient-to-br from-amber-50/60 to-white",
       headerBg: "bg-gradient-to-r from-amber-700 to-amber-600 text-white",
@@ -158,7 +165,8 @@ export default function SponsorshipPage({ onNavigateHome }: SponsorshipPageProps
         "1 booth stand pameran selama 1 hari di lokasi Symposium & Workshop.",
         "1 voucher konsumsi.",
         "Gratis undangan 5 orang pada Dinner Symposium."
-      ]
+      ],
+      bonus: undefined
     },
     {
       id: "pendukung",
@@ -172,8 +180,8 @@ export default function SponsorshipPage({ onNavigateHome }: SponsorshipPageProps
       accentColor: "bg-indigo-600",
       description: "Bentuk dukungan agar pelaku usaha lokal dapat turut ambil bagian, memperkenalkan produk, dan membangun jejaring dengan tenaga kesehatan & masyarakat.",
       benefits: [
-        "Pilihan Tenda (Rp 3.000.000): Stand booth ukuran 3x3 meter termasuk tenda (tidak termasuk listrik) pada Symposium/Workshop dan Pesta Rakyat.",
-        "Pilihan Meja Saja (Rp 1.500.000): Fasilitas stand dengan hanya meja saja pada Symposium/Workshop dan Pesta Rakyat."
+        "Tenda Sarnafil (Rp 3.000.000): Booth ukuran 3 × 3 meter, lokasi di area depan (tidak termasuk listrik).",
+        "Tenda Kerucut (Rp 1.500.000): Booth ukuran 3 × 3 meter, lokasi di area belakang (tidak termasuk listrik)."
       ]
     }
   ];
@@ -268,7 +276,7 @@ export default function SponsorshipPage({ onNavigateHome }: SponsorshipPageProps
               </div>
               <p className="text-xs font-semibold leading-tight">
                 ±400 Dokter (Spesialis/Umum)<br />
-                + 5.000 Peserta Awam/Umum
+                + 7.000 Peserta Awam/Umum
               </p>
             </div>
 
@@ -300,6 +308,173 @@ export default function SponsorshipPage({ onNavigateHome }: SponsorshipPageProps
             <MessageCircle className="h-4 w-4" />
             Minta Proposal Lengkap
           </a>
+        </div>
+
+        {/* Summary Table: Skema Kemitraan & Paket Sponsorship sesuai DAFTAR_BIAYA.md */}
+        <div className="mb-14 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="p-5 sm:p-6 bg-gradient-to-r from-[#0B3D5E] to-slate-800 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h3 className="text-base sm:text-lg font-black tracking-wide">Ringkasan Skema Kemitraan &amp; Investasi</h3>
+              <p className="text-xs text-slate-300">Tabel komparasi paket sponsorship resmi KONAS PERSADIA 2026</p>
+            </div>
+            <span className="text-[11px] font-bold bg-[#C89A2E] text-[#0B3D5E] px-3 py-1 rounded-full self-start sm:self-auto">
+              7 Pilihan Kemitraan
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 text-slate-700 border-b border-slate-200 text-xs font-bold uppercase tracking-wider">
+                  <th className="p-4 pl-6 w-1/5">Paket Sponsor</th>
+                  <th className="p-4 w-1/5 text-center">Nilai Investasi</th>
+                  <th className="p-4 w-1/6 text-center">Kuota</th>
+                  <th className="p-4">Hak &amp; Fasilitas Utama</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs">
+                <tr className="hover:bg-amber-50/40 transition bg-amber-50/20">
+                  <td className="p-4 pl-6 align-top">
+                    <span className="font-extrabold text-amber-900 block text-sm">NUSANTARA</span>
+                    <span className="text-[11px] text-amber-700 font-medium">Sponsor Tunggal Pesta Rakyat</span>
+                  </td>
+                  <td className="p-4 text-center align-top">
+                    <span className="font-black text-[#0B3D5E] bg-amber-100 px-3 py-1.5 rounded-lg border border-amber-300 inline-block">
+                      Negosiasi
+                    </span>
+                    <span className="block text-[10px] text-slate-500 mt-0.5">Hubungi Panitia</span>
+                  </td>
+                  <td className="p-4 text-center align-top font-bold text-amber-800">
+                    Eksklusif 1 Mitra
+                  </td>
+                  <td className="p-4 text-slate-700 align-top leading-relaxed">
+                    Sponsor tunggal track Pesta Rakyat (7.000–10.000 peserta), pengadaan atribut kaos resmi, topi resmi &amp; konsumsi box pagi, aktivasi terintegrasi, plakat karya seni eksklusif Tamara Geraldine / Wendy Septarina.
+                  </td>
+                </tr>
+
+                <tr className="hover:bg-slate-50 transition">
+                  <td className="p-4 pl-6 align-top">
+                    <span className="font-extrabold text-slate-900 block text-sm">DIAMOND</span>
+                  </td>
+                  <td className="p-4 text-center align-top">
+                    <span className="font-black text-[#0B3D5E] bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 inline-block">
+                      Rp 350.000.000
+                    </span>
+                  </td>
+                  <td className="p-4 text-center align-top font-bold text-slate-700">
+                    Terbatas (Maks. 3)
+                  </td>
+                  <td className="p-4 text-slate-700 align-top leading-relaxed">
+                    Presentasi Symposium, Workshop, Meet the Expert &amp; Dinner Symposium, 1 lunch symposium khusus, Booth Premium Novotel, Tenda Sarnavile 5x5m Pakansari, logo prioritas di seluruh media, free 3 peserta ilmiah, 100 undangan dinner, karya seni Tamara Geraldine / Wendy Septarina.
+                  </td>
+                </tr>
+
+                <tr className="hover:bg-blue-50/40 transition bg-blue-50/20">
+                  <td className="p-4 pl-6 align-top">
+                    <span className="font-extrabold text-blue-900 block text-sm">SAPPHIRE</span>
+                  </td>
+                  <td className="p-4 text-center align-top">
+                    <span className="font-black text-blue-900 bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200 inline-block">
+                      Rp 250.000.000
+                    </span>
+                  </td>
+                  <td className="p-4 text-center align-top font-bold text-blue-800">
+                    Terbatas
+                  </td>
+                  <td className="p-4 text-slate-700 align-top leading-relaxed">
+                    Presentasi Symposium &amp; Workshop, Meet the Expert, Booth Novotel, Tenda Sarnavile 5x5m Pakansari, branding kaos &amp; goodie bag, free 2 peserta ilmiah, 50 undangan dinner, karya seni Tamara Geraldine / Wendy Septarina.
+                  </td>
+                </tr>
+
+                <tr className="hover:bg-rose-50/30 transition">
+                  <td className="p-4 pl-6 align-top">
+                    <span className="font-extrabold text-rose-900 block text-sm">RUBY</span>
+                  </td>
+                  <td className="p-4 text-center align-top">
+                    <span className="font-black text-rose-900 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-200 inline-block">
+                      Rp 150.000.000
+                    </span>
+                  </td>
+                  <td className="p-4 text-center align-top font-bold text-slate-700">
+                    Terbuka
+                  </td>
+                  <td className="p-4 text-slate-700 align-top leading-relaxed">
+                    Presentasi Symposium &amp; Workshop, Booth Novotel, Tenda Sarnavile 3x3m Pakansari, branding promosi, free 1 peserta ilmiah, 30 undangan dinner, karya seni Anggota PERSADIA Bogor.
+                  </td>
+                </tr>
+
+                <tr className="hover:bg-emerald-50/30 transition">
+                  <td className="p-4 pl-6 align-top">
+                    <span className="font-extrabold text-emerald-900 block text-sm">EMERALD</span>
+                  </td>
+                  <td className="p-4 text-center align-top">
+                    <span className="font-black text-emerald-900 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 inline-block">
+                      Rp 50.000.000
+                    </span>
+                  </td>
+                  <td className="p-4 text-center align-top font-bold text-slate-700">
+                    Terbuka
+                  </td>
+                  <td className="p-4 text-slate-700 align-top leading-relaxed">
+                    Presentasi sesi Workshop, Booth Novotel, Tenda Sarnavile 3x3m Pakansari, logo promosi, free 2 peserta workshop, 20 undangan dinner.
+                  </td>
+                </tr>
+
+                <tr className="hover:bg-amber-50/30 transition">
+                  <td className="p-4 pl-6 align-top">
+                    <span className="font-extrabold text-amber-900 block text-sm">TOPAZ</span>
+                  </td>
+                  <td className="p-4 text-center align-top">
+                    <span className="font-black text-amber-900 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200 inline-block">
+                      Rp 25.000.000
+                    </span>
+                  </td>
+                  <td className="p-4 text-center align-top font-bold text-slate-700">
+                    Terbuka
+                  </td>
+                  <td className="p-4 text-slate-700 align-top leading-relaxed">
+                    1 Booth stand pameran 1 hari di Novotel Bogor, 5 tiket undangan dinner symposium, 1 voucher konsumsi panitia.
+                  </td>
+                </tr>
+
+                <tr className="hover:bg-indigo-50/30 transition">
+                  <td className="p-4 pl-6 align-top">
+                    <span className="font-extrabold text-indigo-900 block text-sm">PENDUKUNG (UMKM)</span>
+                    <span className="text-[11px] text-indigo-700 font-semibold">Tenda Sarnafil</span>
+                  </td>
+                  <td className="p-4 text-center align-top">
+                    <span className="font-black text-indigo-900 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-200 inline-block">
+                      Rp 3.000.000
+                    </span>
+                  </td>
+                  <td className="p-4 text-center align-top font-bold text-indigo-800">
+                    Mitra UMKM
+                  </td>
+                  <td className="p-4 text-slate-700 align-top leading-relaxed">
+                    Booth ukuran 3 × 3 meter <strong>Tenda Sarnafil</strong>, lokasi di area depan <em>(tidak termasuk listrik)</em>.
+                  </td>
+                </tr>
+
+                <tr className="hover:bg-indigo-50/30 transition">
+                  <td className="p-4 pl-6 align-top">
+                    <span className="font-extrabold text-indigo-900 block text-sm">PENDUKUNG (UMKM)</span>
+                    <span className="text-[11px] text-indigo-700 font-semibold">Tenda Kerucut</span>
+                  </td>
+                  <td className="p-4 text-center align-top">
+                    <span className="font-black text-indigo-900 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-200 inline-block">
+                      Rp 1.500.000
+                    </span>
+                  </td>
+                  <td className="p-4 text-center align-top font-bold text-indigo-800">
+                    Mitra UMKM
+                  </td>
+                  <td className="p-4 text-slate-700 align-top leading-relaxed">
+                    Booth ukuran 3 × 3 meter <strong>Tenda Kerucut</strong>, lokasi di area belakang <em>(tidak termasuk listrik)</em>.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* Sponsorship Tiers Grid */}

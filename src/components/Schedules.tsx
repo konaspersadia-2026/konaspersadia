@@ -30,44 +30,65 @@ export default function Schedules() {
     {
       time: "08:00 – 08:30",
       title: "Registrasi Peserta Simposium & Workshop",
-      location: "Foyer / Meja Registrasi Novotel Bogor",
+      location: "Foyer Ballroom Novotel",
       speaker: "Panitia Pelaksana",
-      type: "administrative"
+      type: "administrative",
+      description: ["Re-registrasi peserta Simposium & Workshop"]
     },
     {
-      time: "08:30 – 09:00",
-      title: "SESI 1 — Plenary Lecture & Opening Ceremony",
+      time: "08:30 – 08:50",
+      title: "SESI 1 — Plenary Lecture",
       location: "Room Gede",
       speaker: "Prof. dr. Putu Moda Arsana, SpPD-KEMD | MC: Dr. dr. Rudy Kurniawan, SpPD, MM, MARS, Dip.TH, DCD",
       type: "symposium",
       description: [
-        "08.30 – 08.50: Plenary Lecture: 'Good Habit for a Better Life' — Prof. dr. Putu Moda Arsana, SpPD-KEMD",
-        "08.50 – 09.00: Opening Ceremony Resmi KONAS PERSADIA & Konferensi Gabungan 2026"
+        "Topik: 'Good Habit for a Better Life' — Prof. dr. Putu Moda Arsana, SpPD-KEMD (Konsil Kedokteran Indonesia / PB PERKENI)",
+        "MC: Dr. dr. Rudy Kurniawan, SpPD, MM, MARS, Dip.TH, DCD (Sobat Diabet)"
       ]
     },
     {
-      time: "09:00 – 10:30",
+      time: "08:50 – 09:00",
+      title: "Opening Ceremony",
+      location: "Room Gede",
+      speaker: "Pimpinan Pengurus Pusat & Tamu Kehormatan",
+      type: "administrative",
+      description: [
+        "Pembukaan resmi Kongres Nasional PERSADIA & Konferensi Gabungan 2026 oleh Pimpinan Pengurus Pusat & Tamu Kehormatan"
+      ]
+    },
+    {
+      time: "09:00 – 10:00",
       title: "SESI 2 — Presidents' Lecture",
       location: "Room Gede",
-      speaker: "Prof. dr. Sidartawan Soegondo, SpPD-KEMD | Dr. dr. K. Heri Nugroho Hariosena, SpPD-KEMD | Prof. Dr. dr. Achmad Rudijanto, SpPD-KEMD | Moderator: dr. Fauzia Kirana, SpPD",
+      speaker: "Prof. Dr. dr. Sidartawan Soegondo, SpPD-KEMD | Dr. dr. K. Heri Nugroho Harioseno, SpPD-KEMD | Prof. Dr. dr. Achmad Rudijanto, SpPD-KEMD | Moderator: dr. Fauzia Kirana, SpPD",
       type: "symposium",
       description: [
-        "09.00 – 09.20: Topik 'Obesity' — Prof. dr. Sidartawan Soegondo, SpPD-KEMD",
-        "09.20 – 09.40: Topik 'Tirzepatide: Beyond the Numbers' — Dr. dr. K. Heri Nugroho Hariosena, SpPD-KEMD",
-        "09.40 – 10.00: Topik 'Diabetes Update Treatment: Janus, The First and After' — Prof. Dr. dr. Achmad Rudijanto, SpPD-KEMD",
-        "10.00 – 10.30: DISCUSSION + COFFEE BREAK"
+        "09.00 – 09.20: 'Obesity: The Growing Metabolic Challenge' — Prof. Dr. dr. Sidartawan Soegondo, SpPD-KEMD (FKUI - RSCM / PB PERKENI)",
+        "09.20 – 09.40: 'Tirzepatide: Beyond the Numbers (Dual GIP/GLP-1)' — Dr. dr. K. Heri Nugroho Harioseno, SpPD-KEMD (UNDIP / RSUP Dr. Kariadi)",
+        "09.40 – 10.00: 'Diabetes Update Treatment: Janus, The First and After' — Prof. Dr. dr. Achmad Rudijanto, SpPD-KEMD (Universitas Brawijaya / PB PERKENI)"
+      ]
+    },
+    {
+      time: "10:00 – 10:30",
+      title: "Coffee Break & Diskusi Panel",
+      location: "Foyer Novotel Bogor",
+      speaker: "Pembicara Presidents' Lecture & Seluruh Peserta",
+      type: "break",
+      description: [
+        "Tanya jawab interaktif bersama pembicara Presidents' Lecture & Rehat Kopi/Kudapan Pagi di Foyer Novotel Bogor"
       ]
     },
     {
       time: "10:30 – 11:30",
-      title: "SESI 3 — Dokter FKTP",
+      title: "SESI 3 — Sesi Dokter Layanan Primer (FKTP)",
       location: "Room Gede",
-      speaker: "dr. Baringin T A Manik, MKM | dr. Dicky Levenus Tahapary, SpPD-KEMD, PhD | Moderator: dr. Maria Sen",
+      speaker: "Prof. Dr. dr. Sidartawan Soegondo, SpPD-KEMD | dr. Baringin T A Manik, MKM | dr. Dicky Levenus Tahapary, SpPD-KEMD, PhD | Moderator: dr. Nur Rusyda Kuddah, SpPD-KEMD",
       type: "symposium",
       description: [
-        "10.30 – 10.50: Topik 'My Life in FKTP' — dr. Baringin T A Manik, MKM",
-        "10.50 – 11.10: Topik 'Diabetes Approach in FKTP' — dr. Dicky Levenus Tahapary, SpPD-KEMD, PhD",
-        "11.10 – 11.30: Sesi Tanya Jawab & Diskusi Interaktif Kasus Layanan Primer"
+        "10.30 – 10.35: 'Opening Speech' — Prof. Dr. dr. Sidartawan Soegondo, SpPD-KEMD",
+        "10.35 – 10.50: 'My Life in FKTP: Realita & Dedikasi Layanan Primer' — dr. Baringin T A Manik, MKM (Dokter Praktisi Layanan Primer)",
+        "10.50 – 11.10: 'Diabetes Approach in FKTP: Deteksi Cepat & Tatalaksana' — dr. Dicky Levenus Tahapary, SpPD-KEMD, PhD (FKUI - RSCM / PB PERSADIA)",
+        "11.10 – 11.30: Diskusi & Tanya Jawab Kasus Layanan Primer"
       ]
     },
     {
@@ -275,13 +296,13 @@ export default function Schedules() {
     },
     {
       time: "06:00 – 07:00",
-      title: "Parade Cabang PERSADIA & Pemeriksaan Gula Darah 5.000 Peserta",
+      title: "Parade Cabang PERSADIA & Pemeriksaan Gula Darah 7.000 Peserta",
       location: "Area Luar & Lapangan GOR Pakansari",
       speaker: "Yell-yell & Mars PERSADIA Bersama",
       type: "health_check",
       description: [
         "Parade antusiasme kontingen cabang PERSADIA dari seluruh Indonesia.",
-        "Skrining gula darah serentak massal gratis menargetkan 5.000 peserta."
+        "Skrining gula darah serentak massal gratis menargetkan 7.000 peserta."
       ]
     },
     {
@@ -548,7 +569,18 @@ export default function Schedules() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  {activeTab === "ilmiah" && (
+                    <a
+                      href="/panduan-simposium-workshop-konas-persadia-2026.pdf"
+                      download="Panduan-Lengkap-Simposium-Workshop-KONAS-PERSADIA-2026.pdf"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-600 text-white text-xs font-bold transition shadow-sm cursor-pointer hover:scale-[1.02]"
+                      title="Download Panduan Lengkap Simposium & Workshop (.pdf)"
+                    >
+                      <Download className="w-3.5 h-3.5 text-white" />
+                      <span>Download Panduan Simpo & WS (.pdf)</span>
+                    </a>
+                  )}
                   <a
                     href="/rundown-konas-persadia-2026.pdf"
                     download="Rundown-Acara-KONAS-PERSADIA-2026.pdf"
@@ -556,7 +588,7 @@ export default function Schedules() {
                     title="Download Rundown Resmi (.pdf)"
                   >
                     <Download className="w-3.5 h-3.5 text-teal-300" />
-                    <span>Download PDF</span>
+                    <span>Download Rundown</span>
                   </a>
                   <div className="shrink-0 bg-white/10 backdrop-blur-sm border border-white/20 px-3.5 py-2 rounded-xl text-center">
                     <span className="block text-2xl font-extrabold text-white leading-none">

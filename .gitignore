@@ -18,10 +18,27 @@ yarn-error.log*
 *.suo
 *.ntvs*
 *.njsproj
-*.sln
 *.sw?
+*.kate-swp
+.*.kate-swp
+__pycache__/
+*.pyc
 
 # Raw images & assets
 hotel/
 assets/
+scratch_pdf.html
 
+# Surat Pembicara (Lokal & Internal)
+Surat_Pembicara/
+Surat_Undangan_Konas_2026_Sample.*
+Kesediaan Pembicara Konas-2.pdf
+assets_surat/
+public/assets_surat/
+DRAFT_SURAT_PEMBICARA_KONAS_2026.md
+scripts/docx_template/
+scripts/generate_surat_docx.py
+scripts/surat_data.py
+
+# Salinan PDF di Root (Website menggunakan file resmi di folder public/)
+/*.pdf
