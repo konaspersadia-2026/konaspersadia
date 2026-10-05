@@ -102,7 +102,7 @@ export const REKENING_PEMBAYARAN: RekeningPembayaran = {
 
 export const KONTAK_PANITIA: KontakPanitia = {
   email: "diabetesinitiativeid@gmail.com",
-  whatsapp: "0898-0287-820",
+  whatsapp: "0853-7071-6686",
 };
 
 export const BRAND_COLORS: BrandColors = {

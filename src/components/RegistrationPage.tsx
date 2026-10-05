@@ -659,7 +659,19 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
       </main>
 
       <footer className="max-w-xl mx-auto px-4 pb-8 text-center text-xs text-slate-400">
-        Bantuan: {KONTAK_PANITIA.email} · WhatsApp {KONTAK_PANITIA.whatsapp}
+        Bantuan:{" "}
+        <a href={`mailto:${KONTAK_PANITIA.email}`} className="underline hover:text-slate-600 transition">
+          {KONTAK_PANITIA.email}
+        </a>{" "}
+        · WhatsApp{" "}
+        <a
+          href={`https://wa.me/${KONTAK_PANITIA.whatsapp.replace(/\D/g, "").replace(/^0/, "62")}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline hover:text-slate-600 transition"
+        >
+          {KONTAK_PANITIA.whatsapp}
+        </a>
       </footer>
 
       {/* E-tiket tersembunyi untuk diunduh sebagai gambar (peserta gratis) */}
