@@ -8,7 +8,9 @@ import {
 import {
   Users, DollarSign, CheckCircle, Clock, Search, ChevronLeft, ChevronRight, ShieldAlert,
   Loader2, LogOut, CheckSquare, XCircle, MessageCircle, Activity, X,
-  Ticket, Copy, Check, Plus, RefreshCw, Share2, Sparkles, Trash2, Filter
+  Ticket, Copy, Check, Plus, RefreshCw, Share2, Sparkles, Trash2, Filter,
+  Download, Eye, ExternalLink, Calendar, MapPin, Building, CreditCard,
+  UserCheck, RotateCcw, AlertTriangle
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -84,6 +86,9 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
 
+  // Tab Navigation: Operational-first
+  const [activeTab, setActiveTab] = useState<'pendaftar' | 'voucher' | 'statistik'>('pendaftar');
+
   const [data, setData] = useState<Pendaftar[]>([]);
   const [healthTalkCount, setHealthTalkCount] = useState(0);
   const [isHealthTalkEnabled, setIsHealthTalkEnabled] = useState(true);
@@ -91,19 +96,35 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Filters & Table Controls
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("Semua");
+  const [kategoriFilter, setKategoriFilter] = useState("Semua");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(50);
 
+  // Participant Detail Modal
+  const [selectedParticipant, setSelectedParticipant] = useState<Pendaftar | null>(null);
+
+  // Status Action & Dialogs
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [confirmDialog, setConfirmDialog] = useState<{isOpen: boolean; id: string; status: string}>({ isOpen: false, id: "", status: "" });
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    id: string;
+    status: string;
+    currentStatus?: string;
+    nama?: string;
+    totalBayar?: number | string;
+  }>({
+    isOpen: false,
+    id: "",
+    status: ""
+  });
 
-  // Voucher management state
+  // Voucher Management State
   const [vouchers, setVouchers] = useState<VoucherItem[]>([]);
   const [loadingVouchers, setLoadingVouchers] = useState(false);
-  const [isVoucherModalOpen, setIsVoucherModalOpen] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [voucherSearch, setVoucherSearch] = useState("");
@@ -150,7 +171,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, pageSize]);
+  }, [searchQuery, statusFilter, kategoriFilter, pageSize]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -171,8 +192,8 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
 
       if (loginError) {
         setAuthError(loginError.message === "Invalid login credentials"
-        ? "Email atau password yang Anda masukkan salah."
-        : loginError.message);
+          ? "Email atau password yang Anda masukkan salah."
+          : loginError.message);
       } else if (authData.session) {
         setIsAuthenticated(true);
         setCurrentUserEmail(authData.session.user?.email || null);
@@ -217,10 +238,10 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
 
       while (hasMore) {
         const { data: supabaseData, error: supabaseError } = await supabase
-        .from('pendaftar')
-        .select('*')
-        .order('timestamp', { ascending: false })
-        .range(page * pageSize, (page + 1) * pageSize - 1);
+          .from('pendaftar')
+          .select('*')
+          .order('timestamp', { ascending: false })
+          .range(page * pageSize, (page + 1) * pageSize - 1);
 
         if (supabaseError) {
           throw supabaseError;
@@ -241,7 +262,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
       if (allData) {
         let htCount = 0;
         allData.forEach(row => {
-          if (row.ikut_health_talk === true || (row.pilihan_kegiatan && (row.pilihan_kegiatan.includes('Diabetes Health Forum') || row.pilihan_kegiatan.includes('Health Talk')))) {
+          if (row.status_pembayaran !== 'Dibatalkan' && (row.ikut_health_talk === true || (row.pilihan_kegiatan && (row.pilihan_kegiatan.includes('Diabetes Health Forum') || row.pilihan_kegiatan.includes('Health Talk'))))) {
             htCount++;
           }
         });
@@ -319,9 +340,10 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
       const { error } = await supabase
         .from('app_settings')
         .upsert({ key: 'health_talk_enabled', value: newValue.toString() }, { onConflict: 'key' });
-      
+
       if (error) throw error;
       setIsHealthTalkEnabled(newValue);
+      showToast(`Pendaftaran Diabetes Health Forum berhasil ${newValue ? 'dibuka' : 'ditutup'}`);
     } catch (err: any) {
       alert("Gagal mengubah status Diabetes Health Forum: " + err.message);
     } finally {
@@ -330,7 +352,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
   };
 
   const executeUpdateStatus = async () => {
-    const { id, status } = confirmDialog;
+    const { id, status, currentStatus } = confirmDialog;
     setConfirmDialog({ isOpen: false, id: "", status: "" });
     setActionError(null);
     setActionLoadingId(id);
@@ -343,28 +365,43 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
 
     try {
       const { error: updateError } = await supabase
-      .from('pendaftar')
-      .update({ status_pembayaran: status })
-      .eq('no_registrasi', id);
+        .from('pendaftar')
+        .update({ status_pembayaran: status })
+        .eq('no_registrasi', id);
 
       if (updateError) {
         throw updateError;
       }
 
-      // Update local state directly
-      setData(prev => prev.map(item =>
-      item["No. Registrasi"] === id ? { ...item, "Status Pembayaran": status } : item
-      ));
+      // Update local state directly and sync healthTalkCount
+      setData(prev => {
+        const updated = prev.map(item =>
+          item["No. Registrasi"] === id ? { ...item, "Status Pembayaran": status } : item
+        );
+        const newHtCount = updated.filter(item =>
+          item["Status Pembayaran"] !== 'Dibatalkan' &&
+          (item.ikut_health_talk === true || (item["Akses Kegiatan"] && (item["Akses Kegiatan"].includes('Diabetes Health Forum') || item["Akses Kegiatan"].includes('Health Talk'))))
+        ).length;
+        setHealthTalkCount(newHtCount);
+        return updated;
+      });
 
-      if (status === "Lunas") {
+      if (selectedParticipant && selectedParticipant["No. Registrasi"] === id) {
+        setSelectedParticipant(prev => prev ? { ...prev, "Status Pembayaran": status } : null);
+      }
+
+      showToast(`Status ${id} berhasil diubah menjadi ${status}`);
+
+      // Auto-open WhatsApp only when freshly verifying a pending registration to Lunas
+      if (status === "Lunas" && currentStatus === "Menunggu Verifikasi") {
         const participant = data.find(item => item["No. Registrasi"] === id);
         const rawWa = participant ? (participant["No. WhatsApp"] || "") : "";
         const waNum = rawWa.replace(/\D/g, '').replace(/^0/, '62');
         const message = `Halo ${participant ? participant["Nama Lengkap"] : "Peserta"},\n\nPembayaran Anda untuk acara Konas Persadia 2026 telah diverifikasi (LUNAS).\n\nSilakan bergabung ke dalam grup WhatsApp Komunitas melalui link undangan berikut:\nhttps://chat.whatsapp.com/GezzqQzSYPuHTiCBRGbela\n\nTerima kasih,\nPanitia Konas Persadia 2026`;
 
         const waUrl = waNum
-        ? `https://wa.me/${waNum}?text=${encodeURIComponent(message)}`
-        : `https://wa.me/?text=${encodeURIComponent(message)}`;
+          ? `https://wa.me/${waNum}?text=${encodeURIComponent(message)}`
+          : `https://wa.me/?text=${encodeURIComponent(message)}`;
 
         window.open(waUrl, "_blank");
       }
@@ -405,6 +442,15 @@ ${qrImageUrl}
 2. Anda dapat membuka link gambar QR Code di atas lalu menyimpannya langsung ke galeri HP.
 
 Sampai jumpa di Bogor!
+_Panitia KONAS PERSADIA 2026_`;
+    } else if (participant["Status Pembayaran"] === "Dibatalkan") {
+      message = `Halo *${participant["Nama Lengkap"]}*,
+
+Kami menginformasikan bahwa pendaftaran Anda dengan No. Registrasi *${participant["No. Registrasi"]}* untuk acara *${EVENT_INFO.namaAcara}* telah dibatalkan (misal: pendaftaran ganda/duplikat).
+
+Jika ada pertanyaan atau kekeliruan, silakan balas pesan ini.
+
+Terima kasih,
 _Panitia KONAS PERSADIA 2026_`;
     } else {
       message = `Yth. *${participant["Nama Lengkap"]}*,
@@ -448,55 +494,59 @@ _Panitia KONAS PERSADIA 2026_`;
         if (voucherError.code === '42501' || voucherError.message?.toLowerCase().includes('permission')) {
           setVoucherActionMsg({
             type: 'error',
-            text: 'Izin akses tabel vouchers ditolak di Supabase. Silakan jalankan script SQL supabase/fix_vouchers_permission.sql di SQL Editor.'
+            text: 'Izin akses tabel vouchers ditolak. Silakan jalankan script supabase/fix_vouchers_permission.sql di SQL Editor Supabase.'
           });
         }
-      } else if (voucherData) {
+        return;
+      }
+
+      if (voucherData) {
         setVouchers(voucherData);
       }
     } catch (err: any) {
-      console.error('Failed to load vouchers:', err);
+      console.error('Catch error fetching vouchers:', err);
     } finally {
       setLoadingVouchers(false);
     }
   };
 
-  const showToast = (message: string) => {
-    setToastMessage(message);
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
     setTimeout(() => {
       setToastMessage(null);
     }, 3000);
   };
 
-  const isFktpVoucher = (v: VoucherItem) => {
-    const code = (v.code || '').trim().toUpperCase();
-    const target = (v.kategori_target || '').trim().toLowerCase();
-    return code.startsWith('FKTP-') || target === 'dokter_umum' || target === 'fktp';
-  };
-
   const isVoucherActuallyUsed = (v: VoucherItem) => {
     if (v.is_used) return true;
-    const code = (v.code || '').trim().toUpperCase();
-    return data.some(p => p.KodeVoucher && p.KodeVoucher !== '-' && p.KodeVoucher.trim().toUpperCase() === code);
+    const codeClean = (v.code || '').trim().toUpperCase();
+    return data.some(d => (d.KodeVoucher || d.kode_voucher || '').trim().toUpperCase() === codeClean);
   };
 
-  const availableFktpVouchers = vouchers.filter(v => isFktpVoucher(v) && !isVoucherActuallyUsed(v));
-  const usedFktpVouchers = vouchers.filter(v => isFktpVoucher(v) && isVoucherActuallyUsed(v));
-  const nextAvailableFktpVoucher = availableFktpVouchers.length > 0 ? availableFktpVouchers[0] : null;
-
-  const getUsedVoucherRegistrant = (voucher: VoucherItem) => {
-    const code = (voucher.code || '').trim().toUpperCase();
-    const byReg = voucher.used_by ? voucher.used_by.trim() : '';
-
-    return data.find(p => 
-      (p.KodeVoucher && p.KodeVoucher.trim().toUpperCase() === code) ||
-      (byReg && p["No. Registrasi"] && p["No. Registrasi"].trim() === byReg)
-    ) || null;
+  const getUsedVoucherRegistrant = (v: VoucherItem): Pendaftar | undefined => {
+    const codeClean = (v.code || '').trim().toUpperCase();
+    return data.find(d => (d.KodeVoucher || d.kode_voucher || '').trim().toUpperCase() === codeClean);
   };
 
   const getVoucherWaMessage = (code: string) => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://konaspersadia.com';
-    return `Yth. Dokter,\n\nBerikut kami sampaikan kode voucher khusus Dokter Umum (FKTP) untuk pendaftaran *${EVENT_INFO.namaAcara}*:\n\n🎟️ Kode Voucher: *${code}*\n\nSilakan gunakan kode voucher di atas saat mengisi formulir pendaftaran kategori *Dokter Umum (FKTP)* melalui website resmi:\n${origin}\n\n*Catatan:* Kode voucher ini bersifat unik dan hanya berlaku untuk 1 kali pendaftaran.\n\nSalam hangat,\n_Panitia KONAS PERSADIA 2026_`;
+    const portalUrl = `${window.location.origin}/#pendaftaran`;
+    return `Yth. Dokter,
+
+Berikut adalah *Kode Voucher Khusus FKTP (Dokter Umum)* untuk pendaftaran *${EVENT_INFO.namaAcara}*:
+
+🎟️ *Kode Voucher:* \`${code}\`
+📍 *Link Pendaftaran:* ${portalUrl}
+
+*Petunjuk Penggunaan:*
+1. Buka link pendaftaran di atas.
+2. Pilih Kategori: *Dokter Umum (FKTP)*.
+3. Masukkan Kode Voucher di atas pada kolom yang tersedia, lalu klik tombol *"Terapkan"*.
+4. Biaya pendaftaran Simposium & Workshop akan otomatis disesuaikan dengan subsidi khusus FKTP.
+
+_Harap kode voucher ini tidak dibagikan ke pihak lain karena hanya berlaku untuk 1 kali pendaftaran._
+
+Terima kasih,
+_Panitia KONAS PERSADIA 2026_`;
   };
 
   const handleCopyCode = (code: string) => {
@@ -529,7 +579,6 @@ _Panitia KONAS PERSADIA 2026_`;
     setVoucherActionMsg(null);
 
     try {
-      // 1. Coba RPC create_voucher terlebih dahulu (SECURITY DEFINER)
       const { data: rpcData, error: rpcErr } = await supabase.rpc('create_voucher', {
         p_code: cleanCode,
         p_kategori: 'dokter_umum',
@@ -548,7 +597,6 @@ _Panitia KONAS PERSADIA 2026_`;
         return;
       }
 
-      // 2. Fallback insert langsung ke tabel
       const { data: newV, error: insertError } = await supabase
         .from('vouchers')
         .insert([
@@ -597,7 +645,6 @@ _Panitia KONAS PERSADIA 2026_`;
     setVoucherActionMsg(null);
 
     try {
-      // 1. Coba RPC generate_fktp_vouchers terlebih dahulu (SECURITY DEFINER)
       const { data: rpcData, error: rpcErr } = await supabase.rpc('generate_fktp_vouchers', {
         p_count: count
       });
@@ -609,7 +656,6 @@ _Panitia KONAS PERSADIA 2026_`;
         return;
       }
 
-      // 2. Fallback ke insert batch langsung
       const existingCodes = new Set(vouchers.map(v => (v.code || '').toUpperCase().trim()));
       const newItems = [];
 
@@ -649,35 +695,26 @@ _Panitia KONAS PERSADIA 2026_`;
         await fetchVouchers();
       }
     } catch (err: any) {
-      setVoucherActionMsg({ type: 'error', text: `Gagal generate voucher: ${err.message}` });
+      setVoucherActionMsg({ type: 'error', text: `Gagal membuat voucher batch: ${err.message}` });
     } finally {
       setIsGeneratingBatch(false);
     }
   };
 
   const handleDeleteVoucher = async (code: string) => {
-    if (!window.confirm(`Hapus voucher ${code}? Tindakan ini tidak dapat dibatalkan.`)) return;
+    if (!window.confirm(`Yakin ingin menghapus voucher ${code}?`)) return;
 
     try {
-      // 1. Coba RPC delete_voucher terlebih dahulu (SECURITY DEFINER)
-      const { error: rpcErr } = await supabase.rpc('delete_voucher', { p_code: code });
-      if (!rpcErr) {
-        setVouchers(prev => prev.filter(v => v.code !== code));
-        showToast(`Voucher ${code} berhasil dihapus.`);
-        return;
-      }
-
-      // 2. Fallback ke delete langsung tabel
-      const { error: delError } = await supabase
+      const { error: delErr } = await supabase
         .from('vouchers')
         .delete()
         .eq('code', code);
 
-      if (delError) {
-        if (delError.code === '42501' || delError.message?.toLowerCase().includes('permission')) {
-          throw new Error('Izin ditolak (Permission denied) di Supabase. Silakan jalankan script supabase/fix_vouchers_permission.sql di SQL Editor Supabase.');
+      if (delErr) {
+        if (delErr.code === '42501' || delErr.message?.toLowerCase().includes('permission')) {
+          throw new Error('Izin hapus ditolak. Jalankan fix_vouchers_permission.sql.');
         }
-        throw delError;
+        throw delErr;
       }
 
       setVouchers(prev => prev.filter(v => v.code !== code));
@@ -687,16 +724,78 @@ _Panitia KONAS PERSADIA 2026_`;
     }
   };
 
-  const filteredVouchers = vouchers.filter(v => {
-    const isUsed = isVoucherActuallyUsed(v);
-    if (voucherTab === 'fktp_tersedia') {
-      if (!isFktpVoucher(v) || isUsed) return false;
-    } else if (voucherTab === 'terpakai') {
-      if (!isUsed) return false;
+  const handleExportCSV = () => {
+    if (filteredData.length === 0) {
+      alert("Tidak ada data untuk diexport.");
+      return;
     }
 
-    if (!voucherSearch.trim()) return true;
-    const q = voucherSearch.toLowerCase();
+    const headers = [
+      "No. Registrasi",
+      "Tanggal",
+      "Nama Lengkap",
+      "Email",
+      "No. WhatsApp",
+      "Kategori Peserta",
+      "Akses Kegiatan",
+      "Total Bayar",
+      "Status Pembayaran",
+      "Institusi",
+      "NIM",
+      "Kode Voucher",
+      "Cabang Persadia",
+      "Kota/Kabupaten",
+      "Provinsi",
+      "Registrasi Onsite",
+      "Waktu Check-in"
+    ];
+
+    const rows = filteredData.map(d => [
+      `"${d["No. Registrasi"]}"`,
+      `"${d.Timestamp}"`,
+      `"${(d["Nama Lengkap"] || "").replace(/"/g, '""')}"`,
+      `"${d.Email || ""}"`,
+      `"'${d["No. WhatsApp"] || ""}"`,
+      `"${(d["Kategori Peserta"] || "").replace(/"/g, '""')}"`,
+      `"${(d["Akses Kegiatan"] || "").replace(/"/g, '""')}"`,
+      d["Total Bayar"],
+      `"${d["Status Pembayaran"]}"`,
+      `"${(d.Institusi || "").replace(/"/g, '""')}"`,
+      `"${d.nim || ""}"`,
+      `"${d.KodeVoucher || d.kode_voucher || ""}"`,
+      `"${(d.CabangPersadia || "").replace(/"/g, '""')}"`,
+      `"${(d.kota_kabupaten || "").replace(/"/g, '""')}"`,
+      `"${(d.provinsi || "").replace(/"/g, '""')}"`,
+      `"${d.registrasi_onsite || "Belum"}"`,
+      `"${d.waktu_registrasi_onsite || ""}"`
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Data_Pendaftar_KONAS_PERSADIA_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast("Data pendaftar berhasil diunduh sebagai file CSV!");
+  };
+
+  // Voucher filtering
+  const availableFktpVouchers = vouchers.filter(v =>
+    (v.kategori_target === 'dokter_umum' || !v.kategori_target) &&
+    !isVoucherActuallyUsed(v)
+  );
+  const usedFktpVouchers = vouchers.filter(v => isVoucherActuallyUsed(v));
+
+  const filteredVouchers = vouchers.filter(v => {
+    const isUsed = isVoucherActuallyUsed(v);
+    if (voucherTab === 'fktp_tersedia' && isUsed) return false;
+    if (voucherTab === 'terpakai' && !isUsed) return false;
+
+    const q = voucherSearch.toLowerCase().trim();
+    if (!q) return true;
+
     const codeMatch = (v.code || '').toLowerCase().includes(q);
     const targetMatch = (v.kategori_target || '').toLowerCase().includes(q);
     const usedByMatch = (v.used_by || '').toLowerCase().includes(q);
@@ -712,71 +811,71 @@ _Panitia KONAS PERSADIA 2026_`;
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-slate-100">
-      <div className="flex justify-center mb-6">
-      <div className="h-16 w-16 bg-blue-50 rounded-full flex items-center justify-center">
-      <ShieldAlert className="h-8 w-8 text-blue-600" />
-      </div>
-      </div>
-      <h1 className="text-2xl font-bold text-slate-800 text-center mb-2">Admin Login</h1>
-      <p className="text-slate-500 text-center text-sm mb-6">
-      Masuk dengan akun admin Supabase untuk mengelola data pendaftaran.
-      </p>
+        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-slate-100">
+          <div className="flex justify-center mb-6">
+            <div className="h-16 w-16 bg-blue-50 rounded-full flex items-center justify-center">
+              <ShieldAlert className="h-8 w-8 text-blue-600" />
+            </div>
+          </div>
+          <h1 className="text-2xl font-bold text-slate-800 text-center mb-2">Admin Login</h1>
+          <p className="text-slate-500 text-center text-sm mb-6">
+            Masuk dengan akun admin Supabase untuk mengelola data pendaftaran.
+          </p>
 
-      <form onSubmit={handleLogin} className="space-y-4">
-      <div>
-      <label className="block text-xs font-semibold text-slate-600 mb-1">Email Admin</label>
-      <input
-      type="email"
-      required
-      placeholder="admin@konaspersadia.or.id"
-      value={email}
-      onChange={(e) => setEmail(e.target.value)}
-      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm transition-all"
-      autoFocus
-      />
-      </div>
-      <div>
-      <label className="block text-xs font-semibold text-slate-600 mb-1">Password</label>
-      <input
-      type="password"
-      required
-      placeholder="••••••••"
-      value={password}
-      onChange={(e) => setPassword(e.target.value)}
-      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm transition-all"
-      />
-      </div>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Email Admin</label>
+              <input
+                type="email"
+                required
+                placeholder="admin@konaspersadia.or.id"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm transition-all"
+                autoFocus
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Password</label>
+              <input
+                type="password"
+                required
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm transition-all"
+              />
+            </div>
 
-      {authError && (
-        <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-xs font-medium">
-        {authError}
+            {authError && (
+              <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-xs font-medium">
+                {authError}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={isLoggingIn}
+              className="w-full bg-blue-600 text-white font-semibold py-3 rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+            >
+              {isLoggingIn ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Memproses...
+                </>
+              ) : (
+                "Masuk Dashboard"
+              )}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <button onClick={onNavigateHome} className="text-sm text-slate-500 hover:text-slate-800 flex items-center justify-center mx-auto cursor-pointer">
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Kembali ke Beranda
+            </button>
+          </div>
         </div>
-      )}
-
-      <button
-      type="submit"
-      disabled={isLoggingIn}
-      className="w-full bg-blue-600 text-white font-semibold py-3 rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
-      >
-      {isLoggingIn ? (
-        <>
-        <Loader2 className="h-4 w-4 animate-spin" />
-        Memproses...
-        </>
-      ) : (
-        "Masuk Dashboard"
-      )}
-      </button>
-      </form>
-
-      <div className="mt-6 text-center">
-      <button onClick={onNavigateHome} className="text-sm text-slate-500 hover:text-slate-800 flex items-center justify-center mx-auto cursor-pointer">
-      <ChevronLeft className="h-4 w-4 mr-1" />
-      Kembali ke Beranda
-      </button>
-      </div>
-      </div>
       </div>
     );
   }
@@ -785,16 +884,20 @@ _Panitia KONAS PERSADIA 2026_`;
   const totalPendaftar = data.length;
   const totalLunas = data.filter(d => d["Status Pembayaran"] === "Lunas").length;
   const totalMenunggu = data.filter(d => d["Status Pembayaran"] === "Menunggu Verifikasi").length;
+  const totalBatal = data.filter(d => d["Status Pembayaran"] === "Dibatalkan").length;
 
   let totalDana = 0;
   data.forEach(d => {
     if (d["Status Pembayaran"] === "Lunas") {
-      const nominal = typeof d["Total Bayar"] === 'number' ? d["Total Bayar"] : parseInt(d["Total Bayar"] as string || '0', 10);
-      totalDana += isNaN(nominal) ? 0 : nominal;
+      const val = typeof d["Total Bayar"] === 'number'
+        ? d["Total Bayar"]
+        : parseInt(d["Total Bayar"] || '0', 10);
+      if (!isNaN(val)) totalDana += val;
     }
   });
 
-  // Prepare chart data
+  const kategoriList = Array.from(new Set(data.map(d => d["Kategori Peserta"]).filter(Boolean)));
+
   const kategoriCount: Record<string, number> = {};
   data.forEach(d => {
     const k = d["Kategori Peserta"] || "Lainnya";
@@ -809,10 +912,10 @@ _Panitia KONAS PERSADIA 2026_`;
   const statusBarData = [
     { name: 'Menunggu', jumlah: totalMenunggu, fill: '#f59e0b' },
     { name: 'Lunas', jumlah: totalLunas, fill: '#10b981' },
-    { name: 'Dibatalkan', jumlah: data.filter(d => d["Status Pembayaran"] === "Dibatalkan").length, fill: '#ef4444' },
+    { name: 'Dibatalkan', jumlah: totalBatal, fill: '#ef4444' },
   ];
 
-  // Filtered data for table (newest first as ordered by Supabase)
+  // Filtered data for table
   const filteredData = data.filter(item => {
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
@@ -822,7 +925,7 @@ _Panitia KONAS PERSADIA 2026_`;
       (item.Email || "").toLowerCase().includes(q) ||
       (item["No. WhatsApp"] || "").toLowerCase().includes(q) ||
       (item.Institusi || "").toLowerCase().includes(q) ||
-      (item.KodeVoucher || "").toLowerCase().includes(q) ||
+      (item.KodeVoucher || item.kode_voucher || "").toLowerCase().includes(q) ||
       (item.CabangPersadia || "").toLowerCase().includes(q) ||
       (item.NamaKetuaCabang || "").toLowerCase().includes(q) ||
       (item["Kategori Peserta"] || "").toLowerCase().includes(q) ||
@@ -831,8 +934,9 @@ _Panitia KONAS PERSADIA 2026_`;
       (item.provinsi || "").toLowerCase().includes(q);
 
     const matchesStatus = statusFilter === "Semua" ? true : item["Status Pembayaran"] === statusFilter;
+    const matchesKategori = kategoriFilter === "Semua" ? true : item["Kategori Peserta"] === kategoriFilter;
 
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && matchesKategori;
   });
 
   // Pagination calculation
@@ -844,1076 +948,1262 @@ _Panitia KONAS PERSADIA 2026_`;
   const paginatedData = pageSize === -1 ? filteredData : filteredData.slice(startIndex, endIndex);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-    {/* Admin Header */}
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-30">
-    <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 h-16 flex items-center justify-between">
-    <div className="flex items-center space-x-4">
-    <button
-    onClick={onNavigateHome}
-    className="p-2 -ml-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-full transition-colors"
-    title="Kembali ke Beranda"
-    >
-    <ChevronLeft className="h-5 w-5" />
-    </button>
-    <div className="flex items-center">
-    <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
-    <ShieldAlert className="h-4 w-4 text-white" />
-    </div>
-    <div>
-    <h1 className="font-bold text-xl text-slate-800 tracking-tight leading-none">Konas Admin</h1>
-    {currentUserEmail && (
-      <span className="text-[11px] text-slate-400 font-normal block mt-0.5">{currentUserEmail}</span>
-    )}
-    </div>
-    </div>
-    </div>
-    <div className="flex items-center space-x-2.5 sm:space-x-4">
-      <button
-        onClick={() => setIsVoucherModalOpen(true)}
-        className="inline-flex items-center px-2.5 sm:px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-xs"
-        title="Kelola & Salin Voucher FKTP"
-      >
-        <Ticket className="h-4 w-4 mr-1.5 text-amber-600" />
-        <span className="hidden sm:inline">Voucher FKTP</span>
-        <span className="sm:hidden">FKTP</span>
-        <span className="ml-1.5 px-1.5 py-0.2 bg-amber-200 text-amber-900 rounded-full text-[10px] font-bold">
-          {availableFktpVouchers.length}
-        </span>
-      </button>
-
-      <button
-        onClick={() => {
-          fetchData();
-          fetchVouchers();
-        }}
-        className="text-xs sm:text-sm font-medium text-slate-600 hover:text-blue-600 flex items-center cursor-pointer"
-      >
-        {(loading || loadingVouchers) && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}
-        Refresh Data
-      </button>
-      <button
-        onClick={handleLogout}
-        className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors cursor-pointer"
-        title="Keluar"
-      >
-        <LogOut className="h-5 w-5" />
-      </button>
-    </div>
-    </div>
-    </header>
-
-    <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 xl:px-10 py-4 sm:py-6">
-    {loading && data.length === 0 ? (
-      <div className="flex flex-col items-center justify-center py-20">
-      <Loader2 className="h-10 w-10 text-blue-600 animate-spin mb-4" />
-      <p className="text-slate-500">Memuat data dari Supabase...</p>
-      </div>
-    ) : error ? (
-      <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl flex items-center justify-between">
-      <p>{error}</p>
-      <button onClick={fetchData} className="font-medium underline hover:text-red-800">Coba Lagi</button>
-      </div>
-    ) : (
-      <div className="space-y-4 sm:space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
-
-      {/* Stats Row - 5 Compact Unified Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3.5">
-      <StatCard
-        title="Total Pendaftar"
-        value={totalPendaftar.toString()}
-        icon={<Users className="h-4 w-4 sm:h-5 sm:w-5" />}
-        trend="+3 hari ini"
-        color="blue"
-      />
-      <StatCard
-        title="Dana Terverifikasi"
-        value={`Rp ${totalDana.toLocaleString('id-ID')}`}
-        icon={<DollarSign className="h-4 w-4 sm:h-5 sm:w-5" />}
-        trend="Lunas"
-        color="emerald"
-      />
-      <StatCard
-        title="Menunggu Verifikasi"
-        value={totalMenunggu.toString()}
-        icon={<Clock className="h-4 w-4 sm:h-5 sm:w-5" />}
-        trend="Perlu tindakan"
-        color="amber"
-      />
-      <StatCard
-        title="Terverifikasi"
-        value={totalLunas.toString()}
-        icon={<CheckCircle className="h-4 w-4 sm:h-5 sm:w-5" />}
-        trend="Selesai"
-        color="indigo"
-      />
-      <StatCard
-        title="Pendaftaran Diabetes Health Forum"
-        value={`${healthTalkCount} orang`}
-        icon={<Activity className="h-4 w-4 sm:h-5 sm:w-5" />}
-        color="purple"
-        trend={
-          <div className="flex items-center gap-1.5">
-            <span className={`text-[10px] font-bold ${isHealthTalkEnabled ? 'text-emerald-600' : 'text-slate-400'}`}>
-              {isHealthTalkEnabled ? 'Dibuka' : 'Ditutup'}
-            </span>
+    <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
+      {/* Sticky Main Header */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+        <div className="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
+          {/* Left: Branding & Return Button */}
+          <div className="flex items-center space-x-3">
             <button
-              onClick={handleToggleHealthTalk}
-              disabled={isTogglingHT}
-              title={isHealthTalkEnabled ? 'Klik untuk menutup pendaftaran Diabetes Health Forum' : 'Klik untuk membuka pendaftaran Diabetes Health Forum'}
-              className={`relative inline-flex h-4.5 w-8 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${
-                isHealthTalkEnabled ? 'bg-emerald-500' : 'bg-slate-300'
-              } ${isTogglingHT ? 'opacity-50 cursor-wait' : ''}`}
+              onClick={onNavigateHome}
+              className="p-2 -ml-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-full transition-colors"
+              title="Kembali ke Beranda Web"
             >
-              <span
-                className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform shadow-xs ${
-                  isHealthTalkEnabled ? 'translate-x-4' : 'translate-x-1'
-                }`}
-              />
+              <ChevronLeft className="h-5 w-5" />
             </button>
-          </div>
-        }
-      />
-      </div>
-
-      {/* Charts Row - Compact Sizing */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-4">
-      {/* Kategori Pie Chart */}
-      <div className="bg-white p-4 sm:p-5 rounded-xl shadow-xs border border-slate-200">
-      <h3 className="text-sm font-bold text-slate-800 mb-3">Distribusi Kategori Peserta</h3>
-      <div className="h-48 sm:h-52 w-full">
-      <ResponsiveContainer width="100%" height="100%">
-      <PieChart>
-      <Pie
-      data={pieData}
-      cx="50%"
-      cy="50%"
-      innerRadius={50}
-      outerRadius={75}
-      paddingAngle={4}
-      dataKey="value"
-      >
-      {pieData.map((entry, index) => (
-        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-      ))}
-      </Pie>
-      <RechartsTooltip
-      formatter={(value: number) => [`${value} peserta`, 'Jumlah']}
-      contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
-      />
-      <Legend verticalAlign="bottom" height={32} wrapperStyle={{ fontSize: '11px' }} />
-      </PieChart>
-      </ResponsiveContainer>
-      </div>
-      </div>
-
-      {/* Status Bar Chart */}
-      <div className="bg-white p-4 sm:p-5 rounded-xl shadow-xs border border-slate-200">
-      <div className="flex items-center justify-between mb-3">
-      <h3 className="text-sm font-bold text-slate-800">Status Pembayaran</h3>
-      <a
-      href="https://chat.whatsapp.com/GezzqQzSYPuHTiCBRGbela"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex items-center px-2.5 py-1 bg-[#25D366] hover:bg-[#128C7E] text-white text-xs font-medium rounded-lg transition-colors shadow-xs"
-      >
-      <MessageCircle className="h-3.5 w-3.5 mr-1" />
-      Grup WA
-      </a>
-      </div>
-      <div className="h-48 sm:h-52 w-full">
-      <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={statusBarData} margin={{ top: 10, right: 15, left: -10, bottom: 0 }}>
-      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 11}} />
-      <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 11}} />
-      <RechartsTooltip
-      cursor={{fill: '#f1f5f9'}}
-      contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
-      />
-      <Bar dataKey="jumlah" radius={[6, 6, 0, 0]} maxBarSize={45}>
-      {statusBarData.map((entry, index) => (
-        <Cell key={`cell-${index}`} fill={entry.fill} />
-      ))}
-      </Bar>
-      </BarChart>
-      </ResponsiveContainer>
-      </div>
-      </div>
-      </div>
-
-      {/* Quick Action: Voucher FKTP Bar */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-blue-500/5 border border-amber-200/90 rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-xs">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          {/* Left: Info */}
-          <div className="flex items-start sm:items-center gap-3.5">
-            <div className="h-11 w-11 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm">
-              <Ticket className="h-6 w-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-bold text-slate-800 text-base sm:text-lg">Voucher Khusus FKTP (Dokter Umum)</h3>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
-                  {availableFktpVouchers.length} Siap Pakai
-                </span>
-                {usedFktpVouchers.length > 0 && (
-                  <span className="text-xs text-slate-500 font-medium">
-                    ({usedFktpVouchers.length} sudah digunakan)
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-slate-600 mt-0.5">
-                Salin dan berikan kode voucher aktif ini kepada dokter FKTP untuk mendapatkan tarif khusus registrasi.
-              </p>
-            </div>
-          </div>
-
-          {/* Right: Quick Copy & Actions */}
-          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-            {nextAvailableFktpVoucher ? (
-              <div className="flex flex-wrap items-center gap-2 bg-white/90 backdrop-blur-xs p-1.5 sm:p-2 rounded-xl border border-amber-200 shadow-xs">
-                <div className="px-2.5 sm:px-3 py-1.5 bg-amber-50 rounded-lg border border-amber-100 flex items-center gap-1.5 sm:gap-2">
-                  <span className="text-[10px] uppercase font-bold text-amber-600 tracking-wider">Voucher:</span>
-                  <span className="font-mono font-bold text-sm sm:text-base text-amber-900 tracking-wider select-all">
-                    {nextAvailableFktpVoucher.code}
-                  </span>
-                </div>
-
-                <button
-                  onClick={() => handleCopyCode(nextAvailableFktpVoucher.code)}
-                  className="inline-flex items-center px-3 py-1.5 sm:py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-xs cursor-pointer"
-                  title="Salin Kode Voucher ke Clipboard"
-                >
-                  {copiedKey === nextAvailableFktpVoucher.code ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 mr-1.5 text-white" />
-                      Tersalin!
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5 mr-1.5" />
-                      Salin Kode
-                    </>
-                  )}
-                </button>
-
-                <button
-                  onClick={() => handleCopyWaMessage(nextAvailableFktpVoucher.code)}
-                  className="inline-flex items-center px-3 py-1.5 sm:py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
-                  title="Salin Template Teks WhatsApp Lengkap"
-                >
-                  {copiedKey === `wa_${nextAvailableFktpVoucher.code}` ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 mr-1.5 text-emerald-600" />
-                      Pesan Tersalin!
-                    </>
-                  ) : (
-                    <>
-                      <Share2 className="w-3.5 h-3.5 mr-1.5 text-slate-600" />
-                      Salin Pesan WA
-                    </>
-                  )}
-                </button>
-
-                <button
-                  onClick={() => handleShareWa(nextAvailableFktpVoucher.code)}
-                  className="inline-flex items-center px-3 py-1.5 sm:py-2 bg-[#25D366] hover:bg-[#128C7E] text-white text-xs font-semibold rounded-lg transition-colors shadow-xs cursor-pointer"
-                  title="Buka WhatsApp untuk kirim kode voucher langsung"
-                >
-                  <MessageCircle className="w-3.5 h-3.5 mr-1.5" />
-                  Kirim WA
-                </button>
-              </div>
-            ) : (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs text-slate-500 italic bg-white px-3 py-2 rounded-lg border border-slate-200">
-                  {vouchers.length === 0 ? "Belum ada voucher FKTP di database." : "Semua voucher FKTP telah digunakan."}
-                </span>
-                <button
-                  onClick={() => handleBatchGenerate(5)}
-                  disabled={isGeneratingBatch}
-                  className="inline-flex items-center px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-xs cursor-pointer disabled:opacity-50"
-                >
-                  {isGeneratingBatch ? (
-                    <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                  ) : (
-                    <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                  )}
-                  + Buat 5 Voucher FKTP
-                </button>
-              </div>
-            )}
-
-            <button
-              onClick={() => setIsVoucherModalOpen(true)}
-              className="inline-flex items-center px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-semibold rounded-xl transition-all shadow-xs cursor-pointer ml-auto lg:ml-0"
-              title="Buka Panel Lengkap Manajemen Voucher"
-            >
-              <Ticket className="w-3.5 h-3.5 mr-1.5 text-amber-600" />
-              Kelola Voucher ({vouchers.length})
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Table Section - Frozen Toolbar & Header */}
-      <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-200 flex flex-col">
-      {/* Sticky Toolbar: Daftar Pendaftar + Search + Filter */}
-      <div className="sticky top-16 z-20 bg-white/95 backdrop-blur-md px-4 sm:px-6 py-3 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-t-xl sm:rounded-t-2xl shadow-xs">
-      <div className="flex items-center gap-2">
-      <h3 className="text-base sm:text-lg font-bold text-slate-800">Daftar Pendaftar</h3>
-      <span className="text-xs font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
-        {filteredData.length}
-      </span>
-      </div>
-      <div className="flex flex-col sm:flex-row gap-2.5">
-      <div className="relative">
-      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-      <Search className="h-3.5 w-3.5 text-slate-400" />
-      </div>
-      <input
-      type="text"
-      placeholder="Cari nama, cabang, no. reg..."
-      value={searchQuery}
-      onChange={(e) => setSearchQuery(e.target.value)}
-      className="pl-9 pr-3 py-1.5 w-full sm:w-60 rounded-lg border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-xs sm:text-sm bg-white"
-      />
-      </div>
-      <select
-      value={statusFilter}
-      onChange={(e) => setStatusFilter(e.target.value)}
-      className="px-3 py-1.5 rounded-lg border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-xs sm:text-sm bg-white w-full sm:w-auto cursor-pointer"
-      >
-      <option value="Semua">Semua Status</option>
-      <option value="Menunggu Verifikasi">Menunggu Verifikasi</option>
-      <option value="Lunas">Lunas</option>
-      <option value="Dibatalkan">Dibatalkan</option>
-      </select>
-      </div>
-      </div>
-
-      {actionError && (
-        <div className="bg-red-50 border-b border-red-200 text-red-700 px-6 py-3 text-sm flex items-center justify-between">
-        <div className="flex items-center">
-        <ShieldAlert className="h-4 w-4 mr-2" />
-        {actionError}
-        </div>
-        <button onClick={() => setActionError(null)} className="text-red-500 hover:text-red-700">
-        <XCircle className="h-4 w-4" />
-        </button>
-        </div>
-      )}
-
-      {/* Scrollable Table Viewport with Sticky Header */}
-      <div className="overflow-x-auto max-h-[60vh] sm:max-h-[65vh] overflow-y-auto">
-      <table className="w-full text-left border-collapse">
-      <thead className="sticky top-0 z-10 bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 shadow-xs">
-      <tr>
-      <th className="px-4 sm:px-6 py-3 font-semibold bg-slate-50">No. Registrasi</th>
-      <th className="px-4 sm:px-6 py-3 font-semibold bg-slate-50">Peserta</th>
-      <th className="px-4 sm:px-6 py-3 font-semibold bg-slate-50">Kategori & Akses</th>
-      <th className="px-4 sm:px-6 py-3 font-semibold bg-slate-50">Total Bayar</th>
-      <th className="px-4 sm:px-6 py-3 font-semibold bg-slate-50">Status</th>
-      <th className="px-4 sm:px-6 py-3 font-semibold bg-slate-50 text-right">Aksi</th>
-      </tr>
-      </thead>
-      <tbody className="divide-y divide-slate-100 text-sm">
-      {filteredData.length === 0 ? (
-        <tr>
-        <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
-        Tidak ada data pendaftar yang cocok dengan filter.
-        </td>
-        </tr>
-      ) : (
-        paginatedData.map((row, idx) => (
-          <tr key={idx} className="hover:bg-slate-50 transition-colors">
-          <td className="px-4 sm:px-6 py-2.5 sm:py-3 whitespace-nowrap">
-          <span className="font-mono text-slate-600 bg-slate-100 px-2 py-0.5 rounded text-xs">
-          {row["No. Registrasi"]}
-          </span>
-          <div className="text-[11px] text-slate-400 mt-0.5">
-          {new Date(row.Timestamp).toLocaleDateString('id-ID', {day: 'numeric', month: 'short'})}
-          </div>
-          </td>
-          <td className="px-4 sm:px-6 py-2.5 sm:py-3">
-          <div className="font-medium text-slate-800 text-xs sm:text-sm">{row["Nama Lengkap"]}</div>
-          {row.Institusi && row.Institusi !== '-' && (
-            <div className="text-[11px] text-slate-500 font-medium truncate max-w-[200px]" title={row.Institusi}>
-              🏛️ {row.Institusi}
-            </div>
-          )}
-          <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
-          {row["No. WhatsApp"]}
-          {row["No. WhatsApp"] && row["No. WhatsApp"] !== "-" && (
-            <a
-            href={`https://wa.me/${row["No. WhatsApp"].replace(/\D/g, '').replace(/^0/, '62')}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center p-1 bg-[#25D366]/10 text-[#128C7E] rounded hover:bg-[#25D366]/20 transition-colors"
-            title="Chat WhatsApp"
-            >
-            <MessageCircle className="h-3 w-3" />
-            </a>
-          )}
-          {row.nim && row.nim !== '-' && (
-            <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded font-mono border border-slate-200">
-              NIM: {row.nim}
-            </span>
-          )}
-          </div>
-          <div className="text-[11px] text-slate-400 mt-0.5 truncate max-w-[200px]">{row.Email}</div>
-          </td>
-          <td className="px-4 sm:px-6 py-2.5 sm:py-3">
-            <div className="text-slate-800 font-semibold text-xs sm:text-sm">{row["Kategori Peserta"]}</div>
-            <div className="text-xs text-slate-500 mt-0.5 max-w-[220px] truncate" title={row["Akses Kegiatan"]}>
-              {row["Akses Kegiatan"]}
-            </div>
-            <div className="flex flex-wrap gap-1 mt-1">
-              {row.KodeVoucher && row.KodeVoucher !== '-' && (
-                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-50 text-amber-900 border border-amber-300 rounded text-[10px] font-mono font-bold" title={`Kode Voucher: ${row.KodeVoucher}`}>
-                  🎟️ {row.KodeVoucher}
-                </span>
-              )}
-              {row.CabangPersadia && row.CabangPersadia !== '-' && (
-                <span 
-                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-blue-50 text-blue-800 border border-blue-200 rounded text-[10px] font-medium"
-                  title={`Cabang PERSADIA: ${row.CabangPersadia}${row.NamaKetuaCabang && row.NamaKetuaCabang !== '-' ? ` | Ketua: ${row.NamaKetuaCabang}` : ''}`}
-                >
-                  🏢 {row.CabangPersadia}
-                  {row.NamaKetuaCabang && row.NamaKetuaCabang !== '-' && (
-                    <span className="text-blue-600 font-normal"> ({row.NamaKetuaCabang})</span>
-                  )}
-                </span>
-              )}
-              {row.BersediaAnggota && (
-                <span 
-                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-300 rounded text-[10px] font-semibold cursor-help"
-                  title={row.AlamatLengkap && row.AlamatLengkap !== '-' ? `Alamat: ${row.AlamatLengkap}, ${row.Kelurahan}, ${row.Kecamatan}, ${row.KotaKabupaten}, ${row.Provinsi}` : 'Bersedia mendaftar anggota PERSADIA'}
-                >
-                  🎁 Anggota PERSADIA
-                </span>
-              )}
-              {row.registrasi_onsite === 'Ya' && (
-                <span 
-                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-300 rounded text-[10px] font-bold"
-                  title={row.waktu_registrasi_onsite ? `Check-in: ${new Date(row.waktu_registrasi_onsite).toLocaleString('id-ID')}` : 'Check-in Onsite'}
-                >
-                  ✅ Onsite
-                </span>
-              )}
-              {row.cek_gula_darah === 'Ya' && (
-                <span 
-                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-purple-50 text-purple-800 border border-purple-300 rounded text-[10px] font-medium"
-                  title={`Gula Darah: ${row.gula_darah || '-'} | Tensi: ${row.tensi || '-'}`}
-                >
-                  🩸 Cek Gula: {row.gula_darah || 'Ya'}
-                </span>
-              )}
-              {row.pengambilan_merchandise === 'Ya' && (
-                <span 
-                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-50 text-amber-800 border border-amber-300 rounded text-[10px] font-medium"
-                  title="Merchandise sudah diambil"
-                >
-                  🎁 Merchandise
-                </span>
-              )}
-            </div>
-          </td>
-          <td className="px-4 sm:px-6 py-2.5 sm:py-3 whitespace-nowrap font-medium text-slate-700 text-xs sm:text-sm">
-          Rp {typeof row["Total Bayar"] === 'number'
-            ? row["Total Bayar"].toLocaleString('id-ID')
-            : parseInt(row["Total Bayar"] as string || '0', 10).toLocaleString('id-ID')}
-            </td>
-            <td className="px-4 sm:px-6 py-2.5 sm:py-3 whitespace-nowrap">
-            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-              row["Status Pembayaran"] === 'Lunas'
-              ? 'bg-emerald-100 text-emerald-800'
-              : row["Status Pembayaran"] === 'Dibatalkan'
-              ? 'bg-red-100 text-red-800'
-              : 'bg-amber-100 text-amber-800'
-            }`}>
-            {row["Status Pembayaran"] === 'Lunas' && <CheckCircle className="w-3 h-3 mr-1" />}
-            {row["Status Pembayaran"] === 'Dibatalkan' && <XCircle className="w-3 h-3 mr-1" />}
-            {row["Status Pembayaran"] === 'Menunggu Verifikasi' && <Clock className="w-3 h-3 mr-1" />}
-            {row["Status Pembayaran"]}
-            </span>
-            </td>
-            <td className="px-4 sm:px-6 py-2.5 sm:py-3 whitespace-nowrap text-right">
-            <div className="flex items-center justify-end gap-1.5">
-            {row["Status Pembayaran"] === 'Menunggu Verifikasi' && (
-              <>
-              <button
-              onClick={() => setConfirmDialog({ isOpen: true, id: row["No. Registrasi"], status: "Lunas" })}
-              disabled={actionLoadingId === row["No. Registrasi"]}
-              className="inline-flex items-center px-2.5 py-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-medium rounded-lg hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-              title="Set Lunas"
-              >
-              {actionLoadingId === row["No. Registrasi"] ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <CheckSquare className="w-3.5 h-3.5 mr-1 text-emerald-600" />
-              )}
-              Lunas
-              </button>
-              <button
-              onClick={() => setConfirmDialog({ isOpen: true, id: row["No. Registrasi"], status: "Dibatalkan" })}
-              disabled={actionLoadingId === row["No. Registrasi"]}
-              className="inline-flex items-center px-2.5 py-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-medium rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-              title="Set Batal"
-              >
-              {actionLoadingId === row["No. Registrasi"] ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <XCircle className="w-3.5 h-3.5 mr-1 text-red-500" />
-              )}
-              Batal
-              </button>
-              </>
-            )}
-
-            <button
-            onClick={() => handleSendWhatsapp(row)}
-            className={`inline-flex items-center px-3 py-1.5 border text-xs font-semibold rounded-lg transition-all shadow-sm cursor-pointer ${
-              row["Status Pembayaran"] === "Lunas"
-              ? "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300"
-              : "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100 hover:border-amber-300"
-            }`}
-            title={row["Status Pembayaran"] === "Lunas" ? "Kirim QR E-Ticket langsung ke WhatsApp Peserta" : "Minta Bukti Transfer Pembayaran ke WhatsApp"}
-            >
-            <MessageCircle className={`w-3.5 h-3.5 mr-1.5 ${row["Status Pembayaran"] === "Lunas" ? "text-emerald-600" : "text-amber-600"}`} />
-            {row["Status Pembayaran"] === "Lunas" ? "Kirim E-Tiket (WA)" : "Tagih Bukti Bayar (WA)"}
-            </button>
-            </div>
-            </td>
-            </tr>
-        ))
-      )}
-      </tbody>
-      </table>
-      </div>
-
-      {/* Pagination Footer */}
-      <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs sm:text-sm text-slate-600">
-        <div className="flex items-center gap-3 sm:gap-4 flex-wrap justify-between w-full sm:w-auto">
-          <span>
-            Menampilkan <strong className="text-slate-800 font-semibold">{totalRows === 0 ? 0 : startIndex + 1}</strong>–<strong className="text-slate-800 font-semibold">{endIndex}</strong> dari <strong className="text-slate-800 font-semibold">{totalRows}</strong> pendaftar
-          </span>
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-slate-500">Per hal:</span>
-            <select
-              value={pageSize}
-              onChange={(e) => setPageSize(Number(e.target.value))}
-              className="bg-white border border-slate-200 text-slate-700 text-xs rounded-lg px-2 py-1 focus:ring-1 focus:ring-blue-500 outline-none cursor-pointer"
-            >
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-              <option value={200}>200</option>
-              <option value={-1}>Semua</option>
-            </select>
-          </div>
-        </div>
-
-        {totalPages > 1 && (
-          <div className="flex items-center gap-1 self-center sm:self-auto">
-            <button
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={safeCurrentPage === 1}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              <ChevronLeft className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Sebelumnya</span>
-            </button>
-
-            <div className="flex items-center gap-1">
-              {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter(p => p === 1 || p === totalPages || Math.abs(p - safeCurrentPage) <= 1)
-                .reduce<(number | string)[]>((acc, p, idx, arr) => {
-                  if (idx > 0 && (p - (arr[idx - 1] as number)) > 1) {
-                    acc.push('...');
-                  }
-                  acc.push(p);
-                  return acc;
-                }, [])
-                .map((p, idx) =>
-                  p === '...' ? (
-                    <span key={`dots-${idx}`} className="px-1.5 text-xs text-slate-400">...</span>
-                  ) : (
-                    <button
-                      key={p}
-                      onClick={() => setCurrentPage(p as number)}
-                      className={`min-w-[28px] sm:min-w-[32px] h-7 sm:h-8 px-2 rounded-lg text-xs font-semibold transition-colors ${
-                        safeCurrentPage === p
-                          ? 'bg-blue-600 text-white shadow-sm'
-                          : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  )
-                )}
-            </div>
-
-            <button
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={safeCurrentPage === totalPages}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              <span className="hidden sm:inline">Selanjutnya</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
-      </div>
-      </div>
-
-      </div>
-    )}
-    </main>
-
-    {/* Confirmation Modal */}
-    {confirmDialog.isOpen && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200">
-      <h3 className="text-lg font-bold text-slate-800 mb-2">Konfirmasi Tindakan</h3>
-      <p className="text-sm text-slate-600 mb-6">
-      Anda yakin ingin mengubah status pembayaran menjadi <strong className={confirmDialog.status === "Lunas" ? "text-emerald-600" : "text-red-600"}>{confirmDialog.status}</strong> untuk peserta dengan nomor registrasi <strong>{confirmDialog.id}</strong>?
-      </p>
-      <div className="flex justify-end space-x-3">
-      <button
-      onClick={() => setConfirmDialog({ isOpen: false, id: "", status: "" })}
-      className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-      >
-      Batal
-      </button>
-      <button
-      onClick={executeUpdateStatus}
-      className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors cursor-pointer ${
-        confirmDialog.status === "Lunas"
-        ? "bg-emerald-600 hover:bg-emerald-700"
-        : "bg-red-600 hover:bg-red-700"
-      }`}
-      >
-      {confirmDialog.status === "Lunas"
-        ? "Ya, Ubah Status & Kirim WA"
-        : "Ya, Batalkan Pendaftaran"}
-        </button>
-        </div>
-        </div>
-        </div>
-    )}
-
-    {/* Voucher Management Modal */}
-    {isVoucherModalOpen && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-        <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full flex flex-col max-h-[92vh] overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200">
-          
-          {/* Modal Header */}
-          <div className="px-5 sm:px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/80">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 bg-amber-500 rounded-xl flex items-center justify-center text-white shadow-xs">
-                <Ticket className="h-5 w-5" />
+            <div className="flex items-center">
+              <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center mr-2.5 shadow-xs">
+                <ShieldAlert className="h-4 w-4 text-white" />
               </div>
               <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-base sm:text-lg font-bold text-slate-800">Manajemen Voucher FKTP (Dokter Umum)</h3>
-                  <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
-                    {availableFktpVouchers.length} Siap Pakai
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Salin atau bagikan kode voucher aktif kepada dokter FKTP dengan satu kali klik.
-                </p>
+                <h1 className="font-bold text-base sm:text-lg text-slate-800 leading-tight">KONAS Admin</h1>
+                {currentUserEmail && (
+                  <span className="text-[10px] text-slate-400 font-medium block truncate max-w-[140px] sm:max-w-xs">{currentUserEmail}</span>
+                )}
               </div>
             </div>
+          </div>
+
+          {/* Center: Simplified Operational Tabs */}
+          <nav className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/80">
             <button
-              onClick={() => setIsVoucherModalOpen(false)}
-              className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-full transition-colors cursor-pointer"
-              title="Tutup"
+              onClick={() => setActiveTab('pendaftar')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                activeTab === 'pendaftar'
+                  ? 'bg-white text-blue-700 shadow-xs border border-slate-200/60'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
             >
-              <X className="h-5 w-5" />
+              <Users className="w-3.5 h-3.5" />
+              <span>Pendaftar</span>
+              {totalMenunggu > 0 && (
+                <span className="ml-0.5 px-1.5 py-0.2 bg-amber-500 text-white rounded-full text-[10px] font-bold animate-pulse">
+                  {totalMenunggu}
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('voucher')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                activeTab === 'voucher'
+                  ? 'bg-white text-amber-700 shadow-xs border border-slate-200/60'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Ticket className="w-3.5 h-3.5 text-amber-600" />
+              <span>Voucher FKTP</span>
+              <span className="ml-0.5 px-1.5 py-0.2 bg-amber-100 text-amber-800 rounded-full text-[10px] font-bold">
+                {availableFktpVouchers.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('statistik')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                activeTab === 'statistik'
+                  ? 'bg-white text-purple-700 shadow-xs border border-slate-200/60'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5" />
+              <span>Statistik</span>
+            </button>
+          </nav>
+
+          {/* Right: Actions */}
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => {
+                fetchData();
+                fetchVouchers();
+              }}
+              disabled={loading || loadingVouchers}
+              className="p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+              title="Refresh Data Terbaru"
+            >
+              <RefreshCw className={`h-4 w-4 ${(loading || loadingVouchers) ? 'animate-spin text-blue-600' : ''}`} />
+            </button>
+            <button
+              onClick={handleLogout}
+              className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+              title="Keluar dari Akun Admin"
+            >
+              <LogOut className="h-4 w-4" />
             </button>
           </div>
+        </div>
+      </header>
 
-          {/* Modal Toolbar: Search, Tabs & Quick Actions */}
-          <div className="p-4 sm:p-5 border-b border-slate-200 bg-white space-y-3">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-              
-              {/* Search Bar */}
-              <div className="relative flex-1">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-4 w-4 text-slate-400" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Cari voucher, nama dokter, institusi, no. reg..."
-                  value={voucherSearch}
-                  onChange={(e) => setVoucherSearch(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none text-xs sm:text-sm bg-slate-50/50"
-                />
-                {voucherSearch && (
-                  <button
-                    onClick={() => setVoucherSearch("")}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2 flex-wrap justify-end">
-                <button
-                  onClick={() => handleBatchGenerate(5)}
-                  disabled={isGeneratingBatch}
-                  className="inline-flex items-center px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
-                  title="Generate 5 kode voucher FKTP baru secara otomatis"
-                >
-                  {isGeneratingBatch ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 mr-1.5 text-amber-600" />}
-                  +5 Acak
-                </button>
-
-                <button
-                  onClick={() => handleBatchGenerate(10)}
-                  disabled={isGeneratingBatch}
-                  className="inline-flex items-center px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
-                  title="Generate 10 kode voucher FKTP baru secara otomatis"
-                >
-                  {isGeneratingBatch ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 mr-1.5 text-amber-600" />}
-                  +10 Acak
-                </button>
-
-                <button
-                  onClick={() => setShowAddForm(!showAddForm)}
-                  className={`inline-flex items-center px-3 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
-                    showAddForm ? 'bg-slate-800 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                  }`}
-                >
-                  <Plus className="w-3.5 h-3.5 mr-1" />
-                  Manual
-                </button>
-
-                <button
-                  onClick={fetchVouchers}
-                  disabled={loadingVouchers}
-                  className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer border border-slate-200"
-                  title="Refresh Data Voucher"
-                >
-                  <RefreshCw className={`w-4 h-4 ${loadingVouchers ? 'animate-spin text-amber-600' : ''}`} />
-                </button>
-              </div>
-            </div>
-
-            {/* Filter Tabs */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-              <button
-                onClick={() => setVoucherTab("fktp_tersedia")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer ${
-                  voucherTab === "fktp_tersedia"
-                    ? "bg-amber-600 text-white shadow-xs"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                }`}
-              >
-                Tersedia ({availableFktpVouchers.length})
-              </button>
-              <button
-                onClick={() => setVoucherTab("terpakai")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer ${
-                  voucherTab === "terpakai"
-                    ? "bg-amber-600 text-white shadow-xs"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                }`}
-              >
-                Sudah Digunakan ({usedFktpVouchers.length})
-              </button>
-              <button
-                onClick={() => setVoucherTab("semua")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer ${
-                  voucherTab === "semua"
-                    ? "bg-amber-600 text-white shadow-xs"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                }`}
-              >
-                Semua Voucher ({vouchers.length})
-              </button>
-            </div>
-
-            {/* Inline Add Manual Voucher Form */}
-            {showAddForm && (
-              <form onSubmit={handleAddVoucher} className="p-3 bg-amber-50/70 border border-amber-200 rounded-xl flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 animate-in fade-in slide-in-from-top-2 duration-150">
-                <div className="flex-1">
-                  <label className="block text-[11px] font-bold text-amber-900 mb-1">Kode Voucher Baru:</label>
-                  <input
-                    type="text"
-                    required
-                    value={newVoucherInput}
-                    onChange={(e) => setNewVoucherInput(e.target.value.toUpperCase())}
-                    placeholder="Contoh: FKTP-BOGOR01"
-                    className="w-full px-3 py-1.5 rounded-lg border border-amber-300 bg-white focus:ring-1 focus:ring-amber-500 outline-none font-mono text-xs font-bold text-slate-800"
-                  />
-                </div>
-                <div className="sm:self-end">
-                  <button
-                    type="submit"
-                    disabled={isAddingVoucher}
-                    className="w-full sm:w-auto px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer shadow-xs disabled:opacity-50"
-                  >
-                    {isAddingVoucher ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Simpan Voucher"}
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {voucherActionMsg && (
-              <div className={`p-2.5 rounded-lg text-xs font-medium ${
-                voucherActionMsg.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'
-              }`}>
-                {voucherActionMsg.text}
-              </div>
-            )}
+      {/* Main Content Area */}
+      <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
+        {loading && data.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-slate-200 shadow-xs">
+            <Loader2 className="h-10 w-10 text-blue-600 animate-spin mb-4" />
+            <p className="text-slate-600 font-medium">Memuat data pendaftar dari Supabase...</p>
           </div>
-
-          {/* Voucher List Content */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-5 max-h-[55vh] divide-y divide-slate-100">
-            {loadingVouchers && vouchers.length === 0 ? (
-              <div className="py-12 flex flex-col items-center justify-center text-slate-400">
-                <Loader2 className="w-8 h-8 text-amber-500 animate-spin mb-2" />
-                <p className="text-xs">Memuat daftar voucher...</p>
-              </div>
-            ) : filteredVouchers.length === 0 ? (
-              <div className="py-12 flex flex-col items-center justify-center text-center">
-                <div className="h-12 w-12 bg-amber-50 rounded-full flex items-center justify-center text-amber-600 mb-3">
-                  <Ticket className="h-6 w-6" />
-                </div>
-                <h4 className="text-sm font-bold text-slate-800 mb-1">Tidak ada voucher yang sesuai</h4>
-                <p className="text-xs text-slate-500 max-w-sm mb-4">
-                  {voucherSearch ? `Tidak ditemukan voucher yang sesuai dengan kata kunci "${voucherSearch}".` : "Belum ada voucher pada kategori filter ini."}
-                </p>
-                {voucherTab === 'fktp_tersedia' && (
-                  <button
-                    onClick={() => handleBatchGenerate(5)}
-                    disabled={isGeneratingBatch}
-                    className="inline-flex items-center px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-xl transition-colors shadow-xs cursor-pointer"
+        ) : error ? (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl flex items-center justify-between">
+            <p>{error}</p>
+            <button onClick={fetchData} className="font-semibold underline hover:text-red-800">Coba Lagi</button>
+          </div>
+        ) : (
+          <>
+            {/* ============================================================== */}
+            {/* TAB 1: PENDAFTAR & VERIFIKASI (OPERASIONAL UTAMA) */}
+            {/* ============================================================== */}
+            {activeTab === 'pendaftar' && (
+              <div className="space-y-3.5">
+                {/* Compact Interactive Stat Chips */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  <div
+                    onClick={() => { setStatusFilter("Semua"); setKategoriFilter("Semua"); }}
+                    className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                      statusFilter === "Semua" ? "bg-white border-blue-500 ring-2 ring-blue-100 shadow-xs" : "bg-white border-slate-200 hover:border-slate-300"
+                    }`}
                   >
-                    <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                    + Buat 5 Voucher FKTP Sekarang
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {filteredVouchers.map((v, idx) => {
-                  const isUsed = isVoucherActuallyUsed(v);
-                  const registrant = getUsedVoucherRegistrant(v);
-                  return (
-                    <div
-                      key={v.id || v.code || idx}
-                      className={`p-3.5 sm:p-4 rounded-xl border transition-all ${
-                        isUsed
-                          ? 'bg-slate-50/70 border-slate-200'
-                          : 'bg-white border-amber-200 hover:border-amber-300 shadow-xs'
-                      }`}
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        {/* Voucher Info */}
-                        <div className="space-y-1.5">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-mono font-bold text-sm sm:text-base text-slate-800 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-lg tracking-wider">
-                              {v.code}
-                            </span>
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                              isUsed
-                                ? 'bg-slate-200 text-slate-700'
-                                : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                            }`}>
-                              {isUsed ? 'Sudah Digunakan' : 'Siap Digunakan'}
-                            </span>
-                            <span className="text-[11px] text-slate-500 font-medium">
-                              Target: {v.kategori_target === 'dokter_umum' ? 'Dokter Umum (FKTP)' : (v.kategori_target || 'Umum')}
-                            </span>
-                          </div>
+                    <div>
+                      <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Pendaftar</p>
+                      <h4 className="text-lg font-bold text-slate-800">{totalPendaftar}</h4>
+                    </div>
+                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                      <Users className="w-4 h-4" />
+                    </div>
+                  </div>
 
-                          {/* Detail of who redeemed if used */}
-                          {isUsed && (
-                            <div className="mt-2 p-2.5 bg-white border border-slate-200 rounded-lg text-xs space-y-1">
-                              <div className="font-semibold text-slate-800 flex items-center gap-1.5 flex-wrap">
-                                <span className="text-slate-500">Pengguna:</span>
-                                <span className="text-blue-700 font-bold">{registrant ? registrant["Nama Lengkap"] : (v.used_by || "Peserta")}</span>
-                                {registrant && (
-                                  <span className="font-mono text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200">
-                                    {registrant["No. Registrasi"]}
-                                  </span>
-                                )}
-                              </div>
-                              {registrant?.Institusi && registrant.Institusi !== '-' && (
-                                <div className="text-slate-600 text-[11px]">Institusi: {registrant.Institusi}</div>
+                  <div
+                    onClick={() => setStatusFilter("Menunggu Verifikasi")}
+                    className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                      statusFilter === "Menunggu Verifikasi" ? "bg-amber-50/50 border-amber-500 ring-2 ring-amber-100 shadow-xs" : "bg-white border-slate-200 hover:border-amber-300"
+                    }`}
+                  >
+                    <div>
+                      <p className="text-[11px] font-semibold text-amber-700 uppercase tracking-wider">Perlu Verifikasi</p>
+                      <h4 className="text-lg font-bold text-amber-600">{totalMenunggu}</h4>
+                    </div>
+                    <div className="p-2 bg-amber-100 text-amber-700 rounded-lg">
+                      <Clock className="w-4 h-4" />
+                    </div>
+                  </div>
+
+                  <div
+                    onClick={() => setStatusFilter("Lunas")}
+                    className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                      statusFilter === "Lunas" ? "bg-emerald-50/50 border-emerald-500 ring-2 ring-emerald-100 shadow-xs" : "bg-white border-slate-200 hover:border-emerald-300"
+                    }`}
+                  >
+                    <div>
+                      <p className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider">Terverifikasi (Lunas)</p>
+                      <h4 className="text-lg font-bold text-emerald-600">{totalLunas}</h4>
+                    </div>
+                    <div className="p-2 bg-emerald-100 text-emerald-700 rounded-lg">
+                      <CheckCircle className="w-4 h-4" />
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-xl border bg-white border-slate-200 flex items-center justify-between">
+                    <div>
+                      <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Dana Terverifikasi</p>
+                      <h4 className="text-lg font-bold text-slate-800">Rp {totalDana.toLocaleString('id-ID')}</h4>
+                    </div>
+                    <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                      <DollarSign className="w-4 h-4" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Table Card */}
+                <div className="bg-white rounded-2xl shadow-xs border border-slate-200">
+                  {/* Clean Search & Filter Control Bar (Sticky) */}
+                  <div 
+                    style={{ position: 'sticky', top: '4rem' }}
+                    className="sticky top-16 z-20 p-3.5 sm:p-4 border-b border-slate-200 bg-white rounded-t-2xl shadow-xs flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3"
+                  >
+                    {/* Left: Search input */}
+                    <div className="relative flex-1 max-w-lg">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Search className="h-4 w-4 text-slate-400" />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Cari nama, No. Reg, WhatsApp, instansi, voucher..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9 pr-8 py-2 w-full rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-xs sm:text-sm bg-white"
+                      />
+                      {searchQuery && (
+                        <button
+                          onClick={() => setSearchQuery("")}
+                          className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Right: Quick Status Pills & Category & Export */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {/* Status Pills */}
+                      <div className="flex items-center bg-slate-200/70 p-0.5 rounded-lg text-xs font-semibold">
+                        {(["Semua", "Menunggu Verifikasi", "Lunas", "Dibatalkan"] as const).map((status) => (
+                          <button
+                            key={status}
+                            onClick={() => setStatusFilter(status)}
+                            className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                              statusFilter === status
+                                ? "bg-white text-slate-900 shadow-xs"
+                                : "text-slate-600 hover:text-slate-900"
+                            }`}
+                          >
+                            {status === "Menunggu Verifikasi" ? "Menunggu" : status}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Category Filter */}
+                      <select
+                        value={kategoriFilter}
+                        onChange={(e) => setKategoriFilter(e.target.value)}
+                        className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                      >
+                        <option value="Semua">Semua Kategori</option>
+                        {kategoriList.map(cat => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+
+                      {/* Export CSV */}
+                      <button
+                        onClick={handleExportCSV}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-xs transition-colors cursor-pointer"
+                        title="Unduh Data Saat Ini ke Excel (CSV)"
+                      >
+                        <Download className="w-3.5 h-3.5 text-slate-500" />
+                        <span>Export CSV</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Action Error Banner if any */}
+                  {actionError && (
+                    <div className="bg-red-50 border-b border-red-200 text-red-700 px-4 py-2.5 text-xs flex items-center justify-between">
+                      <div className="flex items-center">
+                        <ShieldAlert className="h-4 w-4 mr-2" />
+                        {actionError}
+                      </div>
+                      <button onClick={() => setActionError(null)} className="text-red-500 hover:text-red-700">
+                        <XCircle className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Clean Responsive Table */}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-xs sm:text-sm">
+                      <thead>
+                        <tr className="bg-slate-50/90 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                          <th className="px-4 py-3">No. Reg & Waktu</th>
+                          <th className="px-4 py-3">Peserta & Kontak</th>
+                          <th className="px-4 py-3">Kategori & Tagihan</th>
+                          <th className="px-4 py-3 text-center">Status</th>
+                          <th className="px-4 py-3 text-right">Aksi Operasional</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {paginatedData.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="px-6 py-16 text-center text-slate-400">
+                              <p className="font-medium text-sm">Tidak ada pendaftar yang cocok dengan filter pencarian.</p>
+                              {(searchQuery || statusFilter !== "Semua" || kategoriFilter !== "Semua") && (
+                                <button
+                                  onClick={() => { setSearchQuery(""); setStatusFilter("Semua"); setKategoriFilter("Semua"); }}
+                                  className="mt-2 text-xs text-blue-600 hover:underline cursor-pointer"
+                                >
+                                  Reset Semua Filter
+                                </button>
                               )}
-                              <div className="flex items-center gap-3 text-slate-500 text-[11px] flex-wrap pt-0.5">
-                                {v.used_at && (
-                                  <span>Klaim: {new Date(v.used_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                                )}
-                                {registrant?.["No. WhatsApp"] && registrant["No. WhatsApp"] !== '-' && (
+                            </td>
+                          </tr>
+                        ) : (
+                          paginatedData.map((row, idx) => {
+                            const isMenunggu = row["Status Pembayaran"] === "Menunggu Verifikasi";
+                            const isLunas = row["Status Pembayaran"] === "Lunas";
+                            const isDibatalkan = row["Status Pembayaran"] === "Dibatalkan";
+
+                            return (
+                              <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                                {/* 1. No Reg & Tanggal */}
+                                <td className="px-4 py-3 whitespace-nowrap">
+                                  <span className="font-mono font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded text-xs border border-slate-200/60">
+                                    {row["No. Registrasi"]}
+                                  </span>
+                                  <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
+                                    <Calendar className="w-3 h-3" />
+                                    {new Date(row.Timestamp).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                  </div>
+                                </td>
+
+                                {/* 2. Peserta & Kontak */}
+                                <td className="px-4 py-3">
+                                  <div className="font-semibold text-slate-800 text-xs sm:text-sm flex items-center gap-1.5">
+                                    <span>{row["Nama Lengkap"]}</span>
+                                    {row.registrasi_onsite === 'Ya' && (
+                                      <span className="px-1.5 py-0.2 bg-emerald-100 text-emerald-800 rounded text-[10px] font-bold" title="Check-in Onsite Selesai">
+                                        Onsite
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-2 flex-wrap">
+                                    {row.Institusi && row.Institusi !== '-' && (
+                                      <span className="truncate max-w-[160px] text-[11px] text-slate-600 font-medium" title={row.Institusi}>
+                                        🏛️ {row.Institusi}
+                                      </span>
+                                    )}
+                                    {row["No. WhatsApp"] && row["No. WhatsApp"] !== "-" && (
+                                      <a
+                                        href={`https://wa.me/${row["No. WhatsApp"].replace(/\D/g, '').replace(/^0/, '62')}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center text-[#128C7E] hover:underline text-[11px] font-medium"
+                                        title="Kirim pesan WhatsApp"
+                                      >
+                                        <MessageCircle className="w-3 h-3 mr-0.5" />
+                                        {row["No. WhatsApp"]}
+                                      </a>
+                                    )}
+                                  </div>
+                                </td>
+
+                                {/* 3. Kategori & Tagihan */}
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="font-medium text-slate-800 text-xs">{row["Kategori Peserta"]}</span>
+                                    {(row.KodeVoucher || row.kode_voucher) && (row.KodeVoucher !== '-' && row.kode_voucher !== '-') && (
+                                      <span className="px-1.5 py-0.2 bg-amber-50 text-amber-800 border border-amber-300 rounded font-mono text-[10px] font-bold">
+                                        🎟️ {row.KodeVoucher || row.kode_voucher}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-xs font-semibold text-slate-700 mt-0.5">
+                                    Rp {typeof row["Total Bayar"] === 'number'
+                                      ? row["Total Bayar"].toLocaleString('id-ID')
+                                      : parseInt(row["Total Bayar"] as string || '0', 10).toLocaleString('id-ID')}
+                                  </div>
+                                </td>
+
+                                {/* 4. Status Badge */}
+                                <td className="px-4 py-3 whitespace-nowrap text-center">
+                                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
+                                    isLunas
+                                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                      : row["Status Pembayaran"] === 'Dibatalkan'
+                                      ? 'bg-red-100 text-red-800 border border-red-200'
+                                      : 'bg-amber-100 text-amber-800 border border-amber-200'
+                                  }`}>
+                                    {isLunas && <CheckCircle className="w-3 h-3 mr-1" />}
+                                    {row["Status Pembayaran"] === 'Dibatalkan' && <XCircle className="w-3 h-3 mr-1" />}
+                                    {isMenunggu && <Clock className="w-3 h-3 mr-1" />}
+                                    {row["Status Pembayaran"]}
+                                  </span>
+                                </td>
+
+                                {/* 5. Action Buttons */}
+                                <td className="px-4 py-3 whitespace-nowrap text-right">
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    {/* Action: Quick Status Buttons */}
+                                    {isMenunggu && (
+                                      <>
+                                        <button
+                                          onClick={() => setConfirmDialog({
+                                            isOpen: true,
+                                            id: row["No. Registrasi"],
+                                            status: "Lunas",
+                                            currentStatus: row["Status Pembayaran"],
+                                            nama: row["Nama Lengkap"],
+                                            totalBayar: row["Total Bayar"]
+                                          })}
+                                          disabled={actionLoadingId === row["No. Registrasi"]}
+                                          className="inline-flex items-center px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+                                          title="Set Lunas & Berikan E-Tiket"
+                                        >
+                                          {actionLoadingId === row["No. Registrasi"] ? (
+                                            <Loader2 className="w-3 h-3 animate-spin" />
+                                          ) : (
+                                            <Check className="w-3 h-3 mr-1" />
+                                          )}
+                                          Lunas
+                                        </button>
+
+                                        <button
+                                          onClick={() => setConfirmDialog({
+                                            isOpen: true,
+                                            id: row["No. Registrasi"],
+                                            status: "Dibatalkan",
+                                            currentStatus: row["Status Pembayaran"],
+                                            nama: row["Nama Lengkap"],
+                                            totalBayar: row["Total Bayar"]
+                                          })}
+                                          disabled={actionLoadingId === row["No. Registrasi"]}
+                                          className="inline-flex items-center px-2 py-1 bg-white hover:bg-red-50 text-red-600 border border-slate-200 hover:border-red-300 text-xs font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                                          title="Batalkan Pendaftaran"
+                                        >
+                                          Batal
+                                        </button>
+                                      </>
+                                    )}
+
+                                    {/* For Lunas: Option to Cancel (safe for duplicates) */}
+                                    {isLunas && (
+                                      <button
+                                        onClick={() => setConfirmDialog({
+                                          isOpen: true,
+                                          id: row["No. Registrasi"],
+                                          status: "Dibatalkan",
+                                          currentStatus: row["Status Pembayaran"],
+                                          nama: row["Nama Lengkap"],
+                                          totalBayar: row["Total Bayar"]
+                                        })}
+                                        disabled={actionLoadingId === row["No. Registrasi"]}
+                                        className="inline-flex items-center px-2 py-1 bg-white hover:bg-red-50 text-slate-500 hover:text-red-600 border border-slate-200 hover:border-red-200 text-xs font-medium rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                                        title="Batalkan Pendaftaran (misal: pendaftar ganda / duplikat)"
+                                      >
+                                        Batal
+                                      </button>
+                                    )}
+
+                                    {/* For Dibatalkan: Option to Restore */}
+                                    {isDibatalkan && (
+                                      <button
+                                        onClick={() => setConfirmDialog({
+                                          isOpen: true,
+                                          id: row["No. Registrasi"],
+                                          status: "Lunas",
+                                          currentStatus: row["Status Pembayaran"],
+                                          nama: row["Nama Lengkap"],
+                                          totalBayar: row["Total Bayar"]
+                                        })}
+                                        disabled={actionLoadingId === row["No. Registrasi"]}
+                                        className="inline-flex items-center px-2 py-1 bg-white hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 border border-slate-200 hover:border-emerald-300 text-xs font-medium rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                                        title="Pulihkan status pendaftaran ke Lunas"
+                                      >
+                                        <RotateCcw className="w-3 h-3 mr-1" />
+                                        Pulihkan
+                                      </button>
+                                    )}
+
+                                    {/* Action: WhatsApp Notif */}
+                                    <button
+                                      onClick={() => handleSendWhatsapp(row)}
+                                      className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                                        isLunas
+                                          ? "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200"
+                                          : isDibatalkan
+                                          ? "bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200"
+                                          : "bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200"
+                                      }`}
+                                      title={isLunas ? "Kirim E-Tiket via WhatsApp" : isDibatalkan ? "Kirim Pesan WhatsApp" : "Kirim Pengingat Transfer via WhatsApp"}
+                                    >
+                                      <MessageCircle className="w-3 h-3 mr-1" />
+                                      {isLunas ? "E-Tiket WA" : isDibatalkan ? "Chat WA" : "Tagih WA"}
+                                    </button>
+
+                                    {/* Action: Detail Modal */}
+                                    <button
+                                      onClick={() => setSelectedParticipant(row)}
+                                      className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                                      title="Lihat Data Lengkap Peserta"
+                                    >
+                                      <Eye className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Clean Pagination Footer */}
+                  <div className="px-4 sm:px-6 py-3 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600 rounded-b-2xl">
+                    <div className="flex items-center gap-3">
+                      <span>
+                        Menampilkan <strong>{totalRows === 0 ? 0 : startIndex + 1}</strong>–<strong>{endIndex}</strong> dari <strong>{totalRows}</strong> pendaftar
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-slate-400">| Per hal:</span>
+                        <select
+                          value={pageSize}
+                          onChange={(e) => setPageSize(Number(e.target.value))}
+                          className="bg-white border border-slate-200 text-slate-700 text-xs rounded-md px-1.5 py-0.5 cursor-pointer outline-none"
+                        >
+                          <option value={25}>25</option>
+                          <option value={50}>50</option>
+                          <option value={100}>100</option>
+                          <option value={-1}>Semua</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {totalPages > 1 && (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                          disabled={safeCurrentPage === 1}
+                          className="px-2 py-1 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                        >
+                          Prev
+                        </button>
+                        <span className="px-2 font-semibold text-slate-700">
+                          {safeCurrentPage} / {totalPages}
+                        </span>
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                          disabled={safeCurrentPage === totalPages}
+                          className="px-2 py-1 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ============================================================== */}
+            {/* TAB 2: MANAJEMEN VOUCHER FKTP */}
+            {/* ============================================================== */}
+            {activeTab === 'voucher' && (
+              <div className="space-y-4">
+                {/* Header Summary Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="bg-white p-4 rounded-xl border border-amber-200 shadow-xs flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-semibold text-amber-700 uppercase tracking-wider">Voucher Siap Pakai</p>
+                      <h3 className="text-2xl font-bold text-amber-600">{availableFktpVouchers.length}</h3>
+                      <p className="text-[11px] text-slate-400 mt-0.5">Dapat dibagikan ke dokter FKTP</p>
+                    </div>
+                    <div className="p-3 bg-amber-50 rounded-xl text-amber-600">
+                      <Ticket className="w-6 h-6" />
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Sudah Digunakan</p>
+                      <h3 className="text-2xl font-bold text-slate-800">{usedFktpVouchers.length}</h3>
+                      <p className="text-[11px] text-slate-400 mt-0.5">Telah diklaim oleh pendaftar</p>
+                    </div>
+                    <div className="p-3 bg-slate-50 rounded-xl text-slate-600">
+                      <CheckCircle className="w-6 h-6" />
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Voucher</p>
+                      <h3 className="text-2xl font-bold text-slate-800">{vouchers.length}</h3>
+                      <p className="text-[11px] text-slate-400 mt-0.5">Tercatat di sistem Supabase</p>
+                    </div>
+                    <div className="p-3 bg-blue-50 rounded-xl text-blue-600">
+                      <CreditCard className="w-6 h-6" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Generator & Quick Action Bar */}
+                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-base font-bold text-slate-800">Operasi Pembuatan Voucher</h3>
+                      <p className="text-xs text-slate-500 mt-0.5">Generate batch instan atau input kode kustom sesuai kebutuhan panitia.</p>
+                    </div>
+
+                    {/* Batch Generate Buttons */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        onClick={() => handleBatchGenerate(5)}
+                        disabled={isGeneratingBatch}
+                        className="inline-flex items-center px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        {isGeneratingBatch ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 mr-1.5" />}
+                        + Buat 5 Voucher
+                      </button>
+
+                      <button
+                        onClick={() => handleBatchGenerate(10)}
+                        disabled={isGeneratingBatch}
+                        className="inline-flex items-center px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        + Buat 10 Voucher
+                      </button>
+
+                      <button
+                        onClick={() => setShowAddForm(!showAddForm)}
+                        className="inline-flex items-center px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+                      >
+                        {showAddForm ? 'Tutup Input Manual' : '+ Input Kode Khusus'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Manual Add Input Box */}
+                  {showAddForm && (
+                    <form onSubmit={handleAddVoucher} className="pt-3 border-t border-slate-100 flex items-center gap-2">
+                      <input
+                        type="text"
+                        placeholder="Contoh: FKTP-BOGOR01"
+                        value={newVoucherInput}
+                        onChange={(e) => setNewVoucherInput(e.target.value.toUpperCase())}
+                        className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono font-bold focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none max-w-xs"
+                      />
+                      <button
+                        type="submit"
+                        disabled={isAddingVoucher}
+                        className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        {isAddingVoucher ? 'Menyimpan...' : 'Simpan Voucher'}
+                      </button>
+                    </form>
+                  )}
+
+                  {voucherActionMsg && (
+                    <div className={`p-2.5 rounded-xl text-xs font-medium ${voucherActionMsg.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                      {voucherActionMsg.text}
+                    </div>
+                  )}
+                </div>
+
+                {/* Voucher Filter & Cards Grid */}
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-xs">
+                  <div 
+                    style={{ position: 'sticky', top: '4rem' }}
+                    className="sticky top-16 z-20 p-4 border-b border-slate-200 bg-white rounded-t-2xl shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  >
+                    <div className="flex items-center bg-slate-200/70 p-0.5 rounded-lg text-xs font-semibold">
+                      <button
+                        onClick={() => setVoucherTab("fktp_tersedia")}
+                        className={`px-3 py-1.5 rounded-md transition-all cursor-pointer ${
+                          voucherTab === "fktp_tersedia" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+                        }`}
+                      >
+                        Siap Pakai ({availableFktpVouchers.length})
+                      </button>
+                      <button
+                        onClick={() => setVoucherTab("terpakai")}
+                        className={`px-3 py-1.5 rounded-md transition-all cursor-pointer ${
+                          voucherTab === "terpakai" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+                        }`}
+                      >
+                        Sudah Digunakan ({usedFktpVouchers.length})
+                      </button>
+                      <button
+                        onClick={() => setVoucherTab("semua")}
+                        className={`px-3 py-1.5 rounded-md transition-all cursor-pointer ${
+                          voucherTab === "semua" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+                        }`}
+                      >
+                        Semua ({vouchers.length})
+                      </button>
+                    </div>
+
+                    <div className="relative w-full sm:w-64">
+                      <input
+                        type="text"
+                        placeholder="Cari kode atau nama pengguna..."
+                        value={voucherSearch}
+                        onChange={(e) => setVoucherSearch(e.target.value)}
+                        className="pl-8 pr-3 py-1.5 w-full rounded-xl border border-slate-200 text-xs bg-white focus:border-amber-500 outline-none"
+                      />
+                      <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                    </div>
+                  </div>
+
+                  <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {filteredVouchers.length === 0 ? (
+                      <div className="col-span-full py-12 text-center text-slate-400 text-sm">
+                        Tidak ada voucher pada kategori ini.
+                      </div>
+                    ) : (
+                      filteredVouchers.map((v, i) => {
+                        const isUsed = isVoucherActuallyUsed(v);
+                        const registrant = getUsedVoucherRegistrant(v);
+
+                        return (
+                          <div
+                            key={v.id || v.code || i}
+                            className={`p-3.5 rounded-xl border transition-all flex flex-col justify-between ${
+                              isUsed
+                                ? 'bg-slate-50 border-slate-200'
+                                : 'bg-white border-amber-200 hover:border-amber-400 shadow-xs'
+                            }`}
+                          >
+                            <div>
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="font-mono font-bold text-sm text-slate-800 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-lg select-all">
+                                  {v.code}
+                                </span>
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                  isUsed ? 'bg-slate-200 text-slate-600' : 'bg-emerald-100 text-emerald-800'
+                                }`}>
+                                  {isUsed ? 'Digunakan' : 'Siap Pakai'}
+                                </span>
+                              </div>
+
+                              {isUsed ? (
+                                <div className="mt-2 text-xs text-slate-600 space-y-0.5 bg-white p-2 rounded-lg border border-slate-200">
+                                  <div className="font-semibold text-slate-800 truncate">
+                                    👤 {registrant ? registrant["Nama Lengkap"] : (v.used_by || "Peserta")}
+                                  </div>
+                                  {registrant?.Institusi && (
+                                    <div className="text-[11px] text-slate-500 truncate">🏛️ {registrant.Institusi}</div>
+                                  )}
+                                  {registrant?.["No. WhatsApp"] && (
+                                    <div className="text-[11px] text-[#128C7E] font-medium">📱 {registrant["No. WhatsApp"]}</div>
+                                  )}
+                                </div>
+                              ) : (
+                                <p className="text-[11px] text-slate-500 mt-2">
+                                  Target: Dokter Umum (FKTP). Potongan subsidi pendaftaran langsung.
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Actions */}
+                            <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between gap-1">
+                              {!isUsed ? (
+                                <>
+                                  <button
+                                    onClick={() => handleCopyCode(v.code)}
+                                    className="flex-1 py-1.5 px-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                                  >
+                                    {copiedKey === v.code ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                                    <span>Salin</span>
+                                  </button>
+                                  <button
+                                    onClick={() => handleShareWa(v.code)}
+                                    className="p-1.5 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg text-xs transition-colors cursor-pointer"
+                                    title="Bagikan via WhatsApp"
+                                  >
+                                    <MessageCircle className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteVoucher(v.code)}
+                                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                                    title="Hapus Voucher"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </>
+                              ) : (
+                                registrant?.["No. WhatsApp"] && (
                                   <a
                                     href={`https://wa.me/${registrant["No. WhatsApp"].replace(/\D/g, '').replace(/^0/, '62')}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center text-emerald-600 hover:text-emerald-700 font-medium"
+                                    className="w-full py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium text-center flex items-center justify-center gap-1"
                                   >
-                                    <MessageCircle className="w-3 h-3 mr-1" />
-                                    WA: {registrant["No. WhatsApp"]}
+                                    <MessageCircle className="w-3 h-3 text-[#128C7E]" />
+                                    <span>Hubungi Peserta</span>
                                   </a>
-                                )}
-                              </div>
+                                )
+                              )}
                             </div>
-                          )}
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="flex items-center gap-1.5 sm:gap-2 self-end sm:self-center shrink-0 flex-wrap">
-                          {!isUsed ? (
-                            <>
-                              <button
-                                onClick={() => handleCopyCode(v.code)}
-                                className="inline-flex items-center px-2.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-xs cursor-pointer"
-                                title="Salin Kode Voucher"
-                              >
-                                {copiedKey === v.code ? (
-                                  <>
-                                    <Check className="w-3.5 h-3.5 mr-1" />
-                                    Tersalin!
-                                  </>
-                                ) : (
-                                  <>
-                                    <Copy className="w-3.5 h-3.5 mr-1" />
-                                    Salin Kode
-                                  </>
-                                )}
-                              </button>
-
-                              <button
-                                onClick={() => handleCopyWaMessage(v.code)}
-                                className="inline-flex items-center px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
-                                title="Salin Template Pesan WhatsApp"
-                              >
-                                {copiedKey === `wa_${v.code}` ? (
-                                  <>
-                                    <Check className="w-3.5 h-3.5 mr-1 text-emerald-600" />
-                                    Teks Tersalin!
-                                  </>
-                                ) : (
-                                  <>
-                                    <Share2 className="w-3.5 h-3.5 mr-1 text-slate-600" />
-                                    Salin Pesan WA
-                                  </>
-                                )}
-                              </button>
-
-                              <button
-                                onClick={() => handleShareWa(v.code)}
-                                className="inline-flex items-center px-2.5 py-1.5 bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#128C7E] text-xs font-semibold rounded-lg transition-colors cursor-pointer"
-                                title="Buka WhatsApp untuk Kirim Langsung"
-                              >
-                                <MessageCircle className="w-3.5 h-3.5 mr-1" />
-                                Kirim WA
-                              </button>
-
-                              <button
-                                onClick={() => handleDeleteVoucher(v.code)}
-                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                                title="Hapus Voucher Ini"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </>
-                          ) : (
-                            registrant?.["No. WhatsApp"] && registrant["No. WhatsApp"] !== '-' && (
-                              <a
-                                href={`https://wa.me/${registrant["No. WhatsApp"].replace(/\D/g, '').replace(/^0/, '62')}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg transition-colors"
-                              >
-                                <MessageCircle className="w-3.5 h-3.5 mr-1 text-emerald-600" />
-                                Hubungi Dokter
-                              </a>
-                            )
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
               </div>
             )}
-          </div>
 
-          {/* Modal Footer */}
-          <div className="px-5 sm:px-6 py-3.5 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-600">
-            <span>
-              Menampilkan <strong className="text-slate-800 font-semibold">{filteredVouchers.length}</strong> dari <strong className="text-slate-800 font-semibold">{vouchers.length}</strong> voucher
-            </span>
-            <button
-              onClick={() => setIsVoucherModalOpen(false)}
-              className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-xl transition-colors cursor-pointer"
-            >
-              Tutup
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
+            {/* ============================================================== */}
+            {/* TAB 3: STATISTIK & ANALISIS */}
+            {/* ============================================================== */}
+            {activeTab === 'statistik' && (
+              <div className="space-y-4">
+                {/* Control Panel: Diabetes Health Forum Quota Switch */}
+                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
+                      <Activity className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-800 text-sm sm:text-base">Pengaturan Kuota Diabetes Health Forum</h3>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Saat ini terdaftar: <strong className="text-purple-700">{healthTalkCount} orang</strong>. Buka atau tutup akses pendaftaran talkshow ini di form registrasi umum.
+                      </p>
+                    </div>
+                  </div>
 
-    {/* Floating Toast Notification */}
-    {toastMessage && (
-      <div className="fixed bottom-6 right-6 z-50 bg-slate-900/95 text-white text-xs sm:text-sm font-medium px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 animate-in fade-in slide-in-from-bottom-3 duration-200 border border-slate-800 backdrop-blur-xs">
-        <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0" />
-        <span>{toastMessage}</span>
-      </div>
-    )}
-    </div>
-  );
-}
+                  <div className="flex items-center gap-3 self-end sm:self-center">
+                    <span className={`text-xs font-bold ${isHealthTalkEnabled ? 'text-emerald-600' : 'text-slate-400'}`}>
+                      {isHealthTalkEnabled ? 'Status: DIBUKA' : 'Status: DITUTUP'}
+                    </span>
+                    <button
+                      onClick={handleToggleHealthTalk}
+                      disabled={isTogglingHT}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${
+                        isHealthTalkEnabled ? 'bg-emerald-500' : 'bg-slate-300'
+                      } ${isTogglingHT ? 'opacity-50 cursor-wait' : ''}`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-xs ${
+                          isHealthTalkEnabled ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
 
-// Subcomponent for stat cards
-function StatCard({ 
-  title, 
-  value, 
-  icon, 
-  trend, 
-  color 
-}: { 
-  title: string; 
-  value: string; 
-  icon: React.ReactNode; 
-  trend?: React.ReactNode; 
-  color: string;
-}) {
-  const bgColors: Record<string, string> = {
-    blue: 'bg-blue-50 text-blue-600',
-    emerald: 'bg-emerald-50 text-emerald-600',
-    amber: 'bg-amber-50 text-amber-600',
-    indigo: 'bg-indigo-50 text-indigo-600',
-    purple: 'bg-purple-50 text-purple-600',
-  };
+                {/* Charts Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Category Pie Chart */}
+                  <div className="bg-white p-5 rounded-2xl shadow-xs border border-slate-200">
+                    <h3 className="text-sm font-bold text-slate-800 mb-4">Distribusi Kategori Peserta</h3>
+                    <div className="h-64 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={pieData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={55}
+                            outerRadius={85}
+                            paddingAngle={4}
+                            dataKey="value"
+                          >
+                            {pieData.map((_, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <RechartsTooltip
+                            formatter={(value: any) => [`${value} peserta`, 'Jumlah']}
+                            contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
+                          />
+                          <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: '11px' }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
 
-  return (
-    <div className="bg-white p-3 sm:p-3.5 rounded-xl shadow-xs border border-slate-200 flex flex-col justify-between hover:border-slate-300 transition-colors">
-      <div className="flex items-center justify-between gap-2 mb-2">
-        <div className={`p-1.5 sm:p-2 rounded-lg ${bgColors[color] || 'bg-slate-50 text-slate-600'}`}>
-          {icon}
-        </div>
-        {typeof trend === 'string' ? (
-          <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full truncate max-w-[120px]" title={trend}>
-            {trend}
-          </span>
-        ) : (
-          trend
+                  {/* Payment Status Bar Chart */}
+                  <div className="bg-white p-5 rounded-2xl shadow-xs border border-slate-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-sm font-bold text-slate-800">Status Pembayaran Peserta</h3>
+                      <a
+                        href="https://chat.whatsapp.com/GezzqQzSYPuHTiCBRGbela"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center px-2.5 py-1 bg-[#25D366] hover:bg-[#128C7E] text-white text-xs font-semibold rounded-lg transition-colors shadow-xs"
+                      >
+                        <MessageCircle className="h-3.5 w-3.5 mr-1" />
+                        Grup WA Peserta
+                      </a>
+                    </div>
+                    <div className="h-64 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={statusBarData} margin={{ top: 10, right: 15, left: -10, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
+                          <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
+                          <RechartsTooltip
+                            cursor={{ fill: '#f1f5f9' }}
+                            contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
+                          />
+                          <Bar dataKey="jumlah" radius={[6, 6, 0, 0]} maxBarSize={45}>
+                            {statusBarData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.fill} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
-      </div>
-      <div>
-        <p className="text-[11px] sm:text-xs font-medium text-slate-500 mb-0.5 truncate" title={title}>{title}</p>
-        <h3 className="text-base sm:text-lg font-bold text-slate-800 tracking-tight truncate" title={value}>{value}</h3>
-      </div>
+      </main>
+
+      {/* ============================================================== */}
+      {/* PARTICIPANT DETAIL MODAL (MODAL RINCIAN PESERTA) */}
+      {/* ============================================================== */}
+      {selectedParticipant && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200">
+            {/* Modal Header */}
+            <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-xs">
+                  <UserCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-800 text-base leading-tight">Detail Lengkap Peserta</h3>
+                  <span className="font-mono text-xs text-blue-700 font-bold">{selectedParticipant["No. Registrasi"]}</span>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedParticipant(null)}
+                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-full transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 overflow-y-auto space-y-4 text-xs sm:text-sm">
+              {/* Status Header Chip */}
+              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <div>
+                  <span className="text-[11px] text-slate-400 uppercase font-bold block">Status Pembayaran</span>
+                  <span className={`inline-flex items-center font-bold text-sm ${
+                    selectedParticipant["Status Pembayaran"] === 'Lunas' ? 'text-emerald-600' : selectedParticipant["Status Pembayaran"] === 'Dibatalkan' ? 'text-red-600' : 'text-amber-600'
+                  }`}>
+                    {selectedParticipant["Status Pembayaran"]}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-[11px] text-slate-400 uppercase font-bold block">Total Tagihan</span>
+                  <span className="text-base font-bold text-slate-800">
+                    Rp {typeof selectedParticipant["Total Bayar"] === 'number'
+                      ? selectedParticipant["Total Bayar"].toLocaleString('id-ID')
+                      : parseInt(selectedParticipant["Total Bayar"] as string || '0', 10).toLocaleString('id-ID')}
+                  </span>
+                </div>
+              </div>
+
+              {/* Data Diri */}
+              <div className="space-y-2">
+                <h4 className="font-bold text-xs uppercase tracking-wider text-slate-400">Identitas & Kontak</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
+                  <div>
+                    <span className="text-slate-400 text-xs block">Nama Lengkap</span>
+                    <strong className="text-slate-800">{selectedParticipant["Nama Lengkap"]}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-xs block">Institusi / Rumah Sakit</span>
+                    <strong className="text-slate-800">{selectedParticipant.Institusi || '-'}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-xs block">Nomor WhatsApp</span>
+                    <strong className="text-slate-800">{selectedParticipant["No. WhatsApp"]}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-xs block">Email</span>
+                    <strong className="text-slate-800">{selectedParticipant.Email}</strong>
+                  </div>
+                  {selectedParticipant.nim && selectedParticipant.nim !== '-' && (
+                    <div>
+                      <span className="text-slate-400 text-xs block">NIM Mahasiswa</span>
+                      <strong className="text-slate-800 font-mono">{selectedParticipant.nim}</strong>
+                    </div>
+                  )}
+                  {selectedParticipant.jenis_kelamin && selectedParticipant.jenis_kelamin !== '-' && (
+                    <div>
+                      <span className="text-slate-400 text-xs block">Jenis Kelamin</span>
+                      <strong className="text-slate-800">{selectedParticipant.jenis_kelamin}</strong>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Paket & Akses Kegiatan */}
+              <div className="space-y-2">
+                <h4 className="font-bold text-xs uppercase tracking-wider text-slate-400">Paket & Akses Acara</h4>
+                <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-100 space-y-1.5">
+                  <div>
+                    <span className="text-slate-400 text-xs block">Kategori Peserta:</span>
+                    <strong className="text-slate-800">{selectedParticipant["Kategori Peserta"]}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-xs block">Akses Kegiatan / Sesi Terdaftar:</span>
+                    <span className="text-slate-700 font-medium">{selectedParticipant["Akses Kegiatan"]}</span>
+                  </div>
+                  {(selectedParticipant.KodeVoucher || selectedParticipant.kode_voucher) && (
+                    <div className="pt-1">
+                      <span className="text-slate-400 text-xs block">Voucher Digunakan:</span>
+                      <span className="font-mono font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                        {selectedParticipant.KodeVoucher || selectedParticipant.kode_voucher}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Alamat & Cabang PERSADIA (Jika ada) */}
+              {(selectedParticipant.CabangPersadia || selectedParticipant.AlamatLengkap || selectedParticipant.BersediaAnggota) && (
+                <div className="space-y-2">
+                  <h4 className="font-bold text-xs uppercase tracking-wider text-slate-400">Keanggotaan PERSADIA</h4>
+                  <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-100 space-y-1.5">
+                    {selectedParticipant.CabangPersadia && selectedParticipant.CabangPersadia !== '-' && (
+                      <div>
+                        <span className="text-slate-400 text-xs block">Cabang PERSADIA:</span>
+                        <strong className="text-slate-800">{selectedParticipant.CabangPersadia}</strong>
+                        {selectedParticipant.NamaKetuaCabang && selectedParticipant.NamaKetuaCabang !== '-' && (
+                          <span className="text-slate-500 block text-xs">Ketua Cabang: {selectedParticipant.NamaKetuaCabang}</span>
+                        )}
+                      </div>
+                    )}
+                    {selectedParticipant.AlamatLengkap && selectedParticipant.AlamatLengkap !== '-' && (
+                      <div>
+                        <span className="text-slate-400 text-xs block">Alamat Domisili:</span>
+                        <span className="text-slate-700">{selectedParticipant.AlamatLengkap}, {selectedParticipant.Kelurahan}, {selectedParticipant.Kecamatan}, {selectedParticipant.KotaKabupaten}, {selectedParticipant.Provinsi}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Data Onsite & Kesehatan (Jika ada) */}
+              {(selectedParticipant.registrasi_onsite || selectedParticipant.cek_gula_darah || selectedParticipant.gula_darah || selectedParticipant.tensi) && (
+                <div className="space-y-2">
+                  <h4 className="font-bold text-xs uppercase tracking-wider text-slate-400">Pemeriksaan Onsite & Pesta Rakyat</h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
+                    <div>
+                      <span className="text-slate-400 text-xs block">Check-in Onsite</span>
+                      <strong className="text-slate-800">{selectedParticipant.registrasi_onsite || 'Belum'}</strong>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 text-xs block">Gula Darah</span>
+                      <strong className="text-slate-800">{selectedParticipant.gula_darah || '-'}</strong>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 text-xs block">Tensi</span>
+                      <strong className="text-slate-800">{selectedParticipant.tensi || '-'}</strong>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer Actions */}
+            <div className="px-5 py-3.5 border-t border-slate-200 bg-slate-50 flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap">
+                {selectedParticipant["Status Pembayaran"] === 'Menunggu Verifikasi' && (
+                  <>
+                    <button
+                      onClick={() => {
+                        const p = selectedParticipant;
+                        setSelectedParticipant(null);
+                        setConfirmDialog({
+                          isOpen: true,
+                          id: p["No. Registrasi"],
+                          status: "Lunas",
+                          currentStatus: p["Status Pembayaran"],
+                          nama: p["Nama Lengkap"],
+                          totalBayar: p["Total Bayar"]
+                        });
+                      }}
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-xs transition-colors cursor-pointer"
+                    >
+                      Set Lunas
+                    </button>
+                    <button
+                      onClick={() => {
+                        const p = selectedParticipant;
+                        setSelectedParticipant(null);
+                        setConfirmDialog({
+                          isOpen: true,
+                          id: p["No. Registrasi"],
+                          status: "Dibatalkan",
+                          currentStatus: p["Status Pembayaran"],
+                          nama: p["Nama Lengkap"],
+                          totalBayar: p["Total Bayar"]
+                        });
+                      }}
+                      className="px-3 py-1.5 bg-white hover:bg-red-50 text-red-600 border border-slate-200 hover:border-red-300 rounded-lg font-semibold text-xs transition-colors cursor-pointer"
+                    >
+                      Batalkan
+                    </button>
+                  </>
+                )}
+
+                {selectedParticipant["Status Pembayaran"] === 'Lunas' && (
+                  <button
+                    onClick={() => {
+                      const p = selectedParticipant;
+                      setSelectedParticipant(null);
+                      setConfirmDialog({
+                        isOpen: true,
+                        id: p["No. Registrasi"],
+                        status: "Dibatalkan",
+                        currentStatus: p["Status Pembayaran"],
+                        nama: p["Nama Lengkap"],
+                        totalBayar: p["Total Bayar"]
+                      });
+                    }}
+                    className="px-3 py-1.5 bg-white hover:bg-red-50 text-slate-600 hover:text-red-600 border border-slate-200 hover:border-red-300 rounded-lg font-medium text-xs transition-colors cursor-pointer"
+                    title="Batalkan Pendaftaran (misal: pendaftar ganda / duplikat)"
+                  >
+                    Batalkan Pendaftaran
+                  </button>
+                )}
+
+                {selectedParticipant["Status Pembayaran"] === 'Dibatalkan' && (
+                  <button
+                    onClick={() => {
+                      const p = selectedParticipant;
+                      setSelectedParticipant(null);
+                      setConfirmDialog({
+                        isOpen: true,
+                        id: p["No. Registrasi"],
+                        status: "Lunas",
+                        currentStatus: p["Status Pembayaran"],
+                        nama: p["Nama Lengkap"],
+                        totalBayar: p["Total Bayar"]
+                      });
+                    }}
+                    className="px-3 py-1.5 bg-white hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 border border-slate-200 hover:border-emerald-300 rounded-lg font-medium text-xs transition-colors cursor-pointer flex items-center gap-1"
+                    title="Pulihkan status ke Lunas"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    Pulihkan ke Lunas
+                  </button>
+                )}
+
+                <button
+                  onClick={() => handleSendWhatsapp(selectedParticipant)}
+                  className="px-3 py-1.5 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg font-semibold text-xs transition-colors flex items-center gap-1 cursor-pointer"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  Kirim WhatsApp
+                </button>
+              </div>
+
+              <button
+                onClick={() => setSelectedParticipant(null)}
+                className="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-semibold text-xs transition-colors cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {confirmDialog.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200 border border-slate-200">
+            <div className="flex items-center gap-2.5 mb-3">
+              {confirmDialog.status === "Dibatalkan" ? (
+                <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600 shrink-0">
+                  <AlertTriangle className="w-4 h-4" />
+                </div>
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                  <CheckCircle className="w-4 h-4" />
+                </div>
+              )}
+              <h3 className="text-base font-bold text-slate-800">
+                {confirmDialog.status === "Dibatalkan"
+                  ? confirmDialog.currentStatus === "Lunas"
+                    ? "Batalkan Pendaftar Lunas"
+                    : "Konfirmasi Pembatalan"
+                  : confirmDialog.currentStatus === "Dibatalkan"
+                  ? "Pulihkan Status Pendaftar"
+                  : "Verifikasi Pembayaran"}
+              </h3>
+            </div>
+
+            {/* Target participant summary info */}
+            <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 mb-3 text-xs space-y-1.5">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">No. Registrasi:</span>
+                <span className="font-mono font-bold text-slate-800">{confirmDialog.id}</span>
+              </div>
+              {confirmDialog.nama && (
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500">Nama:</span>
+                  <span className="font-semibold text-slate-800 text-right truncate max-w-[180px]">{confirmDialog.nama}</span>
+                </div>
+              )}
+              {confirmDialog.currentStatus && (
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500">Status Saat Ini:</span>
+                  <span className={`font-semibold ${
+                    confirmDialog.currentStatus === 'Lunas' ? 'text-emerald-600' :
+                    confirmDialog.currentStatus === 'Dibatalkan' ? 'text-red-600' : 'text-amber-600'
+                  }`}>
+                    {confirmDialog.currentStatus}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Warning or explanation */}
+            {confirmDialog.status === "Dibatalkan" && confirmDialog.currentStatus === "Lunas" ? (
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs mb-5 space-y-1">
+                <p className="font-bold flex items-center gap-1">
+                  <span>⚠️ Pendaftar Berstatus Lunas</span>
+                </p>
+                <p className="text-amber-800 leading-relaxed">
+                  Tindakan ini aman digunakan untuk <strong>pembatalan pendaftar ganda (duplikat)</strong>. Kuota Diabetes Health Forum (jika ada) akan otomatis dibebaskan kembali. Data tidak akan terhapus dari database.
+                </p>
+              </div>
+            ) : confirmDialog.status === "Dibatalkan" ? (
+              <p className="text-xs text-slate-600 mb-5 leading-relaxed">
+                Apakah Anda yakin ingin membatalkan pendaftaran ini? Status akan ditandai sebagai <strong>Dibatalkan</strong>.
+              </p>
+            ) : confirmDialog.currentStatus === "Dibatalkan" ? (
+              <p className="text-xs text-slate-600 mb-5 leading-relaxed">
+                Apakah Anda yakin ingin memulihkan status pendaftar ini kembali menjadi <strong className="text-emerald-600">Lunas</strong>?
+              </p>
+            ) : (
+              <p className="text-xs text-slate-600 mb-5 leading-relaxed">
+                Ubah status pembayaran menjadi <strong className="text-emerald-600">Lunas</strong> untuk membuka akses e-tiket peserta?
+              </p>
+            )}
+
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => setConfirmDialog({ isOpen: false, id: "", status: "" })}
+                className="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              >
+                Kembali
+              </button>
+              <button
+                onClick={executeUpdateStatus}
+                className={`px-4 py-2 text-xs font-semibold text-white rounded-xl transition-colors cursor-pointer ${
+                  confirmDialog.status === "Lunas"
+                    ? "bg-emerald-600 hover:bg-emerald-700"
+                    : "bg-red-600 hover:bg-red-700"
+                }`}
+              >
+                {confirmDialog.status === "Lunas"
+                  ? confirmDialog.currentStatus === "Dibatalkan"
+                    ? "Ya, Pulihkan ke Lunas"
+                    : "Ya, Verifikasi Lunas"
+                  : "Ya, Batalkan Pendaftaran"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white text-xs sm:text-sm font-medium px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 animate-in fade-in slide-in-from-bottom-3 duration-200 border border-slate-800">
+          <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
     </div>
   );
 }

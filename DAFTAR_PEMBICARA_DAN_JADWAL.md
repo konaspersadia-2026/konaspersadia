@@ -1,215 +1,123 @@
-# DAFTAR PEMBICARA & JADWAL WAKTU BERBICARA
-**KONGRES NASIONAL PERSADIA XI & KONFERENSI GABUNGAN 2026**  
-*SIMPOSIUM ILMIAH, 5 WORKSHOP MEDIS & DIABETES HEALTH FORUM*  
-**Hari / Tanggal:** Sabtu, 7 November 2026  
-**Lokasi Venue:** Novotel Bogor Golf Resort & Convention Center  
+# SUSUNAN / RUNDOWN ACARA
+
+## JADWAL SIMPOSIUM & WORKSHOP, 7 NOVEMBER 2026 – NOVOTEL BOGOR
+
+**Ruangan (kapasitas):** Room Gede (200) · Room Pangrango (200) · Ballroom 2 (100)
+
+> **Catatan struktur tabel asli (agar penempatan tidak keliru):**
+> - *Registration*, *ISHOMA 12.30–14.00*, *ISHOMA 16.00–18.30*, dan *Malam Keakraban* adalah sel gabungan yang melintasi **seluruh kolom ruangan**.
+> - Sesi 1, 2, dan 3 adalah sel gabungan **Room Gede + Room Pangrango** (satu acara bersama, bukan dua acara paralel).
+> - Mulai Sesi 4, Room Gede dan Room Pangrango berjalan **paralel** (kolom terpisah).
+> - **Ballroom 2** pada pagi hari berisi satu sel besar *Diabetes Health Forum* dengan jadwal internalnya sendiri (08.30–12.00). Posisinya di PDF sejajar dengan baris Sesi 3–4, tetapi waktu yang berlaku adalah waktu yang tertulis di dalam sel tersebut.
 
 ---
 
-## 1. TABEL REKAPITULASI PEMBICARA & NARASUMBER
+## 1. Pendaftaran (semua ruangan)
 
-Berikut adalah rekapitulasi data seluruh pembicara, instruktur workshop, dan narasumber beserta waktu berbicara, topik paparan, dan ruang acara:
-
-| No | Nama Pembicara & Gelar | Sesi & Ruangan | Waktu Berbicara (WIB) | Judul / Topik Paparan |
-|:---:|:---|:---|:---:|:---|
-| 1 | **Prof. dr. Putu Moda Arsana, Sp.PD-KEMD** | **Sesi 1: Plenary Lecture**<br>*(Room Gede)* | **08.30 – 08.50**<br>*(20 Menit)* | *"Good Habit for a Better Life"* |
-| 2 | **Prof. Dr. dr. Sidartawan Soegondo, Sp.PD-KEMD** | **Sesi 2: Presidents' Lecture**<br>*(Room Gede)* | **09.00 – 09.20**<br>*(20 Menit)* | *"Obesity: The Growing Metabolic Challenge"* |
-| 3 | **Dr. dr. K. Heri Nugroho Hario Seno, Sp.PD-KEMD** | **Sesi 2: Presidents' Lecture**<br>*(Room Gede)* | **09.20 – 09.40**<br>*(20 Menit)* | *"Tirzepatide: Beyond the Numbers (Dual GIP/GLP-1 Receptor Agonist)"* |
-| 4 | **Prof. Dr. dr. Achmad Rudijanto, Sp.PD-KEMD** | **Sesi 2: Presidents' Lecture**<br>*(Room Gede)* | **09.40 – 10.00**<br>*(20 Menit)* | *"Diabetes Update Treatment: Janus, The First and After"* |
-| 5 | **Prof. Dr. dr. Sidartawan Soegondo, Sp.PD-KEMD** | **Sesi 3: Layanan Primer (FKTP)**<br>*(Room Gede)* | **10.30 – 10.35**<br>*(5 Menit)* | *Opening Speech: Tantangan Layanan Primer* |
-| 6 | **dr. Baringin T. A. Manik, MKM** | **Sesi 3: Layanan Primer (FKTP)**<br>*(Room Gede)* | **10.35 – 10.50**<br>*(15 Menit)* | *"My Life in FKTP: Realita & Dedikasi Layanan Primer"* |
-| 7 | **dr. Dicky Levenus Tahapary, Sp.PD-KEMD, Ph.D** | **Sesi 3: Layanan Primer (FKTP)**<br>*(Room Gede)* | **10.50 – 11.10**<br>*(20 Menit)* | *"Diabetes Approach in FKTP: Deteksi Cepat & Tatalaksana Terintegrasi"* |
-| 8 | **dr. Roy Panusunan Sibarani, Sp.PD-KEMD** | **Sesi 4: Simposium Paralel**<br>*(Room Gede)* | **11.30 – 11.50**<br>*(20 Menit)* | *"Footsteps Leading to Neuropathy: From Upstream (Endocrinologist POV)"* |
-| 9 | **dr. Gloria Tanjung, Sp.N** | **Sesi 4: Simposium Paralel**<br>*(Room Gede)* | **11.50 – 12.10**<br>*(20 Menit)* | *"Footsteps Leading to Neuropathy: To Downstream (Neurologist POV)"* |
-| 10 | **dr. Johanes Purwoto, Sp.PD-KEMD** | **Sesi 4: Workshop 1 (CGM)**<br>*(Room Pangrango)* | **11.30 – 12.00**<br>*(30 Menit)* | *"Doctor's POV: Continuous Glucose Monitoring (CGM) — Mastering AGP, Clinical Decisions & Special Populations"* |
-| 11 | **Daniel Surbakti** | **Sesi 4: Workshop 1 (CGM)**<br>*(Room Pangrango)* | **12.00 – 12.10**<br>*(10 Menit)* | *"Patient's POV on Continuous Glucose Monitoring (CGM)"* |
-| 12 | **dr. Johanes Purwoto, Sp.PD-KEMD & Tim** | **Sesi 4: Workshop 1 (CGM)**<br>*(Room Pangrango)* | **12.10 – 12.30**<br>*(20 Menit)* | *Hands-on Case-Based CGM Workshop: Solving Real-World Glycemic Profiles & Artifacts* |
-| 13 | **dr. Sony Wibisono Mudjanarko, Sp.PD-KEMD** | **Sesi 5: Workshop 2 (Semaglutide)**<br>*(Room Gede)* | **14.00 – 14.30**<br>*(30 Menit Paparan)*<br>**14.30 – 15.00**<br>*(30 Menit Hands-on)* | *"Semaglutide on Prediabetes: Beyond Weight Loss"* & Hands-on Kasus Riil (Titrasi, Kepatuhan, Reversal) |
-| 14 | **dr. Santi Syafril, Sp.PD-KEMD** | **Sesi 5: Workshop 3 (Nutrition)**<br>*(Room Pangrango)* | **14.00 – 14.30**<br>*(30 Menit Paparan)*<br>**14.30 – 15.00**<br>*(30 Menit Hands-on)* | *"Nutrition in Diabetes: Practical Meal Planning & Carb Counting"* & Hands-on Perancangan Pola Diet |
-| 15 | **Dr. dr. Yuanita Langi, Sp.PD-KEMD** | **Sesi 6: Workshop 4 (Hypoglycemia)**<br>*(Room Gede)* | **15.00 – 15.30**<br>*(30 Menit)* | *"Investigating Hypoglycemia: Mechanism, Unawareness, & Crisis Care in Special Populations"* |
-| 16 | **dr. Henny Megawati, Sp.PD** | **Sesi 6: Workshop 4 (Hypoglycemia)**<br>*(Room Gede)* | **15.40 – 16.00**<br>*(20 Menit)* | *Hands-on Case-based Workshop: Complex Hypoglycemic Scenarios (Filling the Gap)* |
-| 17 | **Dr. dr. Made Ratna Saraswati, Sp.PD-KEMD** | **Sesi 6: Workshop 5 (Prediabetes)**<br>*(Room Pangrango)* | **15.00 – 15.30**<br>*(30 Menit)* | *"Pre-Diabetes: Counting the Time to Action — Early Detection, Reversal, & Pharmacotherapy"* |
-| 18 | **dr. Pandu Sakti, Sp.PD, AIFO-K** | **Sesi 6: Workshop 5 (Prediabetes)**<br>*(Room Pangrango)* | **15.40 – 16.00**<br>*(20 Menit)* | *Hands-on Case-based Learning: Personalizing Prediabetes Management in High-Risk Patients* |
-| 19 | **dr. Boyke Dian Nugraha, Sp.OG, MARS** | **Diabetes Health Forum (DHF)**<br>*(Ballroom 2 Novotel)* | **10.35 – 11.20**<br>*(45 Menit Talkshow)*<br>**11.20 – 11.50**<br>*(30 Menit Q&A)* | *Talkshow Interaktif: "Cantik, Bugar, Bergairah: Menjaga Kebugaran & Harmoni Pasutri Penyandang Diabetes"* |
+| Waktu | Acara |
+|---|---|
+| 08.00 – 08.30 | *Registration* |
 
 ---
 
-## 2. TABEL MODERATOR & MASTER OF CEREMONY (MC)
+## 2. Sesi 1, 2, 3 — Room Gede + Room Pangrango (gabungan)
 
-Data pemandu sidang ilmiah dan moderator yang bertugas mengawal jalannya sesi:
+### SESI 1
 
-| No | Nama & Gelar | Peran Acara | Sesi & Ruangan | Waktu Tugas (WIB) |
-|:---:|:---|:---|:---|:---:|
-| 1 | **Dr. dr. Rudy Kurniawan, Sp.PD, MM, MARS, Dip.TH, DCD** | **Master of Ceremony (MC)** | Sesi 1: Plenary Lecture & Opening Ceremony *(Room Gede)* | **08.30 – 09.00** |
-| 2 | **dr. Fauzia Kirana, Sp.PD** | **Moderator** | Sesi 2: Presidents' Lecture *(Room Gede)* | **09.00 – 10.30** |
-| 3 | **dr. Nur Rusyda Kuddah, Sp.PD-KEMD** / **dr. Maria Sen** | **Moderator** | Sesi 3: Dokter Layanan Primer (FKTP) *(Room Gede)* | **10.30 – 11.30** |
-| 4 | **dr. William Djauhari** | **Moderator** | Sesi 4: Simposium Footsteps Leading to Neuropathy *(Room Gede)* | **11.30 – 12.30** |
+| Waktu | Acara |
+|---|---|
+| 08.30 – 08.50 | **Plenary Lecture**<br>Topic: Good Habit for a Better Life<br>**SPEAKER : Prof. dr. Putu Moda Arsana SpPD-KEMD**<br>**MC: Dr. dr. Rudy Kurniawan, SpPD, MM, MARS, Dip.TH, DCD** |
+| 08.50 – 09.00 | *Opening ceremony* |
 
----
+### SESI 2 — Presidents' Lecture
 
-## 3. RUNDOWN KRONOLOGIS DETAIL PER SESI
+| Waktu | Acara |
+|---|---|
+| 09.00 – 09.20 | Topic: Obesity<br>**SPEAKER : Prof. dr. Sidartawan Soegondo, SpPD-KEMD** |
+| 09.20 – 09.40 | Topic: Tirzepatide: Beyond the numbers<br>**SPEAKER: Dr. dr. K. Heri Nugroho Harioseno, SpPD-KEMD** |
+| 09.40 – 10.00 | Topic: Diabetes update treatment: Janus, The First and After<br>**SPEAKER: Prof. Dr. dr. Achmad Rudijanto, SpPD-KEMD** |
+| *(untuk Sesi 2)* | **MODERATOR: dr. Fauzia Kirana, SpPD** |
+| 10.00 – 10.30 | DISCUSSION + COFFEE BREAK |
 
-### Sesi 1: Plenary Lecture & Opening Ceremony (08.30 – 09.00 WIB)
-* **Tempat:** Room Gede, Novotel Bogor  
-* **MC:** Dr. dr. Rudy Kurniawan, Sp.PD, MM, MARS, Dip.TH, DCD  
-  * **08.30 – 08.50:** Kuliah Pleno: *"Good Habit for a Better Life"* — **Prof. dr. Putu Moda Arsana, Sp.PD-KEMD**  
-  * **08.50 – 09.00:** Upacara Pembukaan Resmi Kongres Nasional PERSADIA 2026  
+### SESI 3 — Dokter FKTP
 
-### Sesi 2: Presidents' Lecture (09.00 – 10.30 WIB)
-* **Tempat:** Room Gede, Novotel Bogor  
-* **Moderator:** dr. Fauzia Kirana, Sp.PD  
-  * **09.00 – 09.20:** *"Obesity: The Growing Metabolic Challenge"* — **Prof. Dr. dr. Sidartawan Soegondo, Sp.PD-KEMD**  
-  * **09.20 – 09.40:** *"Tirzepatide: Beyond the Numbers"* — **Dr. dr. K. Heri Nugroho Hario Seno, Sp.PD-KEMD**  
-  * **09.40 – 10.00:** *"Diabetes Update Treatment: Janus, The First and After"* — **Prof. Dr. dr. Achmad Rudijanto, Sp.PD-KEMD**  
-  * **10.00 – 10.30:** Diskusi Panel & Rehat Kopi (Coffee Break)  
-
-### Sesi 3: Sesi Dokter Layanan Primer (FKTP) (10.30 – 11.30 WIB)
-* **Tempat:** Room Gede, Novotel Bogor  
-* **Moderator:** dr. Nur Rusyda Kuddah, Sp.PD-KEMD / dr. Maria Sen  
-  * **10.30 – 10.35:** *Opening Speech* — **Prof. Dr. dr. Sidartawan Soegondo, Sp.PD-KEMD**  
-  * **10.35 – 10.50:** *"My Life in FKTP: Realita & Dedikasi Layanan Primer"* — **dr. Baringin T. A. Manik, MKM**  
-  * **10.50 – 11.10:** *"Diabetes Approach in FKTP: Deteksi Cepat & Tatalaksana"* — **dr. Dicky Levenus Tahapary, Sp.PD-KEMD, Ph.D**  
-  * **11.10 – 11.30:** Diskusi Interaktif & Tanya Jawab  
-
-### Sesi 4: Sesi Paralel Simposium & Workshop 1 (11.30 – 12.30 WIB)
-* **Jalur A (Room Gede) — Simposium Neuropati:**  
-  * **Moderator:** dr. William Djauhari  
-  * **11.30 – 11.50:** *"From Upstream: Endocrinologist POV"* — **dr. Roy Panusunan Sibarani, Sp.PD-KEMD**  
-  * **11.50 – 12.10:** *"To Downstream: Neurologist POV"* — **dr. Gloria Tanjung, Sp.N**  
-  * **12.10 – 12.30:** Tanya Jawab & Diskusi Klinis  
-* **Jalur B (Room Pangrango) — Workshop 1: Diabetes Technology (CGM):**  
-  * **11.30 – 12.00:** *"Doctor's POV (Mastering AGP, Clinical Decisions & Special Populations)"* — **dr. Johanes Purwoto, Sp.PD-KEMD**  
-  * **12.00 – 12.10:** *"Patient's POV on Continuous Glucose Monitoring"* — **Daniel Surbakti**  
-  * **12.10 – 12.30:** Hands-on: Analisis Profil Glikemik Riil — **dr. Johanes Purwoto, Sp.PD-KEMD & Tim**  
-
-*(12.30 – 14.00 WIB: ISHOMA / Makan Siang Bersama di Restoran Novotel Bogor)*
-
-### Sesi 5: Sesi Paralel Workshop Medis 2 & 3 (14.00 – 15.00 WIB)
-* **Room Gede — Workshop 2: Semaglutide on Prediabetes (Beyond Weight Loss):**  
-  * **14.00 – 14.30:** Paparan Teori & Bukti Klinis — **dr. Sony Wibisono Mudjanarko, Sp.PD-KEMD**  
-  * **14.30 – 15.00:** Hands-on Studi Kasus: Titrasi Dosis & Strategi Kepatuhan — **dr. Sony Wibisono Mudjanarko, Sp.PD-KEMD**  
-* **Room Pangrango — Workshop 3: Nutrition in Diabetes (Meal Planning & Carb Counting):**  
-  * **14.00 – 14.30:** Paparan Pola Diet & Karbohidrat — **dr. Santi Syafril, Sp.PD-KEMD**  
-  * **14.30 – 15.00:** Hands-on Penyusunan Menu Diet Kasus Khusus — **dr. Santi Syafril, Sp.PD-KEMD**  
-
-### Sesi 6: Sesi Paralel Workshop Medis 4 & 5 (15.00 – 16.00 WIB)
-* **Room Gede — Workshop 4: Investigating Hypoglycemia (Stratifikasi & Tata Laksana Kedaruratan):**  
-  * **15.00 – 15.30:** Paparan Teori & Algoritma Klinis — **Dr. dr. Yuanita Langi, Sp.PD-KEMD**  
-  * **15.30 – 15.40:** Rehat / Transisi Kasus  
-  * **15.40 – 16.00:** Hands-on Skenario Kasus Kompleks — **dr. Henny Megawati, Sp.PD**  
-* **Room Pangrango — Workshop 5: Pre-Diabetes: Counting the Time to Action:**  
-  * **15.00 – 15.30:** Paparan Deteksi Dini & Strategi Reversal — **Dr. dr. Made Ratna Saraswati, Sp.PD-KEMD**  
-  * **15.30 – 15.40:** Rehat / Transisi Kasus  
-  * **15.40 – 16.00:** Hands-on Manajemen Personal Pasien Risiko Tinggi — **dr. Pandu Sakti, Sp.PD, AIFO-K**  
-
-### Sesi Khusus Awam: Diabetes Health Forum (08.30 – 12.00 WIB)
-* **Tempat:** Ballroom 2, Novotel Bogor  
-  * **08.30 – 09.25:** Pembukaan & Sesi Edukasi: *"Masih Muda, Kok Diabetes?"*  
-  * **09.25 – 09.55:** Diskusi & Tanya Jawab Interaktif  
-  * **09.55 – 10.25:** Temu 6 Tokoh Senior Penyandang Diabetes Inspiratif  
-  * **10.25 – 10.35:** Rehat Kopi Sehat  
-  * **10.35 – 11.20:** Talkshow Spesial: *"Cantik, Bugar, Bergairah: Harmoni Pasutri Diabetes"* — **dr. Boyke Dian Nugraha, Sp.OG, MARS**  
-  * **11.20 – 11.50:** Sesi Tanya Jawab Eksklusif dr. Boyke  
-  * **11.50 – 12.00:** Penyerahan Plakat Penghargaan & Foto Bersama  
+| Waktu | Acara |
+|---|---|
+| 10.30 – 10.35 | **Opening Speech: Prof. dr. Sidartawan Soegondo, SpPD-KEMD** |
+| 10.35 – 10.50 | Topic: My life in FKTP<br>**SPEAKER: dr. Baringin T A Manik, MKM** |
+| 10.50 – 11.10 | Topic: Diabetes approach in FKTP<br>**SPEAKER: dr. Dicky Levenus Tahapary, SpPD-KEMD, PhD** |
+| *(untuk Sesi 3)* | **MODERATOR: dr. Nur Rusyda Kuddah, SpPD-KEMD** |
+| 11.10 – 11.30 | DISCUSSION |
 
 ---
 
-## 4. TEMPLATE DRAFT SURAT UNDANGAN RESMI PEMBICARA
+## 3. Sesi 4 — Paralel Room Gede & Room Pangrango
 
-Berikut adalah draf surat resmi yang dapat disesuaikan untuk masing-masing pembicara:
-
-```text
-KOP SURAT PANITIA PELAKSANA
-KONGRES NASIONAL PERSADIA XI & KONFERENSI GABUNGAN 2026
-Sekretariat: Novotel Bogor Golf Resort & Convention Center
-WhatsApp: 0898-0287-820 / 0853-7071-6686 | Email: diabetesinitiativeid@gmail.com | Website: konaspersadia.com
----------------------------------------------------------------------------------------------------------
-
-Nomor       : [Nomor_Surat]/UND-PEMB/KONAS-PERSADIA/X/2026
-Lampiran    : 1 (satu) Berkas Kerangka Acuan (TOR) & Rundown
-Perihal     : Permohonan Kesediaan Menjadi Narasumber / Pembicara Ilmiah
-              KONAS PERSADIA XI & Konferensi Gabungan 2026
-
-Kepada Yang Terhormat,
-[Nama_Lengkap_Beserta_Gelar_Pembicara]
-[Jabatan_atau_Institusi_Pembicara]
-di Tempat
-
-Dengan hormat,
-
-Teriring salam dan doa semoga Dokter/Profesor senantiasa berada dalam lindungan Tuhan Yang Maha Esa serta senantiasa sukses dalam menjalankan aktivitas dan pengabdian mulia sehari-hari.
-
-Sehubungan dengan diselenggarakannya Kongres Nasional Perhimpunan Diabetes Indonesia (PERSADIA) XI yang berkolaborasi bersama Perkumpulan Edukator Diabetes Indonesia (PEDI) dan Perkumpulan Endokrinologi Indonesia (PERKENI) dengan tema:
-
-          "Pesta Rakyat Persadia, Menyehatkan Indonesia"
-           (Fokus Utama: Diabetes, Deteksi Dini Lebih Awal)
-
-yang telah terakreditasi resmi Satuan Kredit Profesi (SKP) Kementerian Kesehatan Republik Indonesia (Plataran Sehat), Panitia Pelaksana bermaksud memohon kesediaan Dokter/Profesor untuk berkenan hadir dan memberikan pencerahan ilmiah sebagai NARASUMBER / PEMBICARA pada agenda ilmiah tersebut, dengan rincian penugasan sebagai berikut:
-
-Hari / Tanggal  : Sabtu, 7 November 2026
-Sesi Acara      : [Nama_Sesi] (Contoh: Sesi 2 — Presidents' Lecture / Workshop 2)
-Waktu Paparan   : Pukul [Waktu_Mulai] – [Waktu_Selesai] WIB (Durasi: [Durasi_Menit] Menit)
-Ruangan Venue   : [Nama_Ruangan] (Room Gede / Room Pangrango / Ballroom 2),
-                  Novotel Bogor Golf Resort & Convention Center, Jawa Barat
-Topik Paparan   : "[Judul_Topik_Sesuai_Silabus]"
-Bentuk Sesi     : [Presentasi Ilmiah / Workshop Interaktif Hands-on / Talkshow Panel]
-
-Sebagai wujud apresiasi dan guna kelancaran partisipasi Dokter/Profesor, Panitia Pelaksana menyediakan fasilitas narasumber yang mencakup:
-1. Sertifikat Penghargaan Narasumber Ber-SKP Resmi Kemenkes RI (Plataran Sehat).
-2. Plakat Karya Seni Eksklusif Tamara Geraldine / Wendy Septarina.
-3. Fasilitas Akomodasi Hotel Bintang 4 di Novotel Bogor Golf Resort & Convention Center.
-4. Jamuan Makan Siang (Buffet Lunch) dan Undangan Khusus Malam Keakraban (Gala Dinner) Sabtu malam di Grand Ballroom Novotel Bogor.
-5. Penggantian transport dan honorarium narasumber sesuai ketentuan kepanitiaan.
-
-Mengingat pentingnya kontribusi dan kepakaran Dokter/Profesor dalam memperkuat kompetensi tenaga medis Indonesia serta menekan laju komplikasi diabetes nasional, besar harapan kami agar Dokter/Profesor berkenan mengonfirmasi kesediaan ini paling lambat tanggal 23 Oktober 2026.
-
-Konfirmasi kesediaan, pengiriman Curriculum Vitae (CV) ringkas, serta file materi slide presentasi (format PPT/PDF) dapat disampaikan melalui:
-• Narahubung WhatsApp : 0898-0287-820 (dr. William Djauhari / Sekretariat Acara)
-• Email Resmi Panitia : diabetesinitiativeid@gmail.com
-
-Demikian surat permohonan ini kami sampaikan. Atas perhatian, kebaikan hati, dan kesediaan Dokter/Profesor, kami haturkan terima kasih yang sebesar-besarnya.
-
-
-Bogor, [Tanggal_Surat] Oktober 2026
-Hormat kami,
-PANITIA PELAKSANA KONGRES NASIONAL PERSADIA 2026
-
-
-
-dr. Roy Panusunan Sibarani, Sp.PD-KEMD           dr. Dicky Levenus Tahapary, Sp.PD-KEMD, Ph.D
-Ketua Umum PB PERSADIA 2026–2029                Wakil Ketua Panitia Pelaksana
-```
+| Sesi / Waktu | Room Gede (200) | Room Pangrango (200) |
+|---|---|---|
+| **SESI 4**<br>11.30 – 12.10 | **TOPIC: Footsteps Leading to Neuropathy**<br><br>**11.30 – 11.50**<br>From Upstream: Endocrinologist POV<br>**SPEAKER 1: dr. Roy Panusunan Sibarani, SpPD-KEMD**<br><br>**11.50 – 12.10**<br>To Downstream: Neurologist POV<br>**SPEAKER 2: dr. Gloria Tanjung, SpN**<br><br>**MODERATOR: dr. William Djauhari** | **WORKSHOP 1: Diabetes Technology: CGM**<br><br>**11.30 – 12.00 — Doctor's POV**<br>**SPEAKER 1: dr. Johanes Purwoto, SpPD-KEMD**<br>Topic:<br>• Mastering ambulatory glucose profile (AGP): A step-by-step guide to read CGM reports<br>• CGM-driven clinical decisions: Tailoring therapy in type 1 and type 2 diabetes<br>• CGM in special populations: prediabetes, pregnancy, elderly, and hospitalized care<br><br>**12.00 – 12.10 — Patient's POV**<br>**SPEAKER 2: Daniel Surbakti** |
+| 12.10 – 12.30 | DISCUSSION | **HANDS ON: Case-based CGM Workshop: Solving real-world glycemic profiles and artifacts**<br>**FASILITATOR:**<br>Dr. Johanes Purwoto, SpPD-KEMD<br>Dr. Libriansyah, MM, SpPD-KEMD<br>Dr. Leny Puspitasari, SpPD-KEMD |
 
 ---
 
-## 5. LEMBAR KONFIRMASI KESEDIAAN PEMBICARA (LAMPIRAN SURAT)
+## 4. Diabetes Health Forum — Ballroom 2 (100)
 
-```text
-LEMBAR KONFIRMASI KESEDIAAN NARASUMBER / PEMBICARA
-KONAS PERSADIA XI & KONFERENSI GABUNGAN 2026
+> Jadwal internal sel Ballroom 2 (pagi hari). Waktu di bawah adalah waktu yang tertulis di dalam sel tersebut.
 
-Saya yang bertanda tangan di bawah ini:
-Nama Lengkap & Gelar  : .....................................................................
-NIP / NIK             : .....................................................................
-Institusi / Asal RS   : .....................................................................
-No. WhatsApp Aktif    : .....................................................................
-Email Aktif           : .....................................................................
+| Waktu | Acara |
+|---|---|
+| 08.30 – 08.40 | Pembukaan |
+| 08.40 – 09.25 | Topik: Masih muda, kok diabetes? |
+| 09.25 – 09.55 | Tanya jawab |
+| 09.55 – 10.25 | Temu 6 tokoh senior penyandang diabetes |
+| 10.25 – 10.35 | Coffee break |
+| 10.35 – 11.20 | Topik: Cantik, Bugar, Bergairah (dr. Boyke SpOG) |
+| 11.20 – 11.50 | Tanya jawab |
+| 11.50 – 12.00 | Penutupan |
+| 12.00 | Makan siang dan ramah tamah |
 
-Menyatakan:
-[   ] BERSEDIA hadir secara tatap muka (luring/offline) sebagai Narasumber
-[   ] BERSEDIA dengan penyesuaian waktu: ....................................................
-[   ] BELUM BERSEDIA karena ada agenda lain yang bersamaan
+---
 
-Kebutuhan Fasilitas Teknis Paparan:
-[   ] Laptop Pribadi (HDMI Output)
-[   ] Laptop Panitia (Slide dikirim sebelumnya)
-[   ] Pointer Presenter / Clicker
-[   ] Kebutuhan Akomodasi Kamar Hotel di Novotel Bogor (Check-in: 6/7 Nov, Check-out: 7/8 Nov 2026)
+## 5. ISHOMA (semua ruangan)
 
-Kota, ......................... 2026
+| Waktu | Acara |
+|---|---|
+| 12.30 – 14.00 | **ISHOMA** (R. Makan Ballroom 2 & Restaurant) |
 
-Tanda Tangan & Nama Terang
+---
 
+## 6. Sesi 5 — Room Gede, Room Pangrango, Ballroom 2
 
-( ...................................................... )
-```
+| Sesi / Waktu | Room Gede (200) | Room Pangrango (200) | Ballroom 2 (100) |
+|---|---|---|---|
+| **SESI 5**<br>14.00 – 14.30 | **WORKSHOP 2: Semaglutide on Prediabetes**<br>**SPEAKER : dr. Sony Wibisono Mudjanarko, SpPD-KEMD**<br>Topic:<br>• Targeting metabolic risk early: Semaglutide beyond weight loss<br>• Synergy of Semaglutide and Lifestyle intervention in Prediabetes Reversal<br>• Patient selection and dosing protocol: Practical Guide to Prescribing Semaglutide in Prediabetes | **WORKSHOP 3: Nutrition in Diabetes**<br>**SPEAKER: dr. Santi Syafril, SpPD-KEMD**<br>Topic:<br>• Navigating dietary patterns: Mediterranean, Low-Carb, and Intermittent Fasting in Diabetes<br>• Carbohydrate counting and Glycemic Index: Practical strategies for glycemic control<br>• Behavior change & Nutritional counceling: Overcoming adherence barriers in diabetes care | KONKER PERSADIA/PEDI |
+| 14.30 – 15.00 | **HANDS ON: Case-Based Learning: Navigating Real-World Prediabetes Cases with Semaglutide (How to use, tapering strategy, compliance)**<br>**FASILITATOR:**<br>dr. Sony Wibisono Mudjanarko, SpPD-KEMD<br>dr. Khomimah SpPD-KEMD<br>dr. Nanang Miftah Fajari, SpPD-KEMD | **HANDS ON: Meal planning and case-based: Designing Practical Diets for Real World Patients (shift worker, obesity, elderly)**<br>**FASILITATOR:**<br>dr. Santi Syafril, SpPD-KEMD<br>dr. Herni Basir, SpPD-KEMD<br>dr. Brama Ihsan Sazli, M(Ked)PD, SpPD-KEMD | — |
+
+---
+
+## 7. Sesi 6 — Room Gede & Room Pangrango
+
+| Sesi / Waktu | Room Gede (200) | Room Pangrango (200) |
+|---|---|---|
+| **SESI 6**<br>15.00 – 15.20<br>15.20 – 15.40 | **WORKSHOP 4: Investigating Hypoglycemia**<br>**SPEAKER 1: Dr. dr. Yuanita Langi, SpPD-KEMD**<br>Topic:<br>• Hypoglycemia Unawareness: Mechanism, Risk stratification, clinical recovery<br>• Hypoglycemia in special populations: Elderly, renal impairment, and shift workers<br>• Hypoglycemia management: protocol, prevention, post-crisis care | **WORKSHOP 5: Pre-Diabetes: Counting the time**<br>**SPEAKER 1: Dr. dr. Made Ratna Saraswati, SpPD-KEMD**<br>Topic:<br>• Early detection and risk stratification in prediabetes: stopping the diabetes continuum<br>• Pharmacotherapy vs Lifestyle modification in prediabetes: finding the balance<br>• Reversing prediabetes: practical nutrition and exercise prescriptions |
+| 15.40 – 16.00 | **HANDS ON: Case-based workshop: navigating complex hypoglycemic scenarios in daily practice**<br>**FASILITATOR:**<br>Dr. dr. Yuanita Langi, SpPD-KEMD<br>dr. Rulli Rosandi, SpPD-KEMD<br>dr. Yohana Ceria Anindita, SpPD-KEMD<br><br>Filling the gap: **dr. Henny Megawati SpPD** | **HANDS ON: Case-based learning: personalizing prediabetes management in high-risk patients**<br>**FASILITATOR:**<br>Dr. dr. Made Ratna Saraswati, SpPD-KEMD<br>Dr. dr. Fabiola MS Adam, SpPD-KEMD<br>dr. Nurleny Sutanto, SpPD, SpMk, FPCP<br><br>Filling the gap: **dr. Pandu Sakti, SpPD, AIFO-K** |
+
+> Pada PDF, Sesi 6 mencantumkan dua label waktu (15.00 – 15.20 dan 15.20 – 15.40) di samping blok Workshop 4 dan 5. PDF tidak memetakan butir topik ke masing-masing label waktu tersebut.
+
+---
+
+## 8. ISHOMA dan Malam Keakraban (semua ruangan)
+
+| Waktu | Acara |
+|---|---|
+| 16.00 – 18.30 | **ISHOMA** |
+| 18.30 – 21.00 | **MALAM KEAKRABAN (GRAND BALLROOM)**<br>• Kata Sambutan<br>• Musik dan Sajak<br>• Diskusi<br>• Lagu dan Tari Lilin-Lilin Kecil |
+
+---
+
+# JADWAL RAPAT PERSADIA, PEDI & PERKENI, 7 NOVEMBER 2026 – NOVOTEL BOGOR
+
+| Waktu | PERSADIA (Karang-Sanggar 80) | PEDI (Kencana 40) |
+|---|---|---|
+| 14.00 – 17.00 | **BREAK ROOM:**<br>Karang (50)<br>Sanggar (30)<br>Geulis (70) | *(kosong pada PDF)* |
+| 18.00 – 19.00 | **PERKENI (Ballroom 2)** *(sel gabungan, melintasi kolom Persadia dan PEDI)* | ↑ |
