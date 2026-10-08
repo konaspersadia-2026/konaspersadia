@@ -19,10 +19,14 @@ const rupiah = (n: number) =>
 const inputCls =
   "w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0B3D5E] focus:border-[#0B3D5E]";
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
+function Field({ label, children, required, optional }: { label: string; children: ReactNode; required?: boolean; optional?: boolean }) {
   return (
     <label className="block">
-      <span className="block text-sm font-medium text-slate-700 mb-1">{label}</span>
+      <span className="block text-sm font-medium text-slate-700 mb-1">
+        {label}
+        {required && <span className="text-rose-500 font-bold ml-1" title="Wajib diisi">*</span>}
+        {optional && <span className="text-xs text-slate-400 font-normal ml-1.5">(opsional)</span>}
+      </span>
       {children}
     </label>
   );
@@ -176,7 +180,7 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
 
   const lanjutDariDataDiri = () => {
     if (!namaLengkap.trim()) return setError("Nama lengkap wajib diisi.");
-    if (!email.trim() || !email.includes("@")) return setError("Email yang valid wajib diisi.");
+    if (email.trim() && !email.includes("@")) return setError("Format email tidak valid.");
     if (!whatsapp.trim() || whatsapp.length < 9) return setError("Nomor WhatsApp yang valid wajib diisi.");
     const f = kat.fieldTambahan;
     if (f.includes("institusi") && !institusi.trim()) return setError("Institusi wajib diisi.");
@@ -235,7 +239,7 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
         no_registrasi: id,
         status_pembayaran: total === 0 ? "Lunas" : "Menunggu Verifikasi",
         nama_lengkap: namaLengkap,
-        email,
+        email: email.trim() || "-",
         whatsapp,
         kategori_peserta: kat.label,
         pilihan_kegiatan: kegiatan,
@@ -392,47 +396,48 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
                 <ArrowLeft className="h-4 w-4" /> Ganti kategori
               </button>
               <h1 className="text-xl font-bold text-slate-900">{kat.label}</h1>
+              <p className="text-xs text-slate-500 mt-1"><span className="text-rose-500 font-bold">*</span> Bidang bertanda bintang wajib diisi</p>
             </div>
 
             {error && <div className="px-3.5 py-2.5 bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-lg">{error}</div>}
 
             <div className="space-y-4">
-              <Field label="Nama lengkap (beserta gelar)">
+              <Field label="Nama lengkap (beserta gelar)" required>
                 <input className={inputCls} value={namaLengkap} onChange={(e) => setNamaLengkap(e.target.value)} />
               </Field>
-              <Field label="Email">
-                <input type="email" className={inputCls} value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Field label="Email" optional>
+                <input type="email" className={inputCls} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="nama@email.com" />
               </Field>
-              <Field label="Nomor WhatsApp">
+              <Field label="Nomor WhatsApp" required>
                 <input type="tel" className={inputCls} value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="08xxxxxxxxxx" />
               </Field>
 
               {kat.fieldTambahan.includes("institusi") && (
-                <Field label="Institusi / tempat bertugas">
+                <Field label="Institusi / tempat bertugas" required>
                   <input className={inputCls} value={institusi} onChange={(e) => setInstitusi(e.target.value)} />
                 </Field>
               )}
               {kat.fieldTambahan.includes("nim") && (
-                <Field label="NIM">
+                <Field label="NIM" required>
                   <input className={inputCls} value={nim} onChange={(e) => setNim(e.target.value)} />
                 </Field>
               )}
               {kat.fieldTambahan.includes("cabangPersadia") && (
-                <Field label="Cabang PERSADIA">
+                <Field label="Cabang PERSADIA" required>
                   <input className={inputCls} value={cabangPersadia} onChange={(e) => setCabangPersadia(e.target.value)} />
                 </Field>
               )}
               {kat.fieldTambahan.includes("namaKetuaCabang") && (
-                <Field label="Nama Ketua Cabang PERSADIA">
+                <Field label="Nama Ketua Cabang PERSADIA" required>
                   <input className={inputCls} value={namaKetuaCabang} onChange={(e) => setNamaKetuaCabang(e.target.value)} />
                 </Field>
               )}
               {kat.fieldTambahan.includes("tanggalLahir") && (
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="Tanggal lahir">
+                  <Field label="Tanggal lahir" required>
                     <input type="date" className={inputCls} value={tanggalLahir} onChange={(e) => setTanggalLahir(e.target.value)} />
                   </Field>
-                  <Field label="Jenis kelamin">
+                  <Field label="Jenis kelamin" required>
                     <select className={inputCls} value={jenisKelamin} onChange={(e) => setJenisKelamin(e.target.value)}>
                       <option>Laki-laki</option>
                       <option>Perempuan</option>
@@ -444,10 +449,9 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
 
             {/* Pilihan khusus per kategori */}
             {kat.akses === "ilmiah" && kat.id !== "perawat" && (
-              <Field label="Paket">
+              <Field label="Paket kegiatan">
                 <select className={inputCls} value={pilihanKegiatan} onChange={(e) => setPilihanKegiatan(e.target.value as any)}>
                   <option value="Symposium + Workshop">Simposium + Workshop</option>
-                  <option value="Symposium">Simposium saja</option>
                 </select>
               </Field>
             )}
@@ -480,7 +484,7 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
 
             {kat.id === "umum" && (
               <div className="space-y-3">
-                <span className="block text-sm font-medium text-slate-700">Kegiatan yang diikuti</span>
+                <span className="block text-sm font-medium text-slate-700">Kegiatan yang diikuti <span className="text-rose-500 font-bold">*</span></span>
                 <Check checked={ikutPestaRakyatUmum} onChange={setIkutPestaRakyatUmum}>Pesta Rakyat, 8 Nov di Stadion Pakansari</Check>
                 {ikutPestaRakyatUmum && (
                   <div className="ml-6 space-y-2 text-sm text-slate-700">
@@ -507,14 +511,14 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
                 </Check>
                 {bersediaAnggotaPersadia && (
                   <div className="space-y-3 pl-6">
-                    <Field label="Alamat lengkap">
+                    <Field label="Alamat lengkap" required>
                       <input className={inputCls} value={alamatLengkap} onChange={(e) => setAlamatLengkap(e.target.value)} />
                     </Field>
                     <div className="grid grid-cols-2 gap-3">
-                      <Field label="Kelurahan / Desa"><input className={inputCls} value={kelurahan} onChange={(e) => setKelurahan(e.target.value)} /></Field>
-                      <Field label="Kecamatan"><input className={inputCls} value={kecamatan} onChange={(e) => setKecamatan(e.target.value)} /></Field>
-                      <Field label="Kota / Kabupaten"><input className={inputCls} value={kotaKabupaten} onChange={(e) => setKotaKabupaten(e.target.value)} /></Field>
-                      <Field label="Provinsi"><input className={inputCls} value={provinsi} onChange={(e) => setProvinsi(e.target.value)} /></Field>
+                      <Field label="Kelurahan / Desa" required><input className={inputCls} value={kelurahan} onChange={(e) => setKelurahan(e.target.value)} /></Field>
+                      <Field label="Kecamatan" required><input className={inputCls} value={kecamatan} onChange={(e) => setKecamatan(e.target.value)} /></Field>
+                      <Field label="Kota / Kabupaten" required><input className={inputCls} value={kotaKabupaten} onChange={(e) => setKotaKabupaten(e.target.value)} /></Field>
+                      <Field label="Provinsi" required><input className={inputCls} value={provinsi} onChange={(e) => setProvinsi(e.target.value)} /></Field>
                     </div>
                   </div>
                 )}
