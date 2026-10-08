@@ -539,7 +539,7 @@ Berikut adalah *Kode Voucher Khusus FKTP (Dokter Umum)* untuk pendaftaran *${EVE
 
 *Petunjuk Penggunaan:*
 1. Buka link pendaftaran di atas.
-2. Pilih Kategori: *Dokter Umum (FKTP)*.
+2. Pilih Kategori: *Dokter Umum*.
 3. Masukkan Kode Voucher di atas pada kolom yang tersedia, lalu klik tombol *"Terapkan"*.
 4. Biaya pendaftaran Simposium & Workshop akan otomatis disesuaikan dengan subsidi khusus FKTP.
 

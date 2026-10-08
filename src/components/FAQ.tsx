@@ -23,7 +23,7 @@ export default function FAQ() {
     },
     {
       q: "Kemana saya harus menghubungi jika menemui kendala teknis dalam pengisian form?",
-      a: "Silakan menghubungi admin pelaksana pendaftaran melalui kontak layanan bantuan yang tercantum di bagian bawah halaman website (Email panitia atau WhatsApp resmi)."
+      a: "Silakan menghubungi admin pelaksana pendaftaran melalui kontak layanan bantuan yang tercantum di bagian bawah halaman website (WhatsApp resmi panitia)."
     }
   ];
 

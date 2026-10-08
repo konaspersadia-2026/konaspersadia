@@ -662,17 +662,13 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
         )}
       </main>
 
-      <footer className="max-w-xl mx-auto px-4 pb-8 text-center text-xs text-slate-400">
-        Bantuan:{" "}
-        <a href={`mailto:${KONTAK_PANITIA.email}`} className="underline hover:text-slate-600 transition">
-          {KONTAK_PANITIA.email}
-        </a>{" "}
-        · WhatsApp{" "}
+      <footer className="max-w-xl mx-auto px-4 pb-8 text-center text-sm text-slate-500">
+        Bantuan WhatsApp:{" "}
         <a
           href={`https://wa.me/${KONTAK_PANITIA.whatsapp.replace(/\D/g, "").replace(/^0/, "62")}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="underline hover:text-slate-600 transition"
+          className="font-medium text-slate-600 hover:text-slate-900 underline underline-offset-2 transition"
         >
           {KONTAK_PANITIA.whatsapp}
         </a>

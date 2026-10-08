@@ -24,7 +24,7 @@
 * **Slogan Bahasa Inggris:** *"Early Detection for Better Living: Standing Together Against Diabetes at Its Root"*
 * **Website Resmi:** https://konaspersadia.com
 * **Link Pendaftaran Langsung:** https://konaspersadia.com/#pendaftaran
-* **Hotline WhatsApp:** 08980287820 & 085370716686 (Seksi Acara & Registrasi)
+* **Hotline WhatsApp:** 08980287820 & 081210000980 (Seksi Acara & Registrasi)
 * **Email Sekretariat:** diabetesinitiativeid@gmail.com
 
 ---
@@ -201,7 +201,7 @@ Ketua Umum PB PERSADIA Periode 2026–2029
 | Kategori Peserta Medis | Pilihan Paket Kegiatan | Biaya |
 |---|---|---|
 | **Dokter Spesialis**<br>*(Sp.PD, Sp.PD-KEMD)* | Symposium + Workshop | **Rp 2.500.000** |
-| **Dokter Umum**<br>*(Praktisi FKTP / Puskesmas / Klinik)* | Symposium + Workshop | **Rp 1.500.000** |
+| **Dokter Umum** | Symposium + Workshop | **Rp 1.500.000** |
 | **Residen / PPDS**<br>*(Pendidikan Dokter Spesialis)* | Symposium + Workshop | **Rp 1.000.000** |
 | **Perawat, ahli gizi & Edukator Diabetes** | **Workshop Medis Terapan** | **Rp 400.000** |
 | **Mahasiswa Kedokteran S1**<br>*(Wajib upload KTM aktif)* | Symposium + Workshop | **Rp 400.000** |
@@ -251,7 +251,7 @@ Setiap peserta yang terdaftar resmi berhak memperoleh fasilitas komprehensif ber
 ## 11. KONTAK PANITIA RESMI (HELPDESK)
 
 Untuk konfirmasi pendaftaran, bantuan teknis, dan informasi sponsorship:
-* **Hotline WhatsApp Registrasi:** `0898-0287-820 / 0853-7071-6686` (Seksi Acara & Registrasi)
+* **Hotline WhatsApp Registrasi:** `0898-0287-820 / 0812-1000-0980` (Seksi Acara & Registrasi)
 * **Email Sekretariat:** `diabetesinitiativeid@gmail.com`
 * **Website Resmi:** `https://konaspersadia.com`
 * **Link Halaman Pendaftaran:** `https://konaspersadia.com/#pendaftaran`

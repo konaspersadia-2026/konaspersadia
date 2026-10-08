@@ -19,7 +19,7 @@ export const EVENT_INFO: EventInfo = {
 export const KATEGORI_PESERTA: KategoriPeserta[] = [
   {
     id: "dokter_umum",
-    label: "Dokter Umum (Praktisi FKTP / Puskesmas / Klinik)",
+    label: "Dokter Umum",
     akses: "ilmiah",
     hargaSymposium: { earlyBird: 1500000, onsite: 1500000 },
     hargaSymposiumWorkshop: { earlyBird: 1500000, onsite: 1500000 },
@@ -102,7 +102,7 @@ export const REKENING_PEMBAYARAN: RekeningPembayaran = {
 
 export const KONTAK_PANITIA: KontakPanitia = {
   email: "diabetesinitiativeid@gmail.com",
-  whatsapp: "0853-7071-6686",
+  whatsapp: "0812-1000-0980",
 };
 
 export const BRAND_COLORS: BrandColors = {
@@ -396,8 +396,8 @@ export const SUSUNAN_PANITIA = {
 // ============================================
 
 export const KONTAK_AKOMODASI = {
-  telepon: "0853-7071-6686",
-  whatsappNumber: "6285370716686",
+  telepon: "0812-1000-0980",
+  whatsappNumber: "6281210000980",
   email: "diabetesinitiativeid@gmail.com",
 };
 

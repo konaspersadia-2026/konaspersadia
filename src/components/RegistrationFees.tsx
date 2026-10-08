@@ -40,7 +40,7 @@ export default function RegistrationFees({ onOpenRegister }: RegistrationFeesPro
     },
     {
       kategori: "Dokter Umum",
-      subKategori: "(Praktisi FKTP / Puskesmas / Klinik)",
+      subKategori: "",
       paket: "Symposium + Workshop",
       biaya: 1500000,
       fasilitas: [
@@ -142,7 +142,9 @@ export default function RegistrationFees({ onOpenRegister }: RegistrationFeesPro
                     <tr key={idx} className={`hover:bg-[#F8FAFC]/50 transition duration-150 ${idx % 2 === 1 ? "bg-slate-50/40" : ""}`}>
                       <td className="p-4 pl-6 align-top">
                         <span className="font-extrabold text-slate-800 text-sm block">{item.kategori}</span>
-                        <span className="text-xs text-slate-500 font-medium">{item.subKategori}</span>
+                        {item.subKategori && (
+                          <span className="text-xs text-slate-500 font-medium block">{item.subKategori}</span>
+                        )}
                       </td>
                       <td className="p-4 align-top">
                         <span className={`inline-block px-3 py-1 rounded-lg text-xs font-black ${
@@ -169,7 +171,9 @@ export default function RegistrationFees({ onOpenRegister }: RegistrationFeesPro
               <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex items-center justify-between">
                 <div>
                   <h4 className="font-extrabold text-sm text-slate-800 leading-tight">{item.kategori}</h4>
-                  <span className="text-xs text-slate-500 font-medium block mt-0.5">{item.subKategori}</span>
+                  {item.subKategori && (
+                    <span className="text-xs text-slate-500 font-medium block mt-0.5">{item.subKategori}</span>
+                  )}
                   <div className="mt-2">
                     <span className={`inline-block px-2.5 py-0.5 rounded-lg text-[11px] font-bold ${
                       item.isWorkshopOnly ? "bg-teal-100 text-teal-800" : "bg-amber-100 text-amber-800"

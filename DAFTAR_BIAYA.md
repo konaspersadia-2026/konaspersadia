@@ -15,7 +15,7 @@
 | Kategori Peserta Medis | Pilihan Paket Kegiatan | Biaya Resmi |
 | :--- | :--- | :---: |
 | **Dokter Spesialis**<br>*(Sp.PD, Sp.PD-KEMD)* | Symposium + Workshop | **Rp 2.500.000** |
-| **Dokter Umum**<br>*(Praktisi FKTP / Puskesmas / Klinik)* | Symposium + Workshop | **Rp 1.500.000** |
+| **Dokter Umum** | Symposium + Workshop | **Rp 1.500.000** |
 | **Residen / PPDS**<br>*(Pendidikan Dokter Spesialis)* | Symposium + Workshop | **Rp 1.000.000** |
 | **Perawat, Ahli Gizi & Edukator Diabetes** | **Workshop Medis Terapan** | **Rp 400.000** |
 | **Mahasiswa Kedokteran S1**<br>*(Tahap Akademik & Profesi / Co-ass)* | Symposium + Workshop | **Rp 400.000** |
@@ -79,6 +79,6 @@
   - Nomor Rekening: `2101022971`  
   - Atas Nama: **Perkumpulan Diabetes Inisiatif**  
   - *Catatan:* Mohon sertakan **3 digit kode unik transfer** yang diberikan sistem agar pembayaran teridentifikasi dan diverifikasi secara otomatis.
-- **Hotline WhatsApp Acara & Registrasi:** `0898-0287-820` / `0853-7071-6686`
+- **Hotline WhatsApp Acara & Registrasi:** `0898-0287-820` / `0812-1000-0980`
 - **Email Sekretariat:** `diabetesinitiativeid@gmail.com`
 - **Website Resmi:** `https://konaspersadia.com`

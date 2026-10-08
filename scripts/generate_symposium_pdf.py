@@ -825,7 +825,7 @@ html_content = f"""<!DOCTYPE html>
   <div class="callout-strip">
     <div>
       <strong>Pendaftaran Dibuka s.d. 31 Oktober 2026</strong> (Tetap dibuka selama kuota masih ada)<br>
-      <span style="font-size: 8pt; color: #475569;">Hotline WA: 08980287820 & 085370716686 (Seksi Acara & Registrasi) • Email: diabetesinitiativeid@gmail.com</span>
+      <span style="font-size: 8pt; color: #475569;">Hotline WA: 08980287820 & 081210000980 (Seksi Acara & Registrasi) • Email: diabetesinitiativeid@gmail.com</span>
     </div>
     <div class="callout-btn">konaspersadia.com</div>
   </div>
@@ -1216,7 +1216,7 @@ html_content = f"""<!DOCTYPE html>
         <td>Rp 2.500.000</td>
       </tr>
       <tr>
-        <td>Dokter Umum <span style="font-weight: normal; font-size: 8pt; color: #64748b;">(Praktisi FKTP / Puskesmas / Klinik)</span></td>
+        <td>Dokter Umum</td>
         <td>Symposium + Workshop</td>
         <td>Rp 1.500.000</td>
       </tr>
@@ -1297,7 +1297,7 @@ html_content = f"""<!DOCTYPE html>
     </div>
     <div>
       <strong>📞 Kontak Panitia Resmi (Helpdesk):</strong><br>
-      <strong>Hotline WhatsApp:</strong> 0898-0287-820 / 0853-7071-6686 (Seksi Acara & Registrasi)<br>
+      <strong>Hotline WhatsApp:</strong> 0898-0287-820 / 0812-1000-0980 (Seksi Acara & Registrasi)<br>
       <strong>Email Sekretariat:</strong> diabetesinitiativeid@gmail.com<br>
       <strong>Website:</strong> https://konaspersadia.com<br>
       <strong>Link Pendaftaran:</strong> https://konaspersadia.com/#pendaftaran
