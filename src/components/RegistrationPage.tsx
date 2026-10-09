@@ -1,5 +1,5 @@
 import { useState, useEffect, type ReactNode } from "react";
-import { ArrowLeft, ChevronRight, Copy, Download, Loader2, CheckCircle2, Clock } from "lucide-react";
+import { ArrowLeft, ChevronRight, Copy, Download, Loader2, CheckCircle2, Clock, AlertCircle, X, MessageCircle } from "lucide-react";
 import {
   KATEGORI_PESERTA, EVENT_INFO, REKENING_PEMBAYARAN,
   VOUCHER_DOKTER_UMUM_CONFIG, DIABETES_HEALTH_FORUM_CONFIG, KONTAK_PANITIA
@@ -52,6 +52,10 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
   const [hasConfirmedPayment, setHasConfirmedPayment] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
+  // Status kategori yang ditutup oleh panitia dari app_settings
+  const [closedCategories, setClosedCategories] = useState<string[]>([]);
+  const [closedModalCategory, setClosedModalCategory] = useState<typeof KATEGORI_PESERTA[number] | null>(null);
+
   const [pilihanKegiatan, setPilihanKegiatan] = useState<"Symposium" | "Symposium + Workshop" | "Workshop">("Symposium + Workshop");
   const [namaLengkap, setNamaLengkap] = useState("");
   const [email, setEmail] = useState("");
@@ -90,6 +94,55 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [step]);
+
+  // Ambil pengaturan kategori yang ditutup dari Supabase app_settings
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    const fetchClosedCategories = async () => {
+      try {
+        const { data } = await supabase
+          .from("app_settings")
+          .select("value")
+          .eq("key", "closed_categories")
+          .maybeSingle();
+        if (data && data.value) {
+          const parsed = JSON.parse(data.value);
+          if (Array.isArray(parsed)) {
+            setClosedCategories(parsed);
+          }
+        }
+      } catch (e) {
+        console.warn("Gagal memuat status kategori tertutup:", e);
+      }
+    };
+
+    fetchClosedCategories();
+
+    // Dengarkan perubahan realtime bila status diubah dari admin dashboard
+    const channel = supabase
+      .channel("app_settings_closed_categories_changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "app_settings", filter: "key=eq.closed_categories" },
+        (payload: any) => {
+          if (payload.new && payload.new.value) {
+            try {
+              const parsed = JSON.parse(payload.new.value);
+              if (Array.isArray(parsed)) {
+                setClosedCategories(parsed);
+              }
+            } catch (err) {
+              console.error(err);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   // Pantau perubahan hash URL (misal browser back dari form ke kategori)
   useEffect(() => {
@@ -140,6 +193,13 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
   }, [kat, pilihanKegiatan, ikutHealthTalk, ikutPestaRakyatUmum, tipePestaRakyatUmum, ikutDhfUmum, appliedVoucher]);
 
   const pilihKategori = (id: string) => {
+    if (closedCategories.includes(id)) {
+      const selectedCat = KATEGORI_PESERTA.find((k) => k.id === id);
+      if (selectedCat) {
+        setClosedModalCategory(selectedCat);
+      }
+      return;
+    }
     setKategoriId(id);
     setStep(1);
     setError("");
@@ -179,6 +239,9 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
   const newRegId = () => `KNS2026-${Date.now().toString().slice(-4)}${Math.floor(1000 + Math.random() * 9000)}`;
 
   const lanjutDariDataDiri = () => {
+    if (closedCategories.includes(kat.id)) {
+      return setError(`Mohon maaf, pendaftaran untuk kategori "${kat.label}" saat ini telah ditutup karena kuota kapasitas telah terpenuhi.`);
+    }
     if (!namaLengkap.trim()) return setError("Nama lengkap wajib diisi.");
     if (email.trim() && !email.includes("@")) return setError("Format email tidak valid.");
     if (!whatsapp.trim() || whatsapp.length < 9) return setError("Nomor WhatsApp yang valid wajib diisi.");
@@ -215,6 +278,10 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
   };
 
   const kirim = async (idArg?: string, totalArg?: number) => {
+    if (closedCategories.includes(kat.id)) {
+      setError(`Mohon maaf, pendaftaran untuk kategori "${kat.label}" saat ini telah ditutup.`);
+      return;
+    }
     setIsSubmitting(true);
     setError("");
     const total = totalArg ?? totalAkhir;
@@ -323,29 +390,66 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
     return h ? rupiah(h.earlyBird) : "";
   };
 
-  const kategoriRow = (k: typeof KATEGORI_PESERTA[number]) => (
-    <button
-      key={k.id}
-      type="button"
-      onClick={() => pilihKategori(k.id)}
-      className="w-full flex items-center justify-between gap-3 px-4 py-3.5 bg-white border border-slate-200 hover:border-[#0B3D5E] rounded-xl text-left hover:bg-slate-50 transition-all shadow-xs hover:shadow-sm group cursor-pointer"
-    >
-      <div className="min-w-0 pr-2">
-        <span className="text-sm font-semibold text-slate-900 group-hover:text-[#0B3D5E] transition-colors block">
-          {k.label}
-        </span>
-        <span className="text-xs text-slate-500 block mt-0.5">
-          {k.akses === "ilmiah"
-            ? (k.id === "perawat" ? "Khusus workshop medis terapan" : "Akses simposium & workshop ilmiah")
-            : (k.id === "persadia" ? "Gratis bagi anggota cabang PERSADIA" : "Pesta Rakyat & Diabetes Health Forum")}
-        </span>
-      </div>
-      <span className="flex items-center gap-2 shrink-0 text-sm font-bold text-[#0B3D5E]">
-        {hargaTampil(k)}
-        <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-[#0B3D5E] group-hover:translate-x-0.5 transition-all" />
-      </span>
-    </button>
-  );
+  const isPestaRakyatClosed = closedCategories.includes("persadia") || closedCategories.includes("umum");
+  const cleanWa = KONTAK_PANITIA.whatsapp.replace(/\D/g, "").replace(/^0/, "62");
+
+  const kategoriRow = (k: typeof KATEGORI_PESERTA[number]) => {
+    const isClosed = closedCategories.includes(k.id);
+
+    return (
+      <button
+        key={k.id}
+        type="button"
+        onClick={() => {
+          if (isClosed) {
+            setClosedModalCategory(k);
+          } else {
+            pilihKategori(k.id);
+          }
+        }}
+        className={`w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl text-left transition-all shadow-xs group cursor-pointer border ${
+          isClosed
+            ? "bg-slate-50/90 border-slate-200 hover:border-rose-300 hover:bg-rose-50/20"
+            : "bg-white border-slate-200 hover:border-[#0B3D5E] hover:bg-slate-50 hover:shadow-sm"
+        }`}
+      >
+        <div className="min-w-0 pr-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span
+              className={`text-sm font-semibold transition-colors block ${
+                isClosed ? "text-slate-700" : "text-slate-900 group-hover:text-[#0B3D5E]"
+              }`}
+            >
+              {k.label}
+            </span>
+            {isClosed && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700 border border-rose-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                Ditutup
+              </span>
+            )}
+          </div>
+          <span className="text-xs text-slate-500 block mt-0.5">
+            {k.akses === "ilmiah"
+              ? (k.id === "perawat" ? "Khusus workshop medis terapan" : "Akses simposium & workshop ilmiah")
+              : (k.id === "persadia" ? "Gratis bagi anggota cabang PERSADIA" : "Pesta Rakyat & Diabetes Health Forum")}
+          </span>
+        </div>
+        <div className="shrink-0 flex items-center gap-2">
+          {isClosed ? (
+            <span className="text-xs font-semibold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-md border border-rose-200/80">
+              Kuota Penuh
+            </span>
+          ) : (
+            <span className="flex items-center gap-2 text-sm font-bold text-[#0B3D5E]">
+              {hargaTampil(k)}
+              <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-[#0B3D5E] group-hover:translate-x-0.5 transition-all" />
+            </span>
+          )}
+        </div>
+      </button>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans">
@@ -371,6 +475,35 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
                 Silakan pilih salah satu kategori kepesertaan di bawah ini untuk melanjutkan pendaftaran Anda.
               </p>
             </div>
+
+            {/* Banner Peringatan jika Pesta Rakyat ditutup */}
+            {isPestaRakyatClosed && (
+              <div className="bg-amber-50/90 border border-amber-300/80 rounded-xl p-4 text-amber-900 shadow-xs flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <div className="flex items-center gap-2">
+                    <strong className="text-amber-950 font-semibold">Pemberitahuan Kuota Pesta Rakyat</strong>
+                    <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 bg-amber-200/80 text-amber-900 rounded-md">
+                      Kapasitas Penuh
+                    </span>
+                  </div>
+                  <p className="text-amber-800 text-xs mt-1 leading-relaxed">
+                    Pendaftaran untuk kegiatan <strong>Pesta Rakyat (Stadion Pakansari)</strong> saat ini telah ditutup karena jumlah pendaftar telah melampaui kapasitas kuota yang disediakan panitia.
+                  </p>
+                  <p className="text-amber-700 text-xs mt-1.5">
+                    Bagi peserta rombongan cabang atau pertanyaan seputar kuota khusus, silakan hubungi{" "}
+                    <a
+                      href={`https://wa.me/${cleanWa}?text=${encodeURIComponent("Halo Panitia KONAS PERSADIA 2026, saya ingin menanyakan perihal kuota pendaftaran Pesta Rakyat.")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-bold underline text-amber-900 hover:text-amber-950"
+                    >
+                      Panitia via WhatsApp ({KONTAK_PANITIA.whatsapp})
+                    </a>.
+                  </p>
+                </div>
+              </div>
+            )}
 
             <section className="space-y-2.5">
               <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -398,6 +531,34 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
               <h1 className="text-xl font-bold text-slate-900">{kat.label}</h1>
               <p className="text-xs text-slate-500 mt-1"><span className="text-rose-500 font-bold">*</span> Bidang bertanda bintang wajib diisi</p>
             </div>
+
+            {closedCategories.includes(kat.id) && (
+              <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-900 text-sm space-y-2">
+                <div className="flex items-center gap-2 font-bold text-rose-800">
+                  <AlertCircle className="h-5 w-5 text-rose-600 shrink-0" />
+                  Pendaftaran Kategori {kat.label} Telah Ditutup
+                </div>
+                <p className="text-xs text-rose-700 leading-relaxed">
+                  Mohon maaf, kuota kapasitas untuk kategori ini telah terpenuhi sehingga formulir pendaftaran saat ini ditutup. Anda dapat memilih kategori lain atau menghubungi panitia melalui WhatsApp.
+                </p>
+                <div className="pt-1 flex flex-wrap gap-2">
+                  <button
+                    onClick={gantiKategori}
+                    className="px-3 py-1.5 bg-white border border-rose-300 text-rose-800 text-xs font-semibold rounded-lg hover:bg-rose-100/50 cursor-pointer"
+                  >
+                    ← Pilih Kategori Lain
+                  </button>
+                  <a
+                    href={`https://wa.me/${cleanWa}?text=${encodeURIComponent(`Halo Panitia KONAS PERSADIA 2026, saya ingin menanyakan kuota pendaftaran untuk kategori: ${kat.label}.`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 bg-rose-600 text-white text-xs font-semibold rounded-lg hover:bg-rose-700 cursor-pointer inline-flex items-center gap-1.5"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" /> Hubungi Panitia
+                  </a>
+                </div>
+              </div>
+            )}
 
             {error && <div className="px-3.5 py-2.5 bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-lg">{error}</div>}
 
@@ -541,8 +702,8 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
               </div>
               <button
                 onClick={lanjutDariDataDiri}
-                disabled={isSubmitting}
-                className="px-6 py-2.5 bg-[#0B3D5E] hover:bg-[#093450] text-white text-sm font-semibold rounded-lg flex items-center gap-2 disabled:opacity-60 cursor-pointer"
+                disabled={isSubmitting || closedCategories.includes(kat.id)}
+                className="px-6 py-2.5 bg-[#0B3D5E] hover:bg-[#093450] text-white text-sm font-semibold rounded-lg flex items-center gap-2 disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
               >
                 {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
                 {hargaDasar === 0 ? "Daftar" : "Lanjut ke pembayaran"}
@@ -717,6 +878,86 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
             </div>
             <div className="bg-slate-900 text-white px-5 py-4 text-center">
               <p className="text-[10px] font-bold tracking-wider text-amber-400 uppercase">Simpan e-tiket ini di galeri HP Anda.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Dialog Informasi Pendaftaran Kategori Ditutup */}
+      {closedModalCategory && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200"
+          onClick={() => setClosedModalCategory(null)}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-100 overflow-hidden text-left"
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-rose-50 border-b border-rose-100 px-5 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                  <AlertCircle className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-rose-950">Pendaftaran Ditutup</h3>
+                  <p className="text-[11px] text-rose-700 font-medium">Kuota Kapasitas Terpenuhi</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setClosedModalCategory(null)}
+                className="p-1.5 rounded-lg text-rose-400 hover:text-rose-700 hover:bg-rose-100 transition cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <div className="text-sm text-slate-600 space-y-2.5 leading-relaxed">
+                <p>
+                  Mohon maaf, pendaftaran untuk kategori{" "}
+                  <strong className="text-slate-900">{closedModalCategory.label}</strong> saat ini telah resmi ditutup karena jumlah pendaftar telah mencapai batas kapasitas kuota maksimal yang disediakan panitia.
+                </p>
+                {closedModalCategory.akses === "pesta_rakyat" ? (
+                  <div className="text-xs text-slate-600 bg-amber-50/70 p-3 rounded-xl border border-amber-200/80 leading-relaxed">
+                    🎉 <strong className="text-amber-950">Antusiasme Luar Biasa:</strong> Banyaknya peserta yang mendaftar pada <strong>Pesta Rakyat di Stadion Pakansari</strong> membuat kuota terisi dengan sangat cepat. Panitia saat ini membatasi pendaftaran baru demi menjaga kenyamanan, keamanan, dan kelancaran seluruh peserta.
+                  </div>
+                ) : (
+                  <div className="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200 leading-relaxed">
+                    🏛️ Kapasitas ruang simposium dan workshop ilmiah di <strong>Novotel Bogor Golf Resort</strong> telah mencapai kuota maksimal.
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-emerald-50/80 border border-emerald-200 rounded-xl p-3.5 space-y-2.5">
+                <p className="text-xs text-emerald-950 font-bold flex items-center gap-1.5">
+                  <MessageCircle className="h-4 w-4 text-emerald-600 shrink-0" />
+                  Butuh Informasi Tambahan / Rombongan Cabang?
+                </p>
+                <p className="text-xs text-emerald-800 leading-relaxed">
+                  Bagi pendaftar rombongan cabang PERSADIA atau pertanyaan seputar ketersediaan kuota susulan, silakan hubungi tim Sekretariat Panitia langsung melalui WhatsApp:
+                </p>
+                <a
+                  href={`https://wa.me/${cleanWa}?text=${encodeURIComponent(`Halo Panitia KONAS PERSADIA 2026, saya ingin menanyakan perihal kuota pendaftaran kategori: ${closedModalCategory.label}. Apakah masih memungkinkan untuk mendaftar?`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition shadow-xs cursor-pointer"
+                >
+                  <MessageCircle className="h-4 w-4" /> Hubungi Panitia ({KONTAK_PANITIA.whatsapp})
+                </a>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 px-5 py-3 border-t border-slate-100 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setClosedModalCategory(null)}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold rounded-lg transition cursor-pointer"
+              >
+                Tutup &amp; Pilih Kategori Lain
+              </button>
             </div>
           </div>
         </div>

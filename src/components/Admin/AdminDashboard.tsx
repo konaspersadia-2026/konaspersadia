@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
-import { EVENT_INFO } from '../../config';
+import { EVENT_INFO, KATEGORI_PESERTA } from '../../config';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
@@ -10,7 +10,7 @@ import {
   Loader2, LogOut, CheckSquare, XCircle, MessageCircle, Activity, X,
   Ticket, Copy, Check, Plus, RefreshCw, Share2, Sparkles, Trash2, Filter,
   Download, Eye, ExternalLink, Calendar, MapPin, Building, CreditCard,
-  UserCheck, RotateCcw, AlertTriangle
+  UserCheck, RotateCcw, AlertTriangle, SlidersHorizontal, Power, AlertCircle
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -93,6 +93,9 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
   const [healthTalkCount, setHealthTalkCount] = useState(0);
   const [isHealthTalkEnabled, setIsHealthTalkEnabled] = useState(true);
   const [isTogglingHT, setIsTogglingHT] = useState(false);
+  const [closedCategories, setClosedCategories] = useState<string[]>([]);
+  const [isUpdatingCategoryStatus, setIsUpdatingCategoryStatus] = useState<string | null>(null);
+  const [showCategorySettings, setShowCategorySettings] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -277,6 +280,22 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
           setIsHealthTalkEnabled(settingData.value === 'true');
         }
 
+        const { data: catSettingData } = await supabase
+          .from('app_settings')
+          .select('value')
+          .eq('key', 'closed_categories')
+          .maybeSingle();
+        if (catSettingData && catSettingData.value) {
+          try {
+            const parsed = JSON.parse(catSettingData.value);
+            if (Array.isArray(parsed)) {
+              setClosedCategories(parsed);
+            }
+          } catch (e) {
+            console.error("Error parsing closed_categories:", e);
+          }
+        }
+
         // Map to existing Pendaftar interface format
         const mappedData: Pendaftar[] = allData.map((row: any) => ({
           id: row.id,
@@ -348,6 +367,76 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
       alert("Gagal mengubah status Diabetes Health Forum: " + err.message);
     } finally {
       setIsTogglingHT(false);
+    }
+  };
+
+  const handleToggleCategory = async (categoryId: string) => {
+    if (!isSupabaseConfigured) {
+      alert("Supabase belum terkonfigurasi.");
+      return;
+    }
+
+    const isClosed = closedCategories.includes(categoryId);
+    const updated = isClosed
+      ? closedCategories.filter(id => id !== categoryId)
+      : [...closedCategories, categoryId];
+
+    setIsUpdatingCategoryStatus(categoryId);
+    setClosedCategories(updated);
+
+    try {
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert(
+          { key: 'closed_categories', value: JSON.stringify(updated) },
+          { onConflict: 'key' }
+        );
+
+      if (error) throw error;
+
+      const catObj = KATEGORI_PESERTA.find(k => k.id === categoryId);
+      const label = catObj ? catObj.label : categoryId;
+      showToast(`Pendaftaran ${label} berhasil ${isClosed ? 'DIBUKA' : 'DITUTUP'}`);
+    } catch (err: any) {
+      setClosedCategories(closedCategories);
+      alert("Gagal mengubah status pendaftaran kategori: " + err.message);
+    } finally {
+      setIsUpdatingCategoryStatus(null);
+    }
+  };
+
+  const handleTogglePestaRakyatBatch = async (closeAll: boolean) => {
+    if (!isSupabaseConfigured) {
+      alert("Supabase belum terkonfigurasi.");
+      return;
+    }
+
+    const pestaRakyatIds = ["persadia", "umum"];
+    let updated: string[];
+    if (closeAll) {
+      updated = Array.from(new Set([...closedCategories, ...pestaRakyatIds]));
+    } else {
+      updated = closedCategories.filter(id => !pestaRakyatIds.includes(id));
+    }
+
+    setIsUpdatingCategoryStatus("pesta_rakyat_batch");
+    setClosedCategories(updated);
+
+    try {
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert(
+          { key: 'closed_categories', value: JSON.stringify(updated) },
+          { onConflict: 'key' }
+        );
+
+      if (error) throw error;
+      showToast(`Pendaftaran Pesta Rakyat berhasil ${closeAll ? 'DITUTUP SEMUA' : 'DIBUKA SEMUA'}`);
+    } catch (err: any) {
+      setClosedCategories(closedCategories);
+      alert("Gagal memperbarui status Pesta Rakyat: " + err.message);
+    } finally {
+      setIsUpdatingCategoryStatus(null);
     }
   };
 
@@ -896,18 +985,48 @@ _Panitia KONAS PERSADIA 2026_`;
     }
   });
 
-  const kategoriList = Array.from(new Set(data.map(d => d["Kategori Peserta"]).filter(Boolean)));
+  // Helper pencocokan kategori pendaftar (termasuk variasi data masa lalu di database) dengan kategori resmi form pendaftaran
+  const matchesCategory = (rowCategory: string, targetCategory: string) => {
+    if (!rowCategory || !targetCategory) return false;
+    if (targetCategory === "Semua") return true;
+    if (rowCategory === targetCategory) return true;
 
-  const kategoriCount: Record<string, number> = {};
-  data.forEach(d => {
-    const k = d["Kategori Peserta"] || "Lainnya";
-    kategoriCount[k] = (kategoriCount[k] || 0) + 1;
+    // Normalisasi variasi data masa lalu ke kategori resmi form
+    if (targetCategory === "Dokter Umum" && rowCategory.startsWith("Dokter Umum")) return true;
+    if (targetCategory.startsWith("Dokter Spesialis") && rowCategory.startsWith("Dokter Spesialis")) return true;
+    if (targetCategory.startsWith("Residen") && rowCategory.startsWith("Residen")) return true;
+    if (targetCategory.startsWith("Perawat") && rowCategory.startsWith("Perawat")) return true;
+    if (targetCategory.startsWith("Mahasiswa") && rowCategory.startsWith("Mahasiswa")) return true;
+    if (targetCategory.startsWith("Anggota PERSADIA") && rowCategory.startsWith("Anggota PERSADIA")) return true;
+    if (targetCategory.startsWith("Masyarakat Umum") && rowCategory.startsWith("Masyarakat Umum")) return true;
+
+    return false;
+  };
+
+  // Data ringkasan per kategori persis mengikuti daftar kategori resmi form pendaftaran (KATEGORI_PESERTA)
+  const categoryCardData = KATEGORI_PESERTA.map((k) => {
+    const items = data.filter((d) => matchesCategory(d["Kategori Peserta"] || "", k.label));
+    const total = items.length;
+    const lunas = items.filter((d) => d["Status Pembayaran"] === "Lunas").length;
+    const menunggu = items.filter((d) => d["Status Pembayaran"] === "Menunggu Verifikasi").length;
+    const batal = items.filter((d) => d["Status Pembayaran"] === "Dibatalkan").length;
+
+    return {
+      id: k.id,
+      name: k.label,
+      total,
+      lunas,
+      menunggu,
+      batal,
+    };
   });
 
-  const pieData = Object.keys(kategoriCount).map(key => ({
-    name: key,
-    value: kategoriCount[key]
-  }));
+  const pieData = categoryCardData
+    .filter((cat) => cat.total > 0)
+    .map((cat) => ({
+      name: cat.name,
+      value: cat.total,
+    }));
 
   const statusBarData = [
     { name: 'Menunggu', jumlah: totalMenunggu, fill: '#f59e0b' },
@@ -916,7 +1035,7 @@ _Panitia KONAS PERSADIA 2026_`;
   ];
 
   // Filtered data for table
-  const filteredData = data.filter(item => {
+  const filteredData = data.filter((item) => {
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
       !q ||
@@ -934,7 +1053,7 @@ _Panitia KONAS PERSADIA 2026_`;
       (item.provinsi || "").toLowerCase().includes(q);
 
     const matchesStatus = statusFilter === "Semua" ? true : item["Status Pembayaran"] === statusFilter;
-    const matchesKategori = kategoriFilter === "Semua" ? true : item["Kategori Peserta"] === kategoriFilter;
+    const matchesKategori = matchesCategory(item["Kategori Peserta"] || "", kategoriFilter);
 
     return matchesSearch && matchesStatus && matchesKategori;
   });
@@ -1122,6 +1241,230 @@ _Panitia KONAS PERSADIA 2026_`;
                   </div>
                 </div>
 
+                {/* Category Breakdown Cards */}
+                <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
+                        <Users className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-xs sm:text-sm font-bold text-slate-800">
+                          Jumlah Peserta per Kategori
+                        </h3>
+                        <p className="text-[11px] text-slate-500">
+                          Klik kartu untuk memfilter daftar pendaftar di bawah secara instan
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowCategorySettings(prev => !prev)}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer border ${
+                          showCategorySettings
+                            ? "bg-[#0B3D5E] text-white border-[#0B3D5E]"
+                            : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 shadow-2xs"
+                        }`}
+                      >
+                        <SlidersHorizontal className="w-3.5 h-3.5" />
+                        <span>Kelola Buka/Tutup Pendaftaran</span>
+                        {closedCategories.length > 0 && (
+                          <span className="px-1.5 py-0.2 bg-rose-500 text-white text-[10px] rounded-full font-bold animate-pulse">
+                            {closedCategories.length} Ditutup
+                          </span>
+                        )}
+                      </button>
+
+                      {kategoriFilter !== "Semua" && (
+                        <button
+                          onClick={() => setKategoriFilter("Semua")}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold transition-colors cursor-pointer"
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                          <span>Reset Filter Kategori ({kategoriFilter})</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Expandable Category Access Management Panel */}
+                  {showCategorySettings && (
+                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 animate-in fade-in duration-150">
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2.5">
+                        <div>
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                            <Power className="w-4 h-4 text-[#0B3D5E]" />
+                            Pengaturan Buka / Tutup Pendaftaran per Kategori
+                          </h4>
+                          <p className="text-[11px] text-slate-500">
+                            Matikan pendaftaran jika kuota kategori tertentu (terutama Pesta Rakyat) sudah penuh.
+                          </p>
+                        </div>
+
+                        {/* Batch Pesta Rakyat Actions */}
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleTogglePestaRakyatBatch(true)}
+                            disabled={isUpdatingCategoryStatus !== null}
+                            className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[11px] font-bold shadow-2xs transition cursor-pointer disabled:opacity-50"
+                          >
+                            🚫 Tutup Semua Pesta Rakyat
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleTogglePestaRakyatBatch(false)}
+                            disabled={isUpdatingCategoryStatus !== null}
+                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold shadow-2xs transition cursor-pointer disabled:opacity-50"
+                          >
+                            ✅ Buka Semua Pesta Rakyat
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* List of individual category toggles */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 pt-1">
+                        {KATEGORI_PESERTA.map((k) => {
+                          const isClosed = closedCategories.includes(k.id);
+                          const totalPeserta = data.filter(d => matchesCategory(d["Kategori Peserta"] || "", k.label)).length;
+
+                          return (
+                            <div
+                              key={k.id}
+                              className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 transition ${
+                                isClosed
+                                  ? "bg-rose-50/60 border-rose-200"
+                                  : "bg-white border-slate-200"
+                              }`}
+                            >
+                              <div className="min-w-0 pr-1">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-xs font-bold text-slate-800 truncate block" title={k.label}>
+                                    {k.label}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5">
+                                  <span>{totalPeserta} pendaftar</span>
+                                  <span>•</span>
+                                  <span className={isClosed ? "text-rose-700 font-bold" : "text-emerald-700 font-bold"}>
+                                    {isClosed ? "DITUTUP" : "DIBUKA"}
+                                  </span>
+                                  {k.akses === "pesta_rakyat" && (
+                                    <span className="px-1.5 py-0.2 bg-amber-100 text-amber-800 rounded font-semibold text-[9px]">
+                                      Pesta Rakyat
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => handleToggleCategory(k.id)}
+                                disabled={isUpdatingCategoryStatus !== null}
+                                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors cursor-pointer disabled:opacity-50 ${
+                                  !isClosed ? "bg-emerald-500" : "bg-slate-300"
+                                }`}
+                                title={isClosed ? "Klik untuk MEMBUKA pendaftaran" : "Klik untuk MENUTUP pendaftaran"}
+                              >
+                                <span
+                                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-xs ${
+                                    !isClosed ? "translate-x-6" : "translate-x-1"
+                                  }`}
+                                />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2 sm:gap-2.5">
+                    {categoryCardData.map((cat) => {
+                      const isSelected = kategoriFilter === cat.name;
+                      const isClosed = closedCategories.includes(cat.id);
+                      return (
+                        <div
+                          key={cat.name}
+                          onClick={() => setKategoriFilter(isSelected ? "Semua" : cat.name)}
+                          className={`p-3 rounded-xl border transition-all cursor-pointer flex flex-col justify-between select-none ${
+                            isSelected
+                              ? "bg-blue-50/70 border-blue-500 ring-2 ring-blue-100 shadow-xs"
+                              : isClosed
+                                ? "bg-rose-50/40 hover:bg-white border-rose-200 hover:border-rose-300"
+                                : "bg-slate-50/60 hover:bg-white border-slate-200 hover:border-slate-300 hover:shadow-2xs"
+                          }`}
+                        >
+                          <div>
+                            <div className="flex items-start justify-between gap-1 mb-2">
+                              <span
+                                className={`text-xs font-bold leading-snug line-clamp-2 ${
+                                  isSelected ? "text-blue-900" : "text-slate-700"
+                                }`}
+                                title={cat.name}
+                              >
+                                {cat.name}
+                              </span>
+                              <div className="flex flex-col items-end gap-1 shrink-0">
+                                {isClosed ? (
+                                  <span className="px-1.5 py-0.2 bg-rose-600 text-white text-[9px] font-bold rounded-full">
+                                    Ditutup
+                                  </span>
+                                ) : (
+                                  <span className="px-1.5 py-0.2 bg-emerald-100 text-emerald-800 text-[9px] font-bold rounded-full">
+                                    Dibuka
+                                  </span>
+                                )}
+                                {isSelected && (
+                                  <span className="px-1.5 py-0.2 bg-blue-600 text-white text-[9px] font-bold rounded-full">
+                                    Aktif
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div>
+                              <div className={`text-xl font-black leading-none mb-1.5 ${
+                                isSelected ? "text-blue-900" : "text-slate-900"
+                              }`}>
+                                {cat.total}
+                              </div>
+                              <div className="flex flex-wrap items-center gap-x-1.5 text-[10px] font-medium leading-tight">
+                                <span className="text-emerald-700 font-semibold">{cat.lunas} Lunas</span>
+                                {cat.menunggu > 0 && (
+                                  <span className="text-amber-700 font-semibold">• {cat.menunggu} Menunggu</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Quick Toggle switch on card footer */}
+                          <div className="mt-2.5 pt-2 border-t border-slate-200/60 flex items-center justify-between text-[10px]">
+                            <span className="text-slate-400 font-medium">Akses:</span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleCategory(cat.id);
+                              }}
+                              disabled={isUpdatingCategoryStatus !== null}
+                              className={`px-2 py-0.5 rounded font-bold transition cursor-pointer disabled:opacity-50 ${
+                                isClosed
+                                  ? "bg-rose-100 text-rose-700 hover:bg-rose-200 border border-rose-200"
+                                  : "bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200"
+                              }`}
+                              title={isClosed ? "Klik untuk MEMBUKA pendaftaran" : "Klik untuk MENUTUP pendaftaran"}
+                            >
+                              {isClosed ? "Buka" : "Tutup"}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 {/* Table Card */}
                 <div className="bg-white rounded-2xl shadow-xs border border-slate-200">
                   {/* Clean Search & Filter Control Bar (Sticky) */}
@@ -1177,8 +1520,8 @@ _Panitia KONAS PERSADIA 2026_`;
                         className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
                       >
                         <option value="Semua">Semua Kategori</option>
-                        {kategoriList.map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
+                        {KATEGORI_PESERTA.map((k) => (
+                          <option key={k.id} value={k.label}>{k.label}</option>
                         ))}
                       </select>
 

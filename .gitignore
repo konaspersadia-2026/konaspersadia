@@ -42,3 +42,6 @@ scripts/surat_data.py
 
 # Salinan PDF di Root (Website menggunakan file resmi di folder public/)
 /*.pdf
+
+# Data Peserta (Internal & Confidential)
+Data peserta/
