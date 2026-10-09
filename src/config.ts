@@ -24,6 +24,32 @@ export const KATEGORI_PESERTA: KategoriPeserta[] = [
     hargaSymposium: { earlyBird: 1500000, onsite: 1500000 },
     hargaSymposiumWorkshop: { earlyBird: 1500000, onsite: 1500000 },
     fieldTambahan: ["institusi"],
+    topikMateri: [
+      "Simposium Komprehensif Manajemen Diabetes Melitus Tipe 2 Terkini",
+      "Plenary & Presidents' Lecture: Update Konsensus Endokrinologi & Obesitas",
+      "Sesi Paralel Simposium Neuropati Diabetik & Workshop Teknologi CGM",
+      "Pencegahan & Manajemen Komplikasi Makrovaskular / Mikrovaskular",
+      "Paket Lengkap Onsite: Lunch Buffet Novotel, 2x Coffee Break, Gala Dinner & Akses Pesta Rakyat",
+      "Sertifikat Akreditasi Resmi SKP Kemenkes RI (Plataran Sehat)"
+    ],
+  },
+  {
+    id: "dokter_fktp",
+    label: "Dokter Layanan Primer (FKTP)",
+    akses: "ilmiah",
+    hargaSymposium: { earlyBird: 600000, onsite: 600000 },
+    hargaSymposiumWorkshop: { earlyBird: 600000, onsite: 600000 },
+    hargaOnline: 300000,
+    fieldTambahan: ["institusi"],
+    topikMateri: [
+      "Sesi Khusus Tata Laksana Komprehensif & Deteksi Dini di Fasilitas Layanan Primer (FKTP)",
+      "Sesi Khusus: 'My Life in FKTP: Realita & Dedikasi Layanan Primer' (dr. Baringin T A Manik, MKM)",
+      "Sesi Khusus: 'Diabetes Approach in FKTP: Deteksi Cepat & Tatalaksana' (dr. Dicky Levenus Tahapary, SpPD-KEMD, PhD)",
+      "Alur Skrining Cepat, Terapi Farmakologis Oral, & Penanganan Kegawatdaruratan Glukosa di Klinik/Puskesmas",
+      "Sistem Rujukan Berjenjang & Kolaborasi Pencegahan Komplikasi Diabetes Bersama Dokter Spesialis",
+      "Fleksibilitas Mengikuti Onsite (Novotel Bogor) atau Online (Zoom Webinar)",
+      "Sertifikat Akreditasi Resmi SKP Kemenkes RI (Plataran Sehat)"
+    ],
   },
   {
     id: "dokter_spesialis",

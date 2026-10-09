@@ -1,5 +1,5 @@
 import { useState, useEffect, type ReactNode } from "react";
-import { ArrowLeft, ChevronRight, Copy, Download, Loader2, CheckCircle2, Clock, AlertCircle, X, MessageCircle } from "lucide-react";
+import { ArrowLeft, ChevronRight, Copy, Download, Loader2, CheckCircle2, Clock, AlertCircle, X, MessageCircle, BookOpen } from "lucide-react";
 import {
   KATEGORI_PESERTA, EVENT_INFO, REKENING_PEMBAYARAN,
   VOUCHER_DOKTER_UMUM_CONFIG, DIABETES_HEALTH_FORUM_CONFIG, KONTAK_PANITIA
@@ -55,6 +55,18 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
   // Status kategori yang ditutup oleh panitia dari app_settings
   const [closedCategories, setClosedCategories] = useState<string[]>([]);
   const [closedModalCategory, setClosedModalCategory] = useState<typeof KATEGORI_PESERTA[number] | null>(null);
+
+  // Status jalur online FKTP (disembunyikan jika ada flag 'fktp_online' di closedCategories)
+  const isFktpOnlineHidden = closedCategories.includes("fktp_online");
+
+  const [modeFktp, setModeFktp] = useState<"onsite" | "online">("onsite");
+
+  // Jika jalur online FKTP disembunyikan panitia, pastikan mode terkunci ke onsite
+  useEffect(() => {
+    if (isFktpOnlineHidden && modeFktp === "online") {
+      setModeFktp("onsite");
+    }
+  }, [isFktpOnlineHidden, modeFktp]);
 
   const [pilihanKegiatan, setPilihanKegiatan] = useState<"Symposium" | "Symposium + Workshop" | "Workshop">("Symposium + Workshop");
   const [namaLengkap, setNamaLengkap] = useState("");
@@ -161,6 +173,7 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
     setAppliedVoucher(null);
     setVoucherInput("");
     setVoucherError("");
+    setModeFktp("onsite");
     setIkutHealthTalk(false);
     setIkutPestaRakyatUmum(true);
     setTipePestaRakyatUmum("gratis");
@@ -175,7 +188,10 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
     const eb = isEarlyBird();
     let price = 0;
     if (kat.akses === "ilmiah") {
-      if (kat.id === "perawat") {
+      if (kat.id === "dokter_fktp") {
+        const activeFktpMode = isFktpOnlineHidden ? "onsite" : modeFktp;
+        price = activeFktpMode === "online" ? (kat.hargaOnline || 300000) : (kat.hargaSymposiumWorkshop?.onsite || 600000);
+      } else if (kat.id === "perawat") {
         const h = kat.hargaWorkshop || kat.hargaSymposiumWorkshop;
         if (h) price = eb ? h.earlyBird : h.onsite;
       } else if (kat.id === "dokter_umum" && appliedVoucher) {
@@ -190,7 +206,7 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
       price = (ikutPestaRakyatUmum && tipePestaRakyatUmum === "berbayar" ? 100000 : 0) + (ikutDhfUmum ? 200000 : 0);
     }
     setHargaDasar(price);
-  }, [kat, pilihanKegiatan, ikutHealthTalk, ikutPestaRakyatUmum, tipePestaRakyatUmum, ikutDhfUmum, appliedVoucher]);
+  }, [kat, pilihanKegiatan, modeFktp, isFktpOnlineHidden, ikutHealthTalk, ikutPestaRakyatUmum, tipePestaRakyatUmum, ikutDhfUmum, appliedVoucher]);
 
   const pilihKategori = (id: string) => {
     if (closedCategories.includes(id)) {
@@ -287,9 +303,16 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
     const total = totalArg ?? totalAkhir;
     const id = idArg || registrationId || newRegId();
     try {
+      const activeFktpMode = isFktpOnlineHidden ? "onsite" : modeFktp;
       let kegiatan = "-";
       if (kat.akses === "ilmiah") {
-        kegiatan = kat.id === "perawat" ? "Workshop" : pilihanKegiatan;
+        if (kat.id === "dokter_fktp") {
+          kegiatan = activeFktpMode === "online" ? "Sesi Ilmiah FKTP (Online)" : "Simposium & Workshop FKTP (Onsite)";
+        } else if (kat.id === "perawat") {
+          kegiatan = "Workshop";
+        } else {
+          kegiatan = pilihanKegiatan;
+        }
       } else if (kat.id === "persadia") {
         kegiatan = ikutHealthTalk ? "Pesta Rakyat + Diabetes Health Forum" : "Pesta Rakyat";
       } else if (kat.id === "umum") {
@@ -301,7 +324,7 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
       const anggota = kat.id !== "persadia" && bersediaAnggotaPersadia;
       const f = kat.fieldTambahan;
 
-      const payload = {
+      const basePayload: any = {
         timestamp: new Date().toISOString(),
         no_registrasi: id,
         status_pembayaran: total === 0 ? "Lunas" : "Menunggu Verifikasi",
@@ -328,8 +351,21 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
       };
 
       if (isSupabaseConfigured) {
-        const { error: err } = await supabase.from("pendaftar").insert([payload]);
-        if (err) throw new Error(`Gagal menyimpan pendaftaran: ${err.message}`);
+        // Coba simpan dengan mode_kehadiran jika kolom sudah ada di Supabase
+        const payloadWithMode = {
+          ...basePayload,
+          mode_kehadiran: kat.id === "dokter_fktp" && activeFktpMode === "online" ? "Online" : "Onsite",
+        };
+        const { error: err } = await supabase.from("pendaftar").insert([payloadWithMode]);
+        if (err) {
+          // Fallback tanpa kolom mode_kehadiran jika kolom belum dibuat di tabel
+          if (err.message && err.message.includes("mode_kehadiran")) {
+            const { error: fallbackErr } = await supabase.from("pendaftar").insert([basePayload]);
+            if (fallbackErr) throw new Error(`Gagal menyimpan pendaftaran: ${fallbackErr.message}`);
+          } else {
+            throw new Error(`Gagal menyimpan pendaftaran: ${err.message}`);
+          }
+        }
         if (appliedVoucher) {
           try {
             await supabase.rpc("claim_voucher", { p_code: appliedVoucher, p_no_reg: id });
@@ -386,6 +422,7 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
   const isPaid = Boolean(successData && (successData.totalAkhir > 0 || kat.akses === "ilmiah"));
   const hargaTampil = (k: typeof KATEGORI_PESERTA[number]) => {
     if (k.akses === "pesta_rakyat") return k.id === "persadia" ? "Gratis" : "Mulai Gratis";
+    if (k.id === "dokter_fktp") return isFktpOnlineHidden ? "Rp 600.000" : "Mulai Rp 300.000";
     const h = k.id === "perawat" ? k.hargaWorkshop || k.hargaSymposiumWorkshop : k.hargaSymposiumWorkshop || k.hargaSymposium;
     return h ? rupiah(h.earlyBird) : "";
   };
@@ -431,7 +468,15 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
           </div>
           <span className="text-xs text-slate-500 block mt-0.5">
             {k.akses === "ilmiah"
-              ? (k.id === "perawat" ? "Khusus workshop medis terapan" : "Akses simposium & workshop ilmiah")
+              ? (k.id === "dokter_fktp"
+                  ? (isFktpOnlineHidden
+                      ? "Sesi tata laksana & deteksi dini FKTP (Novotel Bogor)"
+                      : "Sesi tata laksana & deteksi dini FKTP (Onsite / Online Zoom)")
+                  : k.id === "dokter_umum"
+                  ? "Update komprehensif manajemen DM tipe 2 & komplikasi (Novotel)"
+                  : k.id === "perawat"
+                  ? "Khusus workshop medis terapan"
+                  : "Akses simposium & workshop ilmiah")
               : (k.id === "persadia" ? "Gratis bagi anggota cabang PERSADIA" : "Pesta Rakyat & Diabetes Health Forum")}
           </span>
         </div>
@@ -609,12 +654,107 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
             </div>
 
             {/* Pilihan khusus per kategori */}
-            {kat.akses === "ilmiah" && kat.id !== "perawat" && (
+            {kat.akses === "ilmiah" && kat.id !== "perawat" && kat.id !== "dokter_fktp" && (
               <Field label="Paket kegiatan">
                 <select className={inputCls} value={pilihanKegiatan} onChange={(e) => setPilihanKegiatan(e.target.value as any)}>
                   <option value="Symposium + Workshop">Simposium + Workshop</option>
                 </select>
               </Field>
+            )}
+
+            {/* Opsi khusus Dokter FKTP (Layanan Primer): Onsite vs Online */}
+            {kat.id === "dokter_fktp" && (
+              <div className="space-y-2">
+                <span className="block text-sm font-medium text-slate-700">
+                  Metode Keikutsertaan {!isFktpOnlineHidden && <span className="text-rose-500 font-bold">*</span>}
+                </span>
+
+                {isFktpOnlineHidden ? (
+                  <div className="p-3.5 rounded-xl border border-[#0B3D5E] bg-[#0B3D5E]/5 ring-1 ring-[#0B3D5E]">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-slate-900">🏛️ Hadir Onsite (Novotel Bogor)</span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#0B3D5E]/10 text-[#0B3D5E]">
+                          Onsite Prioritas
+                        </span>
+                      </div>
+                      <span className="text-xs font-bold text-[#0B3D5E]">Rp 600.000</span>
+                    </div>
+                    <p className="text-[11px] text-slate-600 mt-1.5 leading-relaxed">
+                      Novotel Bogor: Hands-on Workshop, Lunch Buffet bintang 4, 2x Coffee Break, Gala Dinner, dan Akses Pesta Rakyat.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <label
+                      className={`flex flex-col p-3.5 rounded-xl border cursor-pointer transition-all ${
+                        modeFktp === "onsite"
+                          ? "bg-[#0B3D5E]/5 border-[#0B3D5E] ring-1 ring-[#0B3D5E]"
+                          : "bg-white border-slate-200 hover:border-slate-300"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="modeFktp"
+                            checked={modeFktp === "onsite"}
+                            onChange={() => setModeFktp("onsite")}
+                            className="accent-[#0B3D5E]"
+                          />
+                          <span className="text-sm font-bold text-slate-900">🏛️ Hadir Onsite</span>
+                        </div>
+                        <span className="text-xs font-bold text-[#0B3D5E]">Rp 600.000</span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-1.5 ml-5 leading-relaxed">
+                        Novotel Bogor: Hands-on Workshop, Lunch Buffet bintang 4, 2x Coffee Break, Gala Dinner, dan Akses Pesta Rakyat.
+                      </p>
+                    </label>
+
+                    <label
+                      className={`flex flex-col p-3.5 rounded-xl border cursor-pointer transition-all ${
+                        modeFktp === "online"
+                          ? "bg-[#0B3D5E]/5 border-[#0B3D5E] ring-1 ring-[#0B3D5E]"
+                          : "bg-white border-slate-200 hover:border-slate-300"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="modeFktp"
+                            checked={modeFktp === "online"}
+                            onChange={() => setModeFktp("online")}
+                            className="accent-[#0B3D5E]"
+                          />
+                          <span className="text-sm font-bold text-slate-900">💻 Daring (Online)</span>
+                        </div>
+                        <span className="text-xs font-bold text-[#0B3D5E]">Rp 300.000</span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-1.5 ml-5 leading-relaxed">
+                        Webinar Live Zoom: Siaran langsung sesi ilmiah FKTP, modul materi digital, dan e-sertifikat SKP Kemenkes RI.
+                      </p>
+                    </label>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Kotak Topik & Materi Ilmiah yang Dinikmati */}
+            {kat.topikMateri && kat.topikMateri.length > 0 && (
+              <div className="bg-slate-50/90 border border-slate-200 rounded-xl p-4 space-y-2.5">
+                <span className="block text-xs font-bold uppercase tracking-wider text-[#0B3D5E] flex items-center gap-1.5">
+                  <BookOpen className="h-4 w-4 text-[#00B4AC]" /> Topik &amp; Materi Ilmiah yang Dinikmati:
+                </span>
+                <ul className="space-y-1.5 text-xs text-slate-700">
+                  {kat.topikMateri.map((topik, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                      <span className="leading-relaxed">{topik}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
 
             {kat.id === "dokter_umum" && (

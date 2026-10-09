@@ -44,11 +44,24 @@ export default function RegistrationFees({ onOpenRegister }: RegistrationFeesPro
       paket: "Symposium + Workshop",
       biaya: 1500000,
       fasilitas: [
-        "Seluruh fasilitas komprehensif peserta ilmiah",
-        "Sesi Khusus Tata Laksana & Deteksi Dini Layanan Primer (FKTP)",
-        "Sertifikat Akreditasi Resmi SKP Kemenkes RI",
-        "Lunch Buffet Novotel & 2x Coffee Break",
-        "Akses Gala Dinner Sabtu malam & Pesta Rakyat Minggu pagi"
+        "Akses Penuh Simposium Komprehensif Diabetes & Update Guideline PERKENI",
+        "Sesi Paralel Simposium Neuropati & Workshop Teknologi CGM",
+        "Sertifikat Akreditasi Resmi SKP Kemenkes RI (Plataran Sehat)",
+        "Jamuan Makan Lunch Buffet Novotel Bintang 4 & 2x Coffee Break",
+        "Akses Gala Dinner Sabtu malam & Free Pesta Rakyat Minggu pagi"
+      ]
+    },
+    {
+      kategori: "Dokter Layanan Primer (FKTP)",
+      subKategori: "(Puskesmas / Klinik / Praktisi Mandiri)",
+      paket: "Onsite: Rp 600.000 · Online: Rp 300.000",
+      biaya: 600000,
+      fasilitas: [
+        "Pilihan Onsite (Rp 600.000): Hadir Novotel Bogor (Lunch Buffet, Coffee Break, Gala Dinner)",
+        "Pilihan Online (Rp 300.000): Mengikuti Sesi Ilmiah Daring via Live Zoom Webinar",
+        "Sesi Khusus: 'My Life in FKTP' & 'Diabetes Approach in FKTP'",
+        "Fokus Tata Laksana & Deteksi Dini di Fasilitas Kesehatan Tingkat Pertama",
+        "Sertifikat Akreditasi Resmi SKP Kemenkes RI (Plataran Sehat)"
       ]
     },
     {

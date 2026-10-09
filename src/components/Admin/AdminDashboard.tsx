@@ -10,7 +10,7 @@ import {
   Loader2, LogOut, CheckSquare, XCircle, MessageCircle, Activity, X,
   Ticket, Copy, Check, Plus, RefreshCw, Share2, Sparkles, Trash2, Filter,
   Download, Eye, ExternalLink, Calendar, MapPin, Building, CreditCard,
-  UserCheck, RotateCcw, AlertTriangle, SlidersHorizontal, Power, AlertCircle
+  UserCheck, RotateCcw, AlertTriangle, SlidersHorizontal, Power, AlertCircle, Video
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -64,6 +64,7 @@ interface Pendaftar {
   kode_voucher?: string | null;
   makan_siang_hari_1?: string | null;
   nama_ketua_cabang?: string | null;
+  mode_kehadiran?: string | null;
   // Aliases for compatibility
   KodeVoucher?: string;
   CabangPersadia?: string;
@@ -337,6 +338,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
           kode_voucher: row.kode_voucher || "-",
           makan_siang_hari_1: row.makan_siang_hari_1,
           nama_ketua_cabang: row.nama_ketua_cabang || "-",
+          mode_kehadiran: row.mode_kehadiran || (row.pilihan_kegiatan && row.pilihan_kegiatan.includes("Online") ? "Online" : "Onsite"),
         }));
 
         setData(mappedData);
@@ -394,9 +396,17 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
 
       if (error) throw error;
 
-      const catObj = KATEGORI_PESERTA.find(k => k.id === categoryId);
-      const label = catObj ? catObj.label : categoryId;
-      showToast(`Pendaftaran ${label} berhasil ${isClosed ? 'DIBUKA' : 'DITUTUP'}`);
+      if (categoryId === "fktp_online") {
+        showToast(
+          isClosed
+            ? "Jalur Online FKTP berhasil DIBUKA (Tampil di formulir registrasi)"
+            : "Jalur Online FKTP berhasil DISEMBUNYIKAN (Form difokuskan ke Onsite)"
+        );
+      } else {
+        const catObj = KATEGORI_PESERTA.find(k => k.id === categoryId);
+        const label = catObj ? catObj.label : categoryId;
+        showToast(`Pendaftaran ${label} berhasil ${isClosed ? 'DIBUKA' : 'DITUTUP'}`);
+      }
     } catch (err: any) {
       setClosedCategories(closedCategories);
       alert("Gagal mengubah status pendaftaran kategori: " + err.message);
@@ -827,6 +837,7 @@ _Panitia KONAS PERSADIA 2026_`;
       "No. WhatsApp",
       "Kategori Peserta",
       "Akses Kegiatan",
+      "Mode Kehadiran",
       "Total Bayar",
       "Status Pembayaran",
       "Institusi",
@@ -847,6 +858,7 @@ _Panitia KONAS PERSADIA 2026_`;
       `"'${d["No. WhatsApp"] || ""}"`,
       `"${(d["Kategori Peserta"] || "").replace(/"/g, '""')}"`,
       `"${(d["Akses Kegiatan"] || "").replace(/"/g, '""')}"`,
+      `"${d.mode_kehadiran || (d["Akses Kegiatan"] && d["Akses Kegiatan"].includes("Online") ? "Online" : "Onsite")}"`,
       d["Total Bayar"],
       `"${d["Status Pembayaran"]}"`,
       `"${(d.Institusi || "").replace(/"/g, '""')}"`,
@@ -991,8 +1003,33 @@ _Panitia KONAS PERSADIA 2026_`;
     if (targetCategory === "Semua") return true;
     if (rowCategory === targetCategory) return true;
 
+    const rowLower = rowCategory.toLowerCase();
+    const targetLower = targetCategory.toLowerCase();
+
+    // 1. Kategori Dokter Layanan Primer (FKTP)
+    if (targetLower.includes("fktp") || targetLower.includes("layanan primer")) {
+      return (
+        rowLower.includes("fktp") ||
+        rowLower.includes("layanan primer") ||
+        rowLower.includes("puskesmas") ||
+        rowLower.includes("klinik")
+      );
+    }
+
+    // 2. Kategori Dokter Umum (murni tanpa FKTP/Puskesmas/Klinik)
+    if (targetCategory === "Dokter Umum") {
+      if (
+        rowLower.includes("fktp") ||
+        rowLower.includes("layanan primer") ||
+        rowLower.includes("puskesmas") ||
+        rowLower.includes("klinik")
+      ) {
+        return false;
+      }
+      return rowLower.startsWith("dokter umum");
+    }
+
     // Normalisasi variasi data masa lalu ke kategori resmi form
-    if (targetCategory === "Dokter Umum" && rowCategory.startsWith("Dokter Umum")) return true;
     if (targetCategory.startsWith("Dokter Spesialis") && rowCategory.startsWith("Dokter Spesialis")) return true;
     if (targetCategory.startsWith("Residen") && rowCategory.startsWith("Residen")) return true;
     if (targetCategory.startsWith("Perawat") && rowCategory.startsWith("Perawat")) return true;
@@ -1010,6 +1047,8 @@ _Panitia KONAS PERSADIA 2026_`;
     const lunas = items.filter((d) => d["Status Pembayaran"] === "Lunas").length;
     const menunggu = items.filter((d) => d["Status Pembayaran"] === "Menunggu Verifikasi").length;
     const batal = items.filter((d) => d["Status Pembayaran"] === "Dibatalkan").length;
+    const onsite = items.filter((d) => d.mode_kehadiran === "Onsite" || (d["Akses Kegiatan"] && d["Akses Kegiatan"].includes("Onsite"))).length;
+    const online = items.filter((d) => d.mode_kehadiran === "Online" || (d["Akses Kegiatan"] && d["Akses Kegiatan"].includes("Online"))).length;
 
     return {
       id: k.id,
@@ -1018,6 +1057,8 @@ _Panitia KONAS PERSADIA 2026_`;
       lunas,
       menunggu,
       batal,
+      onsite,
+      online,
     };
   });
 
@@ -1324,10 +1365,87 @@ _Panitia KONAS PERSADIA 2026_`;
                         </div>
                       </div>
 
+                      {/* Kontrol Khusus Jalur Online FKTP */}
+                      {(() => {
+                        const isFktpOnlineHidden = closedCategories.includes("fktp_online");
+                        const fktpStats = categoryCardData.find((c) => c.id === "dokter_fktp");
+
+                        return (
+                          <div className="p-3 sm:p-3.5 bg-gradient-to-r from-blue-50/90 via-sky-50/70 to-indigo-50/70 border border-blue-200/90 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-2xs">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-xs font-bold text-[#0B3D5E] flex items-center gap-1.5">
+                                  <Video className="w-4 h-4 text-blue-600" />
+                                  Kontrol Khusus Jalur Online FKTP (Zoom Webinar - Rp 300.000)
+                                </span>
+                                {isFktpOnlineHidden ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                    🚫 DISEMBUNYIKAN (Fokus Onsite)
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                    ✅ DIBUKA &amp; TAMPIL DI FORM
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-slate-600 leading-relaxed max-w-2xl">
+                                {isFktpOnlineHidden
+                                  ? "Jalur online saat ini DISEMBUNYIKAN dari form registrasi. Calon pendaftar FKTP hanya dapat mendaftar paket Onsite Novotel (Rp 600.000) guna memprioritaskan kuota onsite terlebih dahulu."
+                                  : "Jalur online saat ini DIBUKA di form registrasi. Calon pendaftar FKTP bebas memilih opsi Onsite (Rp 600.000) atau Daring Zoom (Rp 300.000)."}
+                              </p>
+                              {fktpStats && (
+                                <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium pt-0.5">
+                                  <span>Data Pendaftar FKTP:</span>
+                                  <span className="font-bold text-slate-700">{fktpStats.total} Total</span>
+                                  <span>•</span>
+                                  <span className="font-semibold text-blue-700">🏛️ {fktpStats.onsite} Onsite</span>
+                                  <span>•</span>
+                                  <span className="font-semibold text-indigo-700">💻 {fktpStats.online} Online</span>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2.5 self-start md:self-auto shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleCategory("fktp_online")}
+                                disabled={isUpdatingCategoryStatus !== null}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer disabled:opacity-50 ${
+                                  isFktpOnlineHidden
+                                    ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                                    : "bg-amber-600 hover:bg-amber-700 text-white"
+                                }`}
+                              >
+                                {isFktpOnlineHidden ? "🔓 Buka Jalur Online" : "🔒 Sembunyikan Jalur Online"}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleToggleCategory("fktp_online")}
+                                disabled={isUpdatingCategoryStatus !== null}
+                                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors cursor-pointer disabled:opacity-50 ${
+                                  !isFktpOnlineHidden ? "bg-emerald-500" : "bg-slate-300"
+                                }`}
+                                title={isFktpOnlineHidden ? "Klik untuk MEMBUKA jalur online di form" : "Klik untuk MENYEMBUNYIKAN jalur online di form"}
+                              >
+                                <span
+                                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-xs ${
+                                    !isFktpOnlineHidden ? "translate-x-6" : "translate-x-1"
+                                  }`}
+                                />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
                       {/* List of individual category toggles */}
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 pt-1">
                         {KATEGORI_PESERTA.map((k) => {
                           const isClosed = closedCategories.includes(k.id);
+                          const isFktpOnlineHidden = closedCategories.includes("fktp_online");
                           const totalPeserta = data.filter(d => matchesCategory(d["Kategori Peserta"] || "", k.label)).length;
 
                           return (
@@ -1340,10 +1458,15 @@ _Panitia KONAS PERSADIA 2026_`;
                               }`}
                             >
                               <div className="min-w-0 pr-1">
-                                <div className="flex items-center gap-1.5">
+                                <div className="flex items-center gap-1.5 flex-wrap">
                                   <span className="text-xs font-bold text-slate-800 truncate block" title={k.label}>
                                     {k.label}
                                   </span>
+                                  {k.id === "dokter_fktp" && isFktpOnlineHidden && (
+                                    <span className="px-1.5 py-0.2 bg-amber-100 text-amber-800 rounded font-bold text-[9px]">
+                                      Online Tersembunyi
+                                    </span>
+                                  )}
                                 </div>
                                 <div className="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5">
                                   <span>{totalPeserta} pendaftar</span>
@@ -1417,6 +1540,11 @@ _Panitia KONAS PERSADIA 2026_`;
                                     Dibuka
                                   </span>
                                 )}
+                                {cat.id === "dokter_fktp" && closedCategories.includes("fktp_online") && (
+                                  <span className="px-1.5 py-0.2 bg-amber-100 text-amber-800 text-[9px] font-bold rounded-full" title="Jalur Online disembunyikan di form pendaftaran">
+                                    Online Hide
+                                  </span>
+                                )}
                                 {isSelected && (
                                   <span className="px-1.5 py-0.2 bg-blue-600 text-white text-[9px] font-bold rounded-full">
                                     Aktif
@@ -1436,6 +1564,16 @@ _Panitia KONAS PERSADIA 2026_`;
                                   <span className="text-amber-700 font-semibold">• {cat.menunggu} Menunggu</span>
                                 )}
                               </div>
+                              {cat.id === "dokter_fktp" && (
+                                <div className="flex items-center gap-1.5 text-[9px] font-medium text-slate-600 mt-1.5">
+                                  <span className="px-1.5 py-0.5 bg-blue-50 text-blue-800 rounded font-bold border border-blue-100">
+                                    🏛️ {cat.onsite} Onsite
+                                  </span>
+                                  <span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-800 rounded font-bold border border-indigo-100">
+                                    💻 {cat.online} Online
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           </div>
 
@@ -1632,6 +1770,16 @@ _Panitia KONAS PERSADIA 2026_`;
                                 <td className="px-4 py-3">
                                   <div className="flex items-center gap-1.5 flex-wrap">
                                     <span className="font-medium text-slate-800 text-xs">{row["Kategori Peserta"]}</span>
+                                    {row["Akses Kegiatan"] && row["Akses Kegiatan"].includes("Online") && (
+                                      <span className="px-1.5 py-0.2 bg-blue-50 text-blue-700 border border-blue-200 rounded text-[10px] font-bold" title="Partisipasi Daring via Zoom">
+                                        💻 Online
+                                      </span>
+                                    )}
+                                    {row["Akses Kegiatan"] && row["Akses Kegiatan"].includes("Onsite") && (
+                                      <span className="px-1.5 py-0.2 bg-slate-100 text-slate-700 border border-slate-200 rounded text-[10px] font-medium" title="Hadir Langsung di Novotel">
+                                        🏛️ Onsite
+                                      </span>
+                                    )}
                                     {(row.KodeVoucher || row.kode_voucher) && (row.KodeVoucher !== '-' && row.kode_voucher !== '-') && (
                                       <span className="px-1.5 py-0.2 bg-amber-50 text-amber-800 border border-amber-300 rounded font-mono text-[10px] font-bold">
                                         🎟️ {row.KodeVoucher || row.kode_voucher}
@@ -2276,7 +2424,19 @@ _Panitia KONAS PERSADIA 2026_`;
                   </div>
                   <div>
                     <span className="text-slate-400 text-xs block">Akses Kegiatan / Sesi Terdaftar:</span>
-                    <span className="text-slate-700 font-medium">{selectedParticipant["Akses Kegiatan"]}</span>
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                      <span className="text-slate-700 font-medium">{selectedParticipant["Akses Kegiatan"]}</span>
+                      {selectedParticipant["Akses Kegiatan"] && selectedParticipant["Akses Kegiatan"].includes("Online") && (
+                        <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded text-xs font-bold">
+                          💻 Daring / Online Zoom
+                        </span>
+                      )}
+                      {selectedParticipant["Akses Kegiatan"] && selectedParticipant["Akses Kegiatan"].includes("Onsite") && (
+                        <span className="px-2 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 rounded text-xs font-medium">
+                          🏛️ Hadir Onsite (Novotel)
+                        </span>
+                      )}
+                    </div>
                   </div>
                   {(selectedParticipant.KodeVoucher || selectedParticipant.kode_voucher) && (
                     <div className="pt-1">

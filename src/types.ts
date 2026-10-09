@@ -21,9 +21,11 @@ export interface KategoriPeserta {
   hargaSymposium?: HargaKegiatan;
   hargaSymposiumWorkshop?: HargaKegiatan;
   hargaWorkshop?: HargaKegiatan;
+  hargaOnline?: number;
   hargaEarlyBird?: number; // untuk pesta_rakyat
   hargaReguler?: number; // untuk pesta_rakyat
   fieldTambahan: Array<"noSTR" | "institusi" | "noKTP" | "cabangPersadia" | "namaKetuaCabang" | "slotWaktuCekGula" | "nim" | "tanggalLahir" | "jenisKelamin">;
+  topikMateri?: string[];
 }
 
 export interface RekeningPembayaran {
