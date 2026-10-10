@@ -1006,6 +1006,15 @@ _Panitia KONAS PERSADIA 2026_`;
     const rowLower = rowCategory.toLowerCase();
     const targetLower = targetCategory.toLowerCase();
 
+    // 0. Kategori Pesta Rakyat (Gabungan Anggota PERSADIA & Masyarakat Umum)
+    if (targetCategory === "Pesta Rakyat") {
+      return (
+        rowCategory.startsWith("Anggota PERSADIA") ||
+        rowCategory.startsWith("Masyarakat Umum") ||
+        rowLower.includes("pesta rakyat")
+      );
+    }
+
     // 1. Kategori Dokter Layanan Primer (FKTP)
     if (targetLower.includes("fktp") || targetLower.includes("layanan primer")) {
       return (
@@ -1040,8 +1049,8 @@ _Panitia KONAS PERSADIA 2026_`;
     return false;
   };
 
-  // Data ringkasan per kategori persis mengikuti daftar kategori resmi form pendaftaran (KATEGORI_PESERTA)
-  const categoryCardData = KATEGORI_PESERTA.map((k) => {
+  // Data ringkasan per kategori: 6 Kategori Ilmiah + 1 Kategori Gabungan Pesta Rakyat (Anggota & Umum)
+  const scientificCardData = KATEGORI_PESERTA.filter((k) => k.akses === "ilmiah").map((k) => {
     const items = data.filter((d) => matchesCategory(d["Kategori Peserta"] || "", k.label));
     const total = items.length;
     const lunas = items.filter((d) => d["Status Pembayaran"] === "Lunas").length;
@@ -1059,8 +1068,39 @@ _Panitia KONAS PERSADIA 2026_`;
       batal,
       onsite,
       online,
+      anggota: 0,
+      umum: 0,
+      isClosed: closedCategories.includes(k.id),
+      isPartiallyClosed: false,
     };
   });
+
+  // Data ringkasan gabungan Pesta Rakyat (Anggota PERSADIA + Masyarakat Umum)
+  const pestaRakyatItems = data.filter((d) => matchesCategory(d["Kategori Peserta"] || "", "Pesta Rakyat"));
+  const anggotaItems = data.filter((d) => matchesCategory(d["Kategori Peserta"] || "", "Anggota PERSADIA"));
+  const umumItems = data.filter((d) => matchesCategory(d["Kategori Peserta"] || "", "Masyarakat Umum"));
+
+  const isPersadiaClosed = closedCategories.includes("persadia");
+  const isUmumClosed = closedCategories.includes("umum");
+  const isAllPestaClosed = isPersadiaClosed && isUmumClosed;
+  const isAnyPestaClosed = isPersadiaClosed || isUmumClosed;
+
+  const pestaRakyatCard = {
+    id: "pesta_rakyat",
+    name: "Pesta Rakyat",
+    total: pestaRakyatItems.length,
+    lunas: pestaRakyatItems.filter((d) => d["Status Pembayaran"] === "Lunas").length,
+    menunggu: pestaRakyatItems.filter((d) => d["Status Pembayaran"] === "Menunggu Verifikasi").length,
+    batal: pestaRakyatItems.filter((d) => d["Status Pembayaran"] === "Dibatalkan").length,
+    onsite: 0,
+    online: 0,
+    anggota: anggotaItems.length,
+    umum: umumItems.length,
+    isClosed: isAllPestaClosed,
+    isPartiallyClosed: isAnyPestaClosed && !isAllPestaClosed,
+  };
+
+  const categoryCardData = [...scientificCardData, pestaRakyatCard];
 
   const pieData = categoryCardData
     .filter((cat) => cat.total > 0)
@@ -1507,7 +1547,8 @@ _Panitia KONAS PERSADIA 2026_`;
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2 sm:gap-2.5">
                     {categoryCardData.map((cat) => {
                       const isSelected = kategoriFilter === cat.name;
-                      const isClosed = closedCategories.includes(cat.id);
+                      const isClosed = cat.isClosed;
+                      const isPartiallyClosed = cat.isPartiallyClosed;
                       return (
                         <div
                           key={cat.name}
@@ -1517,7 +1558,9 @@ _Panitia KONAS PERSADIA 2026_`;
                               ? "bg-blue-50/70 border-blue-500 ring-2 ring-blue-100 shadow-xs"
                               : isClosed
                                 ? "bg-rose-50/40 hover:bg-white border-rose-200 hover:border-rose-300"
-                                : "bg-slate-50/60 hover:bg-white border-slate-200 hover:border-slate-300 hover:shadow-2xs"
+                                : isPartiallyClosed
+                                  ? "bg-amber-50/40 hover:bg-white border-amber-200 hover:border-amber-300"
+                                  : "bg-slate-50/60 hover:bg-white border-slate-200 hover:border-slate-300 hover:shadow-2xs"
                           }`}
                         >
                           <div>
@@ -1534,6 +1577,10 @@ _Panitia KONAS PERSADIA 2026_`;
                                 {isClosed ? (
                                   <span className="px-1.5 py-0.2 bg-rose-600 text-white text-[9px] font-bold rounded-full">
                                     Ditutup
+                                  </span>
+                                ) : isPartiallyClosed ? (
+                                  <span className="px-1.5 py-0.2 bg-amber-500 text-white text-[9px] font-bold rounded-full" title="Sebagian kategori Pesta Rakyat ditutup">
+                                    1 Tutup
                                   </span>
                                 ) : (
                                   <span className="px-1.5 py-0.2 bg-emerald-100 text-emerald-800 text-[9px] font-bold rounded-full">
@@ -1564,13 +1611,27 @@ _Panitia KONAS PERSADIA 2026_`;
                                   <span className="text-amber-700 font-semibold">• {cat.menunggu} Menunggu</span>
                                 )}
                               </div>
+
+                              {/* FKTP breakdown (Onsite vs Online) */}
                               {cat.id === "dokter_fktp" && (
-                                <div className="flex items-center gap-1.5 text-[9px] font-medium text-slate-600 mt-1.5">
+                                <div className="flex items-center gap-1.5 text-[9px] font-medium text-slate-600 mt-1.5 flex-wrap">
                                   <span className="px-1.5 py-0.5 bg-blue-50 text-blue-800 rounded font-bold border border-blue-100">
                                     🏛️ {cat.onsite} Onsite
                                   </span>
                                   <span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-800 rounded font-bold border border-indigo-100">
                                     💻 {cat.online} Online
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* Pesta Rakyat breakdown (Anggota PERSADIA vs Umum) */}
+                              {cat.id === "pesta_rakyat" && (
+                                <div className="flex items-center gap-1.5 text-[9px] font-medium text-slate-600 mt-1.5 flex-wrap">
+                                  <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-800 rounded font-bold border border-emerald-200">
+                                    🏅 {cat.anggota} Anggota
+                                  </span>
+                                  <span className="px-1.5 py-0.5 bg-amber-50 text-amber-800 rounded font-bold border border-amber-200">
+                                    👥 {cat.umum} Umum
                                   </span>
                                 </div>
                               )}
@@ -1584,17 +1645,29 @@ _Panitia KONAS PERSADIA 2026_`;
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleToggleCategory(cat.id);
+                                if (cat.id === "pesta_rakyat") {
+                                  handleTogglePestaRakyatBatch(!isClosed);
+                                } else {
+                                  handleToggleCategory(cat.id);
+                                }
                               }}
                               disabled={isUpdatingCategoryStatus !== null}
                               className={`px-2 py-0.5 rounded font-bold transition cursor-pointer disabled:opacity-50 ${
                                 isClosed
                                   ? "bg-rose-100 text-rose-700 hover:bg-rose-200 border border-rose-200"
-                                  : "bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200"
+                                  : isPartiallyClosed
+                                    ? "bg-amber-100 text-amber-800 hover:bg-amber-200 border border-amber-200"
+                                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200"
                               }`}
-                              title={isClosed ? "Klik untuk MEMBUKA pendaftaran" : "Klik untuk MENUTUP pendaftaran"}
+                              title={
+                                isClosed
+                                  ? "Klik untuk MEMBUKA pendaftaran"
+                                  : isPartiallyClosed
+                                    ? "Klik untuk MENUTUP SEMUA pendaftaran Pesta Rakyat"
+                                    : "Klik untuk MENUTUP pendaftaran"
+                              }
                             >
-                              {isClosed ? "Buka" : "Tutup"}
+                              {isClosed ? "Buka" : isPartiallyClosed ? "Tutup Semua" : "Tutup"}
                             </button>
                           </div>
                         </div>
@@ -1658,7 +1731,10 @@ _Panitia KONAS PERSADIA 2026_`;
                         className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
                       >
                         <option value="Semua">Semua Kategori</option>
-                        {KATEGORI_PESERTA.map((k) => (
+                        <option value="Pesta Rakyat">🎪 Pesta Rakyat (Semua)</option>
+                        <option value="Anggota PERSADIA">　↳ Anggota PERSADIA</option>
+                        <option value="Masyarakat Umum">　↳ Masyarakat Umum</option>
+                        {KATEGORI_PESERTA.filter(k => k.akses !== "pesta_rakyat").map((k) => (
                           <option key={k.id} value={k.label}>{k.label}</option>
                         ))}
                       </select>
