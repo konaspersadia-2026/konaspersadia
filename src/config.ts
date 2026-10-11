@@ -45,10 +45,7 @@ export const KATEGORI_PESERTA: KategoriPeserta[] = [
       "Sesi Khusus Tata Laksana Komprehensif & Deteksi Dini di Fasilitas Layanan Primer (FKTP)",
       "Sesi Khusus: 'My Life in FKTP: Realita & Dedikasi Layanan Primer' (dr. Baringin T A Manik, MKM)",
       "Sesi Khusus: 'Diabetes Approach in FKTP: Deteksi Cepat & Tatalaksana' (dr. Dicky Levenus Tahapary, SpPD-KEMD, PhD)",
-      "Alur Skrining Cepat, Terapi Farmakologis Oral, & Penanganan Kegawatdaruratan Glukosa di Klinik/Puskesmas",
-      "Sistem Rujukan Berjenjang & Kolaborasi Pencegahan Komplikasi Diabetes Bersama Dokter Spesialis",
-      "Fleksibilitas Mengikuti Onsite (Novotel Bogor) atau Online (Zoom Webinar)",
-      "Sertifikat Akreditasi Resmi SKP Kemenkes RI (Plataran Sehat)"
+      "Sertifikat Akreditasi Resmi SKP Kemenkes RI (Plataran Sehat), sertifikat PERKENI"
     ],
   },
   {

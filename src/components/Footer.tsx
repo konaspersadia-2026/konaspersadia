@@ -70,12 +70,30 @@ export default function Footer() {
 
           {/* Quick Info links */}
           <div className="lg:col-span-3 space-y-3">
-            <h5 className="text-xs font-bold uppercase tracking-wider text-[#C89A2E]">Agenda Utama</h5>
+            <h5 className="text-xs font-bold uppercase tracking-wider text-[#C89A2E]">Layanan &amp; Agenda</h5>
             <ul className="text-xs space-y-1.5 text-white/80">
-              <li>• Sesi Seminar & Workshop Ilmiah (Novotel Bogor)</li>
+              <li>
+                <a 
+                  href="#tiket-simposium" 
+                  onClick={() => window.scrollTo(0, 0)} 
+                  className="inline-flex items-center gap-1 text-cyan-300 hover:text-white font-bold transition underline underline-offset-2"
+                >
+                  🩺 E-Ticket Simposium &amp; Workshop
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#tiket-pesta-rakyat" 
+                  onClick={() => window.scrollTo(0, 0)} 
+                  className="inline-flex items-center gap-1 text-emerald-300 hover:text-white font-bold transition underline underline-offset-2"
+                >
+                  🎪 E-Ticket Pesta Rakyat
+                </a>
+              </li>
+              <li>• Sesi Seminar &amp; Workshop Ilmiah (Novotel Bogor)</li>
               <li>• Sesi Pesta Rakyat Diabetes (GOR Pakansari)</li>
-              <li>• Pemeriksaan Gula Darah & Skrining Gratis massal</li>
-              <li>• Senam Bugar Diabetesi & Hiburan</li>
+              <li>• Pemeriksaan Gula Darah &amp; Skrining Gratis massal</li>
+              <li>• Senam Bugar Diabetesi &amp; Hiburan</li>
             </ul>
           </div>
 

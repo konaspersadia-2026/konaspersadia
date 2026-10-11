@@ -94,18 +94,32 @@ export default function Navbar({ onOpenRegister, activeSection, onNavigate }: Na
                 {item.label}
               </button>
             ))}
-            <div className="flex items-center gap-2 pl-3 ml-1 border-l border-white/20">
+            <div className="flex items-center gap-1.5 pl-3 ml-1 border-l border-white/20">
+              <a
+                href="#tiket-simposium"
+                onClick={() => window.scrollTo(0, 0)}
+                className="px-2.5 py-1.5 bg-blue-500/25 hover:bg-blue-500/35 text-cyan-200 hover:text-white font-bold text-xs rounded-full border border-cyan-400/40 transition whitespace-nowrap cursor-pointer"
+              >
+                🩺 Tiket Simposium
+              </a>
+              <a
+                href="#tiket-pesta-rakyat"
+                onClick={() => window.scrollTo(0, 0)}
+                className="px-2.5 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 hover:text-white font-bold text-xs rounded-full border border-emerald-400/40 transition whitespace-nowrap cursor-pointer"
+              >
+                🎪 Tiket Pesta Rakyat
+              </a>
               <a
                 href="#sponsorship"
                 onClick={() => window.scrollTo(0, 0)}
-                className="px-3.5 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-400 hover:to-orange-400 font-extrabold text-xs rounded-full shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 cursor-pointer text-center animate-pulse whitespace-nowrap"
+                className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-400 hover:to-orange-400 font-extrabold text-xs rounded-full shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 cursor-pointer text-center animate-pulse whitespace-nowrap"
               >
                 Sponsorship
               </a>
               <button
                 id="nav-btn-daftar"
                 onClick={onOpenRegister}
-                className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-black text-xs sm:text-sm rounded-full shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 cursor-pointer whitespace-nowrap ring-2 ring-red-300 ring-offset-2 ring-offset-[#0B3D5E]"
+                className="px-3.5 py-1.5 bg-red-600 hover:bg-red-500 text-white font-black text-xs sm:text-sm rounded-full shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 cursor-pointer whitespace-nowrap ring-2 ring-red-300 ring-offset-2 ring-offset-[#0B3D5E]"
               >
                 Daftar Sekarang
               </button>
@@ -114,6 +128,13 @@ export default function Navbar({ onOpenRegister, activeSection, onNavigate }: Na
 
           {/* Mobile & Tablet Menu & Actions */}
           <div className="xl:hidden flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+            <a
+              href="#tiket"
+              onClick={() => window.scrollTo(0, 0)}
+              className="px-2 py-1 sm:px-3 sm:py-1.5 bg-blue-500/20 text-cyan-200 font-bold text-[10px] sm:text-xs rounded-full border border-cyan-400/30 cursor-pointer whitespace-nowrap"
+            >
+              🎟️ E-Ticket
+            </a>
             <a
               href="#sponsorship"
               onClick={() => window.scrollTo(0, 0)}
@@ -163,6 +184,29 @@ export default function Navbar({ onOpenRegister, activeSection, onNavigate }: Na
             >
               Daftar Sekarang
             </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 pb-2 border-b border-white/10">
+            <a
+              href="#tiket-simposium"
+              onClick={() => {
+                window.scrollTo(0, 0);
+                setIsOpen(false);
+              }}
+              className="py-2 px-2 bg-blue-600/30 hover:bg-blue-600/40 border border-cyan-400/40 text-cyan-200 hover:text-white rounded-lg text-center text-[11px] font-bold transition"
+            >
+              🩺 Tiket Simposium
+            </a>
+            <a
+              href="#tiket-pesta-rakyat"
+              onClick={() => {
+                window.scrollTo(0, 0);
+                setIsOpen(false);
+              }}
+              className="py-2 px-2 bg-emerald-600/30 hover:bg-emerald-600/40 border border-emerald-400/40 text-emerald-200 hover:text-white rounded-lg text-center text-[11px] font-bold transition"
+            >
+              🎪 Tiket Pesta Rakyat
+            </a>
           </div>
 
           {navItems.map((item) => (

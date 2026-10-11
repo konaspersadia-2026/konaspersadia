@@ -15,6 +15,7 @@ import Sponsors from "./components/Sponsors";
 import AdminDashboard from "./components/Admin/AdminDashboard";
 import SponsorshipPage from "./components/SponsorshipPage";
 import AccommodationPage from "./components/AccommodationPage";
+import TicketDownloadPage from "./components/TicketDownloadPage";
 
 export default function App() {
   const [activeSection, setActiveSection] = useState("beranda");
@@ -28,6 +29,11 @@ export default function App() {
       currentHash === "#sponsorship" || 
       currentHash === "#akomodasi" || 
       currentHash === "#hotel" ||
+      currentHash.startsWith("#tiket") ||
+      currentHash === "#qrcode" ||
+      currentPath === "/tiket" ||
+      currentPath === "/tiket-pesta-rakyat" ||
+      currentPath === "/qrcode" ||
       currentHash.startsWith("#pendaftaran") ||
       currentHash.startsWith("#register") ||
       currentPath === "/pendaftaran" ||
@@ -116,6 +122,12 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const isTicketPage =
+    currentHash === "#qrcode" ||
+    currentHash.startsWith("#tiket") ||
+    currentPath === "/qrcode" ||
+    currentPath.startsWith("/tiket");
+
   const isRegisterPage =
     currentHash.startsWith("#pendaftaran") ||
     currentHash.startsWith("#register") ||
@@ -138,6 +150,10 @@ export default function App() {
 
   if (currentHash === "#akomodasi" || currentHash === "#hotel") {
     return <AccommodationPage onNavigateHome={handleBackToHome} />;
+  }
+
+  if (isTicketPage) {
+    return <TicketDownloadPage onNavigateHome={handleBackToHome} />;
   }
 
   if (isRegisterPage) {

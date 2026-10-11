@@ -757,25 +757,6 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
               </div>
             )}
 
-            {kat.id === "dokter_umum" && (
-              <div className="space-y-1.5">
-                <span className="block text-sm font-medium text-slate-700">Kode voucher instansi (jika ada)</span>
-                {appliedVoucher ? (
-                  <div className="flex items-center justify-between px-3.5 py-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-sm">
-                    <span className="font-mono text-emerald-800">{appliedVoucher} · {rupiah(VOUCHER_DOKTER_UMUM_CONFIG.hargaSymposiumWorkshop)}</span>
-                    <button onClick={() => { setAppliedVoucher(null); setVoucherInput(""); }} className="text-rose-600 text-xs cursor-pointer">Hapus</button>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <input className={`${inputCls} font-mono uppercase`} placeholder="FKTP-xxxxxx" value={voucherInput} onChange={(e) => setVoucherInput(e.target.value.toUpperCase())} />
-                    <button onClick={validateVoucher} disabled={voucherLoading} className="px-4 text-sm font-medium bg-slate-800 text-white rounded-lg disabled:opacity-50 cursor-pointer">
-                      {voucherLoading ? "..." : "Terapkan"}
-                    </button>
-                  </div>
-                )}
-                {voucherError && <p className="text-xs text-rose-600">{voucherError}</p>}
-              </div>
-            )}
 
             {kat.id === "persadia" && (
               <Check checked={ikutHealthTalk} onChange={setIkutHealthTalk}>

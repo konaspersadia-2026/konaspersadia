@@ -245,6 +245,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
           .from('pendaftar')
           .select('*')
           .order('timestamp', { ascending: false })
+          .order('id', { ascending: true })
           .range(page * pageSize, (page + 1) * pageSize - 1);
 
         if (supabaseError) {
@@ -262,6 +263,15 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
           hasMore = false;
         }
       }
+
+      // Safeguard against any pagination drift: deduplicate by id or no_registrasi
+      const seenIds = new Set<string | number>();
+      allData = allData.filter((row: any) => {
+        const key = row.id ?? row.no_registrasi;
+        if (!key || seenIds.has(key)) return false;
+        seenIds.add(key);
+        return true;
+      });
 
       if (allData) {
         let htCount = 0;
@@ -522,6 +532,21 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
       const scannerUrl = `${window.location.origin}/scanner.html?id=${encodeURIComponent(participant["No. Registrasi"])}`;
       const qrImageUrl = `https://quickchart.io/qr?text=${encodeURIComponent(scannerUrl)}&size=400&ecLevel=H`;
 
+      const isIlmiah = Boolean(
+        (participant["Kategori Peserta"] || "").toLowerCase().includes("dokter") ||
+        (participant["Kategori Peserta"] || "").toLowerCase().includes("spesialis") ||
+        (participant["Kategori Peserta"] || "").toLowerCase().includes("perawat") ||
+        (participant["Kategori Peserta"] || "").toLowerCase().includes("fktp") ||
+        (participant["Kategori Peserta"] || "").toLowerCase().includes("mahasiswa") ||
+        (participant["Akses Kegiatan"] || "").toLowerCase().includes("symposium") ||
+        (participant["Akses Kegiatan"] || "").toLowerCase().includes("simposium") ||
+        (participant["Akses Kegiatan"] || "").toLowerCase().includes("workshop")
+      );
+
+      const ticketWebUrl = isIlmiah
+        ? `${window.location.origin}/#tiket-simposium?id=${encodeURIComponent(participant["No. Registrasi"])}`
+        : `${window.location.origin}/#tiket-pesta-rakyat?wa=${encodeURIComponent(rawWa || "")}`;
+
       message = `Yth. *${participant["Nama Lengkap"]}*,
 
 Berikut adalah E-Ticket digital/QR Code resmi untuk *${EVENT_INFO.namaAcara}*:
@@ -533,12 +558,16 @@ Berikut adalah E-Ticket digital/QR Code resmi untuk *${EVENT_INFO.namaAcara}*:
 🎟️ *Akses Kegiatan:* ${participant["Akses Kegiatan"]}
 ✅ *Status Pembayaran:* ${participant["Status Pembayaran"]}
 
+🌐 *Link Unduh E-Ticket Mandiri:*
+${ticketWebUrl}
+
 🖼️ *QR Code:*
 ${qrImageUrl}
 
 *Petunjuk Check-in:*
 1. Tunjukkan QR Code saat check-in registrasi di lokasi acara.
 2. Anda dapat membuka link gambar QR Code di atas lalu menyimpannya langsung ke galeri HP.
+3. Anda juga dapat membuka link E-Ticket mandiri di atas untuk mengunduh tiket berkualitas tinggi.
 
 Sampai jumpa di Bogor!
 _Panitia KONAS PERSADIA 2026_`;

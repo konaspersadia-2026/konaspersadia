@@ -216,74 +216,12 @@ export default function RegistrationFees({ onOpenRegister }: RegistrationFeesPro
           </div>
         </div>
 
-        {/* Section 2: Paket Voucher Khusus Dokter Umum (Kolektif / FKTP) */}
-        <div className="max-w-5xl mx-auto mb-14">
-          <div className="mb-4">
-            <h3 className="text-lg sm:text-xl font-black text-slate-800 flex items-center gap-2">
-              <span className="w-2.5 h-6 bg-[#C89A2E] rounded-full inline-block"></span>
-              2. Paket Voucher Khusus Dokter Umum (Kolektif / FKTP)
-            </h3>
-            <p className="text-xs text-slate-500 ml-4.5">Skema pendaftaran kolektif bagi Puskesmas, Klinik Pratama, &amp; RS Daerah</p>
-          </div>
-
-          <div className="overflow-hidden bg-white border border-slate-200 rounded-3xl shadow-xl hidden md:block">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-[#C89A2E] text-slate-900 border-b border-amber-500">
-                  <th className="p-4 text-xs font-bold uppercase tracking-wider pl-6 w-1/4">Jenis Voucher</th>
-                  <th className="p-4 text-xs font-bold uppercase tracking-wider w-1/3">Sasaran</th>
-                  <th className="p-4 text-xs font-bold uppercase tracking-wider text-center w-1/6">Tarif Paket</th>
-                  <th className="p-4 text-xs font-bold uppercase tracking-wider">Keterangan</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="hover:bg-amber-50/30 transition">
-                  <td className="p-4 pl-6 align-top">
-                    <span className="font-extrabold text-slate-800 text-sm block">Voucher Instansi</span>
-                    <span className="font-mono text-xs text-amber-800 font-bold bg-amber-100 px-2 py-0.5 rounded border border-amber-300 inline-block mt-0.5">Kode FKTP-xxxxxx</span>
-                  </td>
-                  <td className="p-4 text-xs text-slate-700 align-top leading-relaxed">
-                    Fasilitas Kesehatan Tingkat Pertama (Klinik Pratama / Puskesmas / RS Daerah)
-                  </td>
-                  <td className="p-4 text-center align-top">
-                    <span className="text-base font-black text-[#0B3D5E] bg-amber-100 px-3.5 py-1.5 rounded-xl border border-amber-300 inline-block">
-                      Rp 600.000
-                    </span>
-                  </td>
-                  <td className="p-4 text-xs text-slate-600 align-top leading-relaxed">
-                    Paket pendaftaran kolektif dokter umum untuk memfasilitasi delegasi tenaga medis layanan primer.
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          {/* Mobile view for Voucher */}
-          <div className="md:hidden bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-2.5">
-            <div className="flex justify-between items-start">
-              <div>
-                <h4 className="font-bold text-sm text-slate-800">Voucher Instansi FKTP</h4>
-                <span className="font-mono text-xs text-amber-800 font-bold bg-amber-100 px-2 py-0.5 rounded border border-amber-200 inline-block mt-1">Kode FKTP-xxxxxx</span>
-              </div>
-              <span className="text-xs font-black bg-amber-100 text-[#0B3D5E] px-2.5 py-1 rounded-lg border border-amber-300">
-                Rp 600.000
-              </span>
-            </div>
-            <p className="text-xs text-slate-600">
-              <strong>Sasaran:</strong> Fasilitas Kesehatan Tingkat Pertama (Klinik Pratama / Puskesmas / RS Daerah).
-            </p>
-            <p className="text-[11px] text-slate-500 italic">
-              Paket pendaftaran kolektif dokter umum untuk memfasilitasi delegasi tenaga medis layanan primer.
-            </p>
-          </div>
-        </div>
-
-        {/* Section 3: Tabel Kegiatan Publik & Komunitas */}
+        {/* Section 2: Tabel Kegiatan Publik & Komunitas */}
         <div className="max-w-5xl mx-auto mb-14">
           <div className="mb-4">
             <h3 className="text-lg sm:text-xl font-black text-slate-800 flex items-center gap-2">
               <span className="w-2.5 h-6 bg-[#2D7A4F] rounded-full inline-block"></span>
-              3. Biaya Kegiatan Publik &amp; Komunitas (Hari Ke-1 &amp; Hari Ke-2)
+              2. Biaya Kegiatan Publik &amp; Komunitas (Hari Ke-1 &amp; Hari Ke-2)
             </h3>
             <p className="text-xs text-slate-500 ml-4.5">Lokasi: Novotel Bogor &amp; Stadion Pakansari (7–8 November 2026)</p>
           </div>
