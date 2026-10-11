@@ -48,82 +48,86 @@ export default function Navbar({ onOpenRegister, activeSection, onNavigate }: Na
           : "bg-gradient-to-r from-[#0B3D5E] to-[#00B4AC] text-white py-2.5 sm:py-3.5"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-3 sm:gap-4 lg:gap-8">
+      <div className="max-w-[1600px] w-full mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between gap-2 lg:gap-4 w-full">
           {/* Logo & Brand */}
           <div
             id="brand-logo-container"
-            className="flex items-center gap-2 sm:gap-3 cursor-pointer shrink-0"
+            className="flex items-center gap-2 sm:gap-2.5 cursor-pointer shrink-0"
             onClick={() => handleItemClick("beranda")}
           >
             <div className="flex items-center justify-center bg-white rounded-lg p-1 sm:p-1.5 shadow-sm border border-white/20 shrink-0">
               <img 
                 src={EVENT_INFO.eventLogoUrl || "https://placehold.co/240x80/ffffff/1e3a8a?text=Logo+Acara"} 
                 alt="Logo Konas Persadia" 
-                className="h-5 sm:h-8 max-w-[75px] min-[360px]:max-w-[90px] sm:max-w-[160px] object-contain"
+                className="h-5 sm:h-7 max-w-[75px] min-[360px]:max-w-[85px] sm:max-w-[140px] object-contain"
                 onError={(e) => {
                   e.currentTarget.src = "https://placehold.co/240x80/ffffff/1e3a8a?text=Logo+Acara";
                 }}
               />
             </div>
             <div className="shrink-0">
-              <div className="font-extrabold text-[9px] min-[360px]:text-[10px] sm:text-base tracking-tight leading-[1.15] uppercase font-sans">
+              <div className="font-extrabold text-[9px] min-[360px]:text-[10px] sm:text-sm lg:text-base tracking-tight leading-[1.15] uppercase font-sans">
                 <span className="block sm:inline">KONAS </span>
                 <span className="block sm:inline">PERSADIA </span>
                 <span className="block sm:inline text-[#C89A2E] sm:text-inherit">2026</span>
               </div>
-              <div className="text-[10px] text-[#F8FAFC] hidden md:block">
+              <div className="text-[10px] text-[#F8FAFC]/90 hidden min-[1400px]:block">
                 KONAS PERSADIA • KONKER PERKENI • KONKER PEDI
               </div>
             </div>
           </div>
 
-          {/* Desktop Nav Items */}
-          <div className="hidden xl:flex items-center space-x-1 shrink-0">
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                id={`nav-link-${item.id}`}
-                onClick={() => handleItemClick(item.id)}
-                className={`px-2.5 py-1.5 text-xs font-medium transition-all duration-300 cursor-pointer ${
-                  activeSection === item.id || (item.id === "jadwal" && activeSection === "pembicara")
-                    ? "bg-white/15 text-[#C89A2E] font-semibold rounded-md"
-                    : "hover:bg-white/10 text-white/90 hover:text-white rounded-md"
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
-            <div className="flex items-center gap-1.5 pl-3 ml-1 border-l border-white/20">
-              <a
-                href="#tiket-simposium"
-                onClick={() => window.scrollTo(0, 0)}
-                className="px-2.5 py-1.5 bg-blue-500/25 hover:bg-blue-500/35 text-cyan-200 hover:text-white font-bold text-xs rounded-full border border-cyan-400/40 transition whitespace-nowrap cursor-pointer"
-              >
-                🩺 Tiket Simposium
-              </a>
-              <a
-                href="#tiket-pesta-rakyat"
-                onClick={() => window.scrollTo(0, 0)}
-                className="px-2.5 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 hover:text-white font-bold text-xs rounded-full border border-emerald-400/40 transition whitespace-nowrap cursor-pointer"
-              >
-                🎪 Tiket Pesta Rakyat
-              </a>
-              <a
-                href="#sponsorship"
-                onClick={() => window.scrollTo(0, 0)}
-                className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-400 hover:to-orange-400 font-extrabold text-xs rounded-full shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 cursor-pointer text-center animate-pulse whitespace-nowrap"
-              >
-                Sponsorship
-              </a>
-              <button
-                id="nav-btn-daftar"
-                onClick={onOpenRegister}
-                className="px-3.5 py-1.5 bg-red-600 hover:bg-red-500 text-white font-black text-xs sm:text-sm rounded-full shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 cursor-pointer whitespace-nowrap ring-2 ring-red-300 ring-offset-2 ring-offset-[#0B3D5E]"
-              >
-                Daftar Sekarang
-              </button>
+          {/* Desktop Nav Items (Rata Tengah) */}
+          <div className="hidden xl:flex items-center justify-center flex-1 mx-1 2xl:mx-3">
+            <div className="flex items-center space-x-0.5 2xl:space-x-1">
+              {navItems.map((item) => (
+                <button
+                  key={item.id}
+                  id={`nav-link-${item.id}`}
+                  onClick={() => handleItemClick(item.id)}
+                  className={`px-2 py-1 2xl:px-2.5 2xl:py-1.5 text-[11px] 2xl:text-xs font-medium transition-all duration-200 cursor-pointer whitespace-nowrap ${
+                    activeSection === item.id || (item.id === "jadwal" && activeSection === "pembicara")
+                      ? "bg-white/15 text-[#C89A2E] font-semibold rounded-md shadow-xs"
+                      : "hover:bg-white/10 text-white/90 hover:text-white rounded-md"
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
             </div>
+          </div>
+
+          {/* Desktop Action Buttons (Sisi Kanan) */}
+          <div className="hidden xl:flex items-center gap-1.5 2xl:gap-2 shrink-0">
+            <a
+              href="#tiket-simposium"
+              onClick={() => window.scrollTo(0, 0)}
+              className="px-2 py-1 2xl:px-2.5 2xl:py-1.5 bg-blue-500/25 hover:bg-blue-500/35 text-cyan-200 hover:text-white font-bold text-[11px] 2xl:text-xs rounded-full border border-cyan-400/40 transition whitespace-nowrap cursor-pointer shadow-xs"
+            >
+              🩺 Tiket Simposium
+            </a>
+            <a
+              href="#tiket-pesta-rakyat"
+              onClick={() => window.scrollTo(0, 0)}
+              className="px-2 py-1 2xl:px-2.5 2xl:py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 hover:text-white font-bold text-[11px] 2xl:text-xs rounded-full border border-emerald-400/40 transition whitespace-nowrap cursor-pointer shadow-xs"
+            >
+              🎪 Tiket Pesta Rakyat
+            </a>
+            <a
+              href="#sponsorship"
+              onClick={() => window.scrollTo(0, 0)}
+              className="px-2.5 py-1 2xl:px-3 2xl:py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-400 hover:to-orange-400 font-extrabold text-[11px] 2xl:text-xs rounded-full shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 cursor-pointer text-center animate-pulse whitespace-nowrap"
+            >
+              Sponsorship
+            </a>
+            <button
+              id="nav-btn-daftar"
+              onClick={onOpenRegister}
+              className="px-3 py-1 2xl:px-3.5 2xl:py-1.5 bg-red-600 hover:bg-red-500 text-white font-black text-xs 2xl:text-sm rounded-full shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 cursor-pointer whitespace-nowrap ring-2 ring-red-300 ring-offset-2 ring-offset-[#0B3D5E]"
+            >
+              Daftar Sekarang
+            </button>
           </div>
 
           {/* Mobile & Tablet Menu & Actions */}
