@@ -101,18 +101,11 @@ export default function Navbar({ onOpenRegister, activeSection, onNavigate }: Na
           {/* Desktop Action Buttons (Sisi Kanan) */}
           <div className="hidden xl:flex items-center gap-1.5 2xl:gap-2 shrink-0">
             <a
-              href="#tiket-simposium"
+              href="#tiket"
               onClick={() => window.scrollTo(0, 0)}
-              className="px-2 py-1 2xl:px-2.5 2xl:py-1.5 bg-blue-500/25 hover:bg-blue-500/35 text-cyan-200 hover:text-white font-bold text-[11px] 2xl:text-xs rounded-full border border-cyan-400/40 transition whitespace-nowrap cursor-pointer shadow-xs"
+              className="px-3 py-1 2xl:px-3.5 2xl:py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 hover:text-white font-bold text-xs rounded-full border border-cyan-400/40 transition whitespace-nowrap cursor-pointer shadow-xs flex items-center gap-1.5"
             >
-              🩺 Tiket Simposium
-            </a>
-            <a
-              href="#tiket-pesta-rakyat"
-              onClick={() => window.scrollTo(0, 0)}
-              className="px-2 py-1 2xl:px-2.5 2xl:py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 hover:text-white font-bold text-[11px] 2xl:text-xs rounded-full border border-emerald-400/40 transition whitespace-nowrap cursor-pointer shadow-xs"
-            >
-              🎪 Tiket Pesta Rakyat
+              🎟️ Unduh E-Ticket
             </a>
             <a
               href="#sponsorship"
@@ -190,26 +183,16 @@ export default function Navbar({ onOpenRegister, activeSection, onNavigate }: Na
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 pb-2 border-b border-white/10">
+          <div className="pb-2 border-b border-white/10">
             <a
-              href="#tiket-simposium"
+              href="#tiket"
               onClick={() => {
                 window.scrollTo(0, 0);
                 setIsOpen(false);
               }}
-              className="py-2 px-2 bg-blue-600/30 hover:bg-blue-600/40 border border-cyan-400/40 text-cyan-200 hover:text-white rounded-lg text-center text-[11px] font-bold transition"
+              className="w-full py-2.5 px-3 bg-cyan-600/25 hover:bg-cyan-600/35 border border-cyan-400/40 text-cyan-100 hover:text-white rounded-lg text-center text-xs font-bold transition flex items-center justify-center gap-2"
             >
-              🩺 Tiket Simposium
-            </a>
-            <a
-              href="#tiket-pesta-rakyat"
-              onClick={() => {
-                window.scrollTo(0, 0);
-                setIsOpen(false);
-              }}
-              className="py-2 px-2 bg-emerald-600/30 hover:bg-emerald-600/40 border border-emerald-400/40 text-emerald-200 hover:text-white rounded-lg text-center text-[11px] font-bold transition"
-            >
-              🎪 Tiket Pesta Rakyat
+              🎟️ Unduh E-Ticket (Simposium &amp; Pesta Rakyat)
             </a>
           </div>
 
