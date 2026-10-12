@@ -12,8 +12,8 @@ export const EVENT_INFO: EventInfo = {
   batasEarlyBird: "2026-10-31",
   batasOnsite: "2026-11-01",
   deadlinePembayaranPeserta: "2026-10-31",
-  // URL Logo Gabungan Acara. Anda bisa mengganti ini dengan URL ImgBB atau link CDN gambar tunggal Anda
-  eventLogoUrl: "https://i.ibb.co.com/TqcrNyd9/logo.webp",
+  // URL Logo Gabungan Acara (menggunakan file lokal di folder public agar aman dari CORS saat unduh e-ticket)
+  eventLogoUrl: "/logo.webp",
 };
 
 export const KATEGORI_PESERTA: KategoriPeserta[] = [

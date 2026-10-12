@@ -240,7 +240,9 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
         const prefix = isIlmiahParticipant(selectedParticipant) ? "E-Ticket-Ilmiah" : "E-Ticket-PestaRakyat";
         link.download = `${prefix}-${selectedParticipant.no_registrasi}-${safeName}.jpg`;
         link.href = dataUrl;
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
       }
     } catch (err) {
       console.error("Gagal mengunduh tiket:", err);

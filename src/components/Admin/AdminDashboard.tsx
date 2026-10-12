@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useDeferredValue } from 'react';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { EVENT_INFO, KATEGORI_PESERTA } from '../../config';
 import {
@@ -75,9 +75,62 @@ interface Pendaftar {
   Kecamatan?: string;
   KotaKabupaten?: string;
   Provinsi?: string;
+  _searchIndex?: string;
 }
 
 const COLORS = ['#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899'];
+
+// Helper pencocokan kategori pendaftar (termasuk variasi data masa lalu di database) dengan kategori resmi form pendaftaran
+const matchesCategory = (rowCategory: string, targetCategory: string): boolean => {
+  if (!rowCategory || !targetCategory) return false;
+  if (targetCategory === "Semua") return true;
+  if (rowCategory === targetCategory) return true;
+
+  const rowLower = rowCategory.toLowerCase();
+  const targetLower = targetCategory.toLowerCase();
+
+  // 0. Kategori Pesta Rakyat (Gabungan Anggota PERSADIA & Masyarakat Umum)
+  if (targetCategory === "Pesta Rakyat") {
+    return (
+      rowCategory.startsWith("Anggota PERSADIA") ||
+      rowCategory.startsWith("Masyarakat Umum") ||
+      rowLower.includes("pesta rakyat")
+    );
+  }
+
+  // 1. Kategori Dokter Layanan Primer (FKTP)
+  if (targetLower.includes("fktp") || targetLower.includes("layanan primer")) {
+    return (
+      rowLower.includes("fktp") ||
+      rowLower.includes("layanan primer") ||
+      rowLower.includes("puskesmas") ||
+      rowLower.includes("klinik")
+    );
+  }
+
+  // 2. Kategori Dokter Umum (murni tanpa FKTP/Puskesmas/Klinik)
+  if (targetCategory === "Dokter Umum") {
+    if (
+      rowLower.includes("fktp") ||
+      rowLower.includes("layanan primer") ||
+      rowLower.includes("puskesmas") ||
+      rowLower.includes("klinik")
+    ) {
+      return false;
+    }
+    return rowLower.startsWith("dokter umum");
+  }
+
+  // Normalisasi variasi data masa lalu ke kategori resmi form
+  if (targetCategory.startsWith("Dokter Spesialis") && rowCategory.startsWith("Dokter Spesialis")) return true;
+  if (targetCategory.startsWith("Residen") && rowCategory.startsWith("Residen")) return true;
+  if (targetCategory.startsWith("Perawat") && rowCategory.startsWith("Perawat")) return true;
+  if (targetCategory.startsWith("Mahasiswa") && rowCategory.startsWith("Mahasiswa")) return true;
+  if (targetCategory.startsWith("Anggota PERSADIA") && rowCategory.startsWith("Anggota PERSADIA")) return true;
+  if (targetCategory.startsWith("Masyarakat Umum") && rowCategory.startsWith("Masyarakat Umum")) return true;
+
+  return false;
+};
 
 export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -102,6 +155,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
 
   // Filters & Table Controls
   const [searchQuery, setSearchQuery] = useState("");
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [statusFilter, setStatusFilter] = useState("Semua");
   const [kategoriFilter, setKategoriFilter] = useState("Semua");
   const [currentPage, setCurrentPage] = useState(1);
@@ -175,7 +229,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, kategoriFilter, pageSize]);
+  }, [deferredSearchQuery, statusFilter, kategoriFilter, pageSize]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -307,49 +361,69 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
           }
         }
 
-        // Map to existing Pendaftar interface format
-        const mappedData: Pendaftar[] = allData.map((row: any) => ({
-          id: row.id,
-          Timestamp: row.timestamp || new Date().toISOString(),
-          "No. Registrasi": row.no_registrasi || "-",
-          "Status Pembayaran": row.status_pembayaran || "Menunggu Verifikasi",
-          "Nama Lengkap": row.nama_lengkap || "-",
-          Email: row.email || "-",
-          "No. WhatsApp": row.whatsapp || "-",
-          "Kategori Peserta": row.kategori_peserta || "-",
-          "Akses Kegiatan": row.pilihan_kegiatan || "-",
-          "Total Bayar": row.total_tagihan || 0,
-          Institusi: row.institusi || "-",
-          CabangPersadia: row.cabang_persadia || "-",
-          NamaKetuaCabang: row.nama_ketua_cabang || "-",
-          KodeVoucher: row.kode_voucher || "-",
-          BersediaAnggota: row.bersedia_anggota_persadia === true || row.bersedia_anggota_persadia === 'true' || row.bersedia_anggota_persadia === 'Ya',
-          AlamatLengkap: row.alamat_lengkap || "-",
-          Kelurahan: row.kelurahan || "-",
-          Kecamatan: row.kecamatan || "-",
-          KotaKabupaten: row.kota_kabupaten || "-",
-          Provinsi: row.provinsi || "-",
-          nim: row.nim || "-",
-          tanggal_lahir: row.tanggal_lahir || "-",
-          jenis_kelamin: row.jenis_kelamin || "-",
-          registrasi_onsite: row.registrasi_onsite || null,
-          waktu_registrasi_onsite: row.waktu_registrasi_onsite || null,
-          tinggi_badan: row.tinggi_badan,
-          berat_badan: row.berat_badan,
-          tensi: row.tensi,
-          lingkar_perut: row.lingkar_perut,
-          cek_gula_darah: row.cek_gula_darah,
-          gula_darah: row.gula_darah,
-          makan_siang_pesta_rakyat: row.makan_siang_pesta_rakyat,
-          ikut_health_talk: row.ikut_health_talk,
-          kesediaan_data: row.kesediaan_data,
-          gejala_neuropati: row.gejala_neuropati,
-          pengambilan_merchandise: row.pengambilan_merchandise,
-          kode_voucher: row.kode_voucher || "-",
-          makan_siang_hari_1: row.makan_siang_hari_1,
-          nama_ketua_cabang: row.nama_ketua_cabang || "-",
-          mode_kehadiran: row.mode_kehadiran || (row.pilihan_kegiatan && row.pilihan_kegiatan.includes("Online") ? "Online" : "Onsite"),
-        }));
+        // Map to existing Pendaftar interface format with precomputed search index
+        const mappedData: Pendaftar[] = allData.map((row: any) => {
+          const searchTerms = [
+            row.nama_lengkap,
+            row.no_registrasi,
+            row.whatsapp,
+            row.email,
+            row.institusi,
+            row.cabang_persadia,
+            row.nama_ketua_cabang,
+            row.kode_voucher,
+            row.kategori_peserta,
+            row.nim,
+            row.kota_kabupaten,
+            row.provinsi,
+            row.pilihan_kegiatan,
+          ];
+          const searchIndex = searchTerms.filter(Boolean).join(" ").toLowerCase();
+
+          return {
+            id: row.id,
+            Timestamp: row.timestamp || new Date().toISOString(),
+            "No. Registrasi": row.no_registrasi || "-",
+            "Status Pembayaran": row.status_pembayaran || "Menunggu Verifikasi",
+            "Nama Lengkap": row.nama_lengkap || "-",
+            Email: row.email || "-",
+            "No. WhatsApp": row.whatsapp || "-",
+            "Kategori Peserta": row.kategori_peserta || "-",
+            "Akses Kegiatan": row.pilihan_kegiatan || "-",
+            "Total Bayar": row.total_tagihan || 0,
+            Institusi: row.institusi || "-",
+            CabangPersadia: row.cabang_persadia || "-",
+            NamaKetuaCabang: row.nama_ketua_cabang || "-",
+            KodeVoucher: row.kode_voucher || "-",
+            BersediaAnggota: row.bersedia_anggota_persadia === true || row.bersedia_anggota_persadia === 'true' || row.bersedia_anggota_persadia === 'Ya',
+            AlamatLengkap: row.alamat_lengkap || "-",
+            Kelurahan: row.kelurahan || "-",
+            Kecamatan: row.kecamatan || "-",
+            KotaKabupaten: row.kota_kabupaten || "-",
+            Provinsi: row.provinsi || "-",
+            nim: row.nim || "-",
+            tanggal_lahir: row.tanggal_lahir || "-",
+            jenis_kelamin: row.jenis_kelamin || "-",
+            registrasi_onsite: row.registrasi_onsite || null,
+            waktu_registrasi_onsite: row.waktu_registrasi_onsite || null,
+            tinggi_badan: row.tinggi_badan,
+            berat_badan: row.berat_badan,
+            tensi: row.tensi,
+            lingkar_perut: row.lingkar_perut,
+            cek_gula_darah: row.cek_gula_darah,
+            gula_darah: row.gula_darah,
+            makan_siang_pesta_rakyat: row.makan_siang_pesta_rakyat,
+            ikut_health_talk: row.ikut_health_talk,
+            kesediaan_data: row.kesediaan_data,
+            gejala_neuropati: row.gejala_neuropati,
+            pengambilan_merchandise: row.pengambilan_merchandise,
+            kode_voucher: row.kode_voucher || "-",
+            makan_siang_hari_1: row.makan_siang_hari_1,
+            nama_ketua_cabang: row.nama_ketua_cabang || "-",
+            mode_kehadiran: row.mode_kehadiran || (row.pilihan_kegiatan && row.pilihan_kegiatan.includes("Online") ? "Online" : "Onsite"),
+            _searchIndex: searchIndex,
+          };
+        });
 
         setData(mappedData);
       } else {
@@ -645,15 +719,34 @@ _Panitia KONAS PERSADIA 2026_`;
     }, 3000);
   };
 
+  // Memoized fast lookups for vouchers across all 5,000+ registrants
+  const usedVoucherCodesSet = useMemo(() => {
+    const set = new Set<string>();
+    for (let i = 0; i < data.length; i++) {
+      const code = (data[i].KodeVoucher || data[i].kode_voucher || "").trim().toUpperCase();
+      if (code) set.add(code);
+    }
+    return set;
+  }, [data]);
+
+  const voucherRegistrantMap = useMemo(() => {
+    const map = new Map<string, Pendaftar>();
+    for (let i = 0; i < data.length; i++) {
+      const code = (data[i].KodeVoucher || data[i].kode_voucher || "").trim().toUpperCase();
+      if (code && !map.has(code)) map.set(code, data[i]);
+    }
+    return map;
+  }, [data]);
+
   const isVoucherActuallyUsed = (v: VoucherItem) => {
     if (v.is_used) return true;
     const codeClean = (v.code || '').trim().toUpperCase();
-    return data.some(d => (d.KodeVoucher || d.kode_voucher || '').trim().toUpperCase() === codeClean);
+    return usedVoucherCodesSet.has(codeClean);
   };
 
   const getUsedVoucherRegistrant = (v: VoucherItem): Pendaftar | undefined => {
     const codeClean = (v.code || '').trim().toUpperCase();
-    return data.find(d => (d.KodeVoucher || d.kode_voucher || '').trim().toUpperCase() === codeClean);
+    return voucherRegistrantMap.get(codeClean);
   };
 
   const getVoucherWaMessage = (code: string) => {
@@ -911,32 +1004,183 @@ _Panitia KONAS PERSADIA 2026_`;
     showToast("Data pendaftar berhasil diunduh sebagai file CSV!");
   };
 
-  // Voucher filtering
-  const availableFktpVouchers = vouchers.filter(v =>
-    (v.kategori_target === 'dokter_umum' || !v.kategori_target) &&
-    !isVoucherActuallyUsed(v)
-  );
-  const usedFktpVouchers = vouchers.filter(v => isVoucherActuallyUsed(v));
+  // Voucher filtering (memoized)
+  const availableFktpVouchers = useMemo(() => {
+    return vouchers.filter(v =>
+      (v.kategori_target === 'dokter_umum' || !v.kategori_target) &&
+      !isVoucherActuallyUsed(v)
+    );
+  }, [vouchers, usedVoucherCodesSet]);
 
-  const filteredVouchers = vouchers.filter(v => {
-    const isUsed = isVoucherActuallyUsed(v);
-    if (voucherTab === 'fktp_tersedia' && isUsed) return false;
-    if (voucherTab === 'terpakai' && !isUsed) return false;
+  const usedFktpVouchers = useMemo(() => {
+    return vouchers.filter(v => isVoucherActuallyUsed(v));
+  }, [vouchers, usedVoucherCodesSet]);
+
+  const filteredVouchers = useMemo(() => {
+    const isUsedMap = new Map<string, boolean>();
+    vouchers.forEach(v => {
+      isUsedMap.set(v.code, isVoucherActuallyUsed(v));
+    });
 
     const q = voucherSearch.toLowerCase().trim();
-    if (!q) return true;
 
-    const codeMatch = (v.code || '').toLowerCase().includes(q);
-    const targetMatch = (v.kategori_target || '').toLowerCase().includes(q);
-    const usedByMatch = (v.used_by || '').toLowerCase().includes(q);
+    return vouchers.filter(v => {
+      const isUsed = isUsedMap.get(v.code) ?? isVoucherActuallyUsed(v);
+      if (voucherTab === 'fktp_tersedia' && isUsed) return false;
+      if (voucherTab === 'terpakai' && !isUsed) return false;
 
-    const registrant = getUsedVoucherRegistrant(v);
-    const regNameMatch = registrant ? (registrant["Nama Lengkap"] || '').toLowerCase().includes(q) : false;
-    const regInstMatch = registrant ? (registrant.Institusi || '').toLowerCase().includes(q) : false;
-    const regNoMatch = registrant ? (registrant["No. Registrasi"] || '').toLowerCase().includes(q) : false;
+      if (!q) return true;
 
-    return codeMatch || targetMatch || usedByMatch || regNameMatch || regInstMatch || regNoMatch;
-  });
+      const codeMatch = (v.code || '').toLowerCase().includes(q);
+      const targetMatch = (v.kategori_target || '').toLowerCase().includes(q);
+      const usedByMatch = (v.used_by || '').toLowerCase().includes(q);
+
+      const registrant = getUsedVoucherRegistrant(v);
+      const regNameMatch = registrant ? (registrant["Nama Lengkap"] || '').toLowerCase().includes(q) : false;
+      const regInstMatch = registrant ? (registrant.Institusi || '').toLowerCase().includes(q) : false;
+      const regNoMatch = registrant ? (registrant["No. Registrasi"] || '').toLowerCase().includes(q) : false;
+
+      return codeMatch || targetMatch || usedByMatch || regNameMatch || regInstMatch || regNoMatch;
+    });
+  }, [vouchers, voucherTab, voucherSearch, usedVoucherCodesSet, voucherRegistrantMap]);
+
+  // General KPIs (memoized in a single fast loop)
+  const { totalPendaftar, totalLunas, totalMenunggu, totalBatal, totalDana } = useMemo(() => {
+    let lunas = 0;
+    let menunggu = 0;
+    let batal = 0;
+    let dana = 0;
+
+    for (let i = 0; i < data.length; i++) {
+      const d = data[i];
+      const status = d["Status Pembayaran"];
+      if (status === "Lunas") {
+        lunas++;
+        const val = typeof d["Total Bayar"] === 'number'
+          ? d["Total Bayar"]
+          : parseInt(d["Total Bayar"] || '0', 10);
+        if (!isNaN(val)) dana += val;
+      } else if (status === "Menunggu Verifikasi") {
+        menunggu++;
+      } else if (status === "Dibatalkan") {
+        batal++;
+      }
+    }
+
+    return {
+      totalPendaftar: data.length,
+      totalLunas: lunas,
+      totalMenunggu: menunggu,
+      totalBatal: batal,
+      totalDana: dana,
+    };
+  }, [data]);
+
+  // Category summaries & chart datasets (memoized)
+  const { categoryCardData, pieData, statusBarData } = useMemo(() => {
+    const scientificCardData = KATEGORI_PESERTA.filter((k) => k.akses === "ilmiah").map((k) => {
+      const items = data.filter((d) => matchesCategory(d["Kategori Peserta"] || "", k.label));
+      const total = items.length;
+      const lunas = items.filter((d) => d["Status Pembayaran"] === "Lunas").length;
+      const menunggu = items.filter((d) => d["Status Pembayaran"] === "Menunggu Verifikasi").length;
+      const batal = items.filter((d) => d["Status Pembayaran"] === "Dibatalkan").length;
+      const onsite = items.filter((d) => d.mode_kehadiran === "Onsite" || (d["Akses Kegiatan"] && d["Akses Kegiatan"].includes("Onsite"))).length;
+      const online = items.filter((d) => d.mode_kehadiran === "Online" || (d["Akses Kegiatan"] && d["Akses Kegiatan"].includes("Online"))).length;
+
+      return {
+        id: k.id,
+        name: k.label,
+        total,
+        lunas,
+        menunggu,
+        batal,
+        onsite,
+        online,
+        anggota: 0,
+        umum: 0,
+        isClosed: closedCategories.includes(k.id),
+        isPartiallyClosed: false,
+      };
+    });
+
+    const pestaRakyatItems = data.filter((d) => matchesCategory(d["Kategori Peserta"] || "", "Pesta Rakyat"));
+    const anggotaItems = data.filter((d) => matchesCategory(d["Kategori Peserta"] || "", "Anggota PERSADIA"));
+    const umumItems = data.filter((d) => matchesCategory(d["Kategori Peserta"] || "", "Masyarakat Umum"));
+
+    const isPersadiaClosed = closedCategories.includes("persadia");
+    const isUmumClosed = closedCategories.includes("umum");
+    const isAllPestaClosed = isPersadiaClosed && isUmumClosed;
+    const isAnyPestaClosed = isPersadiaClosed || isUmumClosed;
+
+    const pestaRakyatCard = {
+      id: "pesta_rakyat",
+      name: "Pesta Rakyat",
+      total: pestaRakyatItems.length,
+      lunas: pestaRakyatItems.filter((d) => d["Status Pembayaran"] === "Lunas").length,
+      menunggu: pestaRakyatItems.filter((d) => d["Status Pembayaran"] === "Menunggu Verifikasi").length,
+      batal: pestaRakyatItems.filter((d) => d["Status Pembayaran"] === "Dibatalkan").length,
+      onsite: 0,
+      online: 0,
+      anggota: anggotaItems.length,
+      umum: umumItems.length,
+      isClosed: isAllPestaClosed,
+      isPartiallyClosed: isAnyPestaClosed && !isAllPestaClosed,
+    };
+
+    const cardData = [...scientificCardData, pestaRakyatCard];
+
+    const pData = cardData
+      .filter((cat) => cat.total > 0)
+      .map((cat) => ({
+        name: cat.name,
+        value: cat.total,
+      }));
+
+    const sBarData = [
+      { name: 'Menunggu', jumlah: totalMenunggu, fill: '#f59e0b' },
+      { name: 'Lunas', jumlah: totalLunas, fill: '#10b981' },
+      { name: 'Dibatalkan', jumlah: totalBatal, fill: '#ef4444' },
+    ];
+
+    return {
+      categoryCardData: cardData,
+      pieData: pData,
+      statusBarData: sBarData,
+    };
+  }, [data, closedCategories, totalMenunggu, totalLunas, totalBatal]);
+
+  // Fast category participant count lookup map
+  const categoryCountMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    categoryCardData.forEach((c) => {
+      map[c.id] = c.total;
+    });
+    return map;
+  }, [categoryCardData]);
+
+  // Ultra-fast search and filter for 5,600+ registrants using pre-computed search index and deferred value
+  const filteredData = useMemo(() => {
+    const q = deferredSearchQuery.toLowerCase().trim();
+    const queryTerms = q ? q.split(/\s+/).filter(Boolean) : [];
+
+    return data.filter((item) => {
+      // 1. Fast path: check status filter
+      if (statusFilter !== "Semua" && item["Status Pembayaran"] !== statusFilter) {
+        return false;
+      }
+
+      // 2. Fast path: check category filter
+      if (kategoriFilter !== "Semua" && !matchesCategory(item["Kategori Peserta"] || "", kategoriFilter)) {
+        return false;
+      }
+
+      // 3. Search query: match all terms against pre-computed lowercase search index
+      if (queryTerms.length === 0) return true;
+
+      const idx = item._searchIndex || "";
+      return queryTerms.every((term) => idx.includes(term));
+    });
+  }, [data, deferredSearchQuery, statusFilter, kategoriFilter]);
 
   if (!isAuthenticated) {
     return (
@@ -1009,164 +1253,6 @@ _Panitia KONAS PERSADIA 2026_`;
       </div>
     );
   }
-
-  // Calculate stats
-  const totalPendaftar = data.length;
-  const totalLunas = data.filter(d => d["Status Pembayaran"] === "Lunas").length;
-  const totalMenunggu = data.filter(d => d["Status Pembayaran"] === "Menunggu Verifikasi").length;
-  const totalBatal = data.filter(d => d["Status Pembayaran"] === "Dibatalkan").length;
-
-  let totalDana = 0;
-  data.forEach(d => {
-    if (d["Status Pembayaran"] === "Lunas") {
-      const val = typeof d["Total Bayar"] === 'number'
-        ? d["Total Bayar"]
-        : parseInt(d["Total Bayar"] || '0', 10);
-      if (!isNaN(val)) totalDana += val;
-    }
-  });
-
-  // Helper pencocokan kategori pendaftar (termasuk variasi data masa lalu di database) dengan kategori resmi form pendaftaran
-  const matchesCategory = (rowCategory: string, targetCategory: string) => {
-    if (!rowCategory || !targetCategory) return false;
-    if (targetCategory === "Semua") return true;
-    if (rowCategory === targetCategory) return true;
-
-    const rowLower = rowCategory.toLowerCase();
-    const targetLower = targetCategory.toLowerCase();
-
-    // 0. Kategori Pesta Rakyat (Gabungan Anggota PERSADIA & Masyarakat Umum)
-    if (targetCategory === "Pesta Rakyat") {
-      return (
-        rowCategory.startsWith("Anggota PERSADIA") ||
-        rowCategory.startsWith("Masyarakat Umum") ||
-        rowLower.includes("pesta rakyat")
-      );
-    }
-
-    // 1. Kategori Dokter Layanan Primer (FKTP)
-    if (targetLower.includes("fktp") || targetLower.includes("layanan primer")) {
-      return (
-        rowLower.includes("fktp") ||
-        rowLower.includes("layanan primer") ||
-        rowLower.includes("puskesmas") ||
-        rowLower.includes("klinik")
-      );
-    }
-
-    // 2. Kategori Dokter Umum (murni tanpa FKTP/Puskesmas/Klinik)
-    if (targetCategory === "Dokter Umum") {
-      if (
-        rowLower.includes("fktp") ||
-        rowLower.includes("layanan primer") ||
-        rowLower.includes("puskesmas") ||
-        rowLower.includes("klinik")
-      ) {
-        return false;
-      }
-      return rowLower.startsWith("dokter umum");
-    }
-
-    // Normalisasi variasi data masa lalu ke kategori resmi form
-    if (targetCategory.startsWith("Dokter Spesialis") && rowCategory.startsWith("Dokter Spesialis")) return true;
-    if (targetCategory.startsWith("Residen") && rowCategory.startsWith("Residen")) return true;
-    if (targetCategory.startsWith("Perawat") && rowCategory.startsWith("Perawat")) return true;
-    if (targetCategory.startsWith("Mahasiswa") && rowCategory.startsWith("Mahasiswa")) return true;
-    if (targetCategory.startsWith("Anggota PERSADIA") && rowCategory.startsWith("Anggota PERSADIA")) return true;
-    if (targetCategory.startsWith("Masyarakat Umum") && rowCategory.startsWith("Masyarakat Umum")) return true;
-
-    return false;
-  };
-
-  // Data ringkasan per kategori: 6 Kategori Ilmiah + 1 Kategori Gabungan Pesta Rakyat (Anggota & Umum)
-  const scientificCardData = KATEGORI_PESERTA.filter((k) => k.akses === "ilmiah").map((k) => {
-    const items = data.filter((d) => matchesCategory(d["Kategori Peserta"] || "", k.label));
-    const total = items.length;
-    const lunas = items.filter((d) => d["Status Pembayaran"] === "Lunas").length;
-    const menunggu = items.filter((d) => d["Status Pembayaran"] === "Menunggu Verifikasi").length;
-    const batal = items.filter((d) => d["Status Pembayaran"] === "Dibatalkan").length;
-    const onsite = items.filter((d) => d.mode_kehadiran === "Onsite" || (d["Akses Kegiatan"] && d["Akses Kegiatan"].includes("Onsite"))).length;
-    const online = items.filter((d) => d.mode_kehadiran === "Online" || (d["Akses Kegiatan"] && d["Akses Kegiatan"].includes("Online"))).length;
-
-    return {
-      id: k.id,
-      name: k.label,
-      total,
-      lunas,
-      menunggu,
-      batal,
-      onsite,
-      online,
-      anggota: 0,
-      umum: 0,
-      isClosed: closedCategories.includes(k.id),
-      isPartiallyClosed: false,
-    };
-  });
-
-  // Data ringkasan gabungan Pesta Rakyat (Anggota PERSADIA + Masyarakat Umum)
-  const pestaRakyatItems = data.filter((d) => matchesCategory(d["Kategori Peserta"] || "", "Pesta Rakyat"));
-  const anggotaItems = data.filter((d) => matchesCategory(d["Kategori Peserta"] || "", "Anggota PERSADIA"));
-  const umumItems = data.filter((d) => matchesCategory(d["Kategori Peserta"] || "", "Masyarakat Umum"));
-
-  const isPersadiaClosed = closedCategories.includes("persadia");
-  const isUmumClosed = closedCategories.includes("umum");
-  const isAllPestaClosed = isPersadiaClosed && isUmumClosed;
-  const isAnyPestaClosed = isPersadiaClosed || isUmumClosed;
-
-  const pestaRakyatCard = {
-    id: "pesta_rakyat",
-    name: "Pesta Rakyat",
-    total: pestaRakyatItems.length,
-    lunas: pestaRakyatItems.filter((d) => d["Status Pembayaran"] === "Lunas").length,
-    menunggu: pestaRakyatItems.filter((d) => d["Status Pembayaran"] === "Menunggu Verifikasi").length,
-    batal: pestaRakyatItems.filter((d) => d["Status Pembayaran"] === "Dibatalkan").length,
-    onsite: 0,
-    online: 0,
-    anggota: anggotaItems.length,
-    umum: umumItems.length,
-    isClosed: isAllPestaClosed,
-    isPartiallyClosed: isAnyPestaClosed && !isAllPestaClosed,
-  };
-
-  const categoryCardData = [...scientificCardData, pestaRakyatCard];
-
-  const pieData = categoryCardData
-    .filter((cat) => cat.total > 0)
-    .map((cat) => ({
-      name: cat.name,
-      value: cat.total,
-    }));
-
-  const statusBarData = [
-    { name: 'Menunggu', jumlah: totalMenunggu, fill: '#f59e0b' },
-    { name: 'Lunas', jumlah: totalLunas, fill: '#10b981' },
-    { name: 'Dibatalkan', jumlah: totalBatal, fill: '#ef4444' },
-  ];
-
-  // Filtered data for table
-  const filteredData = data.filter((item) => {
-    const q = searchQuery.toLowerCase().trim();
-    const matchesSearch =
-      !q ||
-      (item["Nama Lengkap"] || "").toLowerCase().includes(q) ||
-      (item["No. Registrasi"] || "").toLowerCase().includes(q) ||
-      (item.Email || "").toLowerCase().includes(q) ||
-      (item["No. WhatsApp"] || "").toLowerCase().includes(q) ||
-      (item.Institusi || "").toLowerCase().includes(q) ||
-      (item.KodeVoucher || item.kode_voucher || "").toLowerCase().includes(q) ||
-      (item.CabangPersadia || "").toLowerCase().includes(q) ||
-      (item.NamaKetuaCabang || "").toLowerCase().includes(q) ||
-      (item["Kategori Peserta"] || "").toLowerCase().includes(q) ||
-      (item.nim || "").toLowerCase().includes(q) ||
-      (item.kota_kabupaten || "").toLowerCase().includes(q) ||
-      (item.provinsi || "").toLowerCase().includes(q);
-
-    const matchesStatus = statusFilter === "Semua" ? true : item["Status Pembayaran"] === statusFilter;
-    const matchesKategori = matchesCategory(item["Kategori Peserta"] || "", kategoriFilter);
-
-    return matchesSearch && matchesStatus && matchesKategori;
-  });
 
   // Pagination calculation
   const totalRows = filteredData.length;
@@ -1515,7 +1601,7 @@ _Panitia KONAS PERSADIA 2026_`;
                         {KATEGORI_PESERTA.map((k) => {
                           const isClosed = closedCategories.includes(k.id);
                           const isFktpOnlineHidden = closedCategories.includes("fktp_online");
-                          const totalPeserta = data.filter(d => matchesCategory(d["Kategori Peserta"] || "", k.label)).length;
+                          const totalPeserta = categoryCountMap[k.id] ?? 0;
 
                           return (
                             <div
@@ -1715,7 +1801,11 @@ _Panitia KONAS PERSADIA 2026_`;
                     {/* Left: Search input */}
                     <div className="relative flex-1 max-w-lg">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Search className="h-4 w-4 text-slate-400" />
+                        {deferredSearchQuery !== searchQuery ? (
+                          <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />
+                        ) : (
+                          <Search className="h-4 w-4 text-slate-400" />
+                        )}
                       </div>
                       <input
                         type="text"
