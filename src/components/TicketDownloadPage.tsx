@@ -25,13 +25,13 @@ interface ParticipantData {
 }
 
 export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPageProps) {
-  // Mode tab: "simposium" (Ilmiah: Simposium + Workshop) atau "pesta_rakyat"
-  const [activeTab, setActiveTab] = useState<"simposium" | "pesta_rakyat">("simposium");
+  // Mode tab: default "pesta_rakyat" karena 99.9% peserta adalah Pesta Rakyat
+  const [activeTab, setActiveTab] = useState<"simposium" | "pesta_rakyat">("pesta_rakyat");
 
-  // Form states untuk Simposium (Cukup No. Registrasi)
+  // Form states untuk Simposium (No. Registrasi / WA)
   const [regInput, setRegInput] = useState("");
 
-  // Form states untuk Pesta Rakyat (No. WA + Sebagian Nama)
+  // Form states untuk Pesta Rakyat (No. WA / No. Registrasi + Sebagian Nama)
   const [whatsappInput, setWhatsappInput] = useState("");
   const [nameInput, setNameInput] = useState("");
 
@@ -44,11 +44,13 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
   const [isDownloading, setIsDownloading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Normalisasi nomor telepon
+  // Normalisasi nomor telepon cerdas (mendukung 08..., 628..., dan 8...)
   const normalizePhone = (phone: string): string => {
     let clean = phone.replace(/\D/g, "");
     if (clean.startsWith("62")) {
       clean = "0" + clean.slice(2);
+    } else if (clean.startsWith("8")) {
+      clean = "0" + clean;
     }
     return clean;
   };
@@ -82,10 +84,10 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
   // Cek parameter dari URL dan hash saat inisialisasi
   useEffect(() => {
     const hash = window.location.hash.toLowerCase();
-    if (hash.includes("pesta-rakyat") || hash.includes("pesta_rakyat")) {
-      setActiveTab("pesta_rakyat");
-    } else if (hash.includes("simposium") || hash.includes("ilmiah") || hash.includes("workshop")) {
+    if (hash.includes("simposium") || hash.includes("ilmiah") || hash.includes("workshop")) {
       setActiveTab("simposium");
+    } else {
+      setActiveTab("pesta_rakyat");
     }
 
     let searchParamsStr = window.location.search;
@@ -109,11 +111,11 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
     }
   }, []);
 
-  // 1. Pencarian Simposium & Workshop (HANYA NO REGISTRASI)
+  // 1. Pencarian Simposium & Workshop (Mendukung No. Registrasi / No. WhatsApp / Nama)
   const searchSimposiumByRegistrationId = async (queryReg: string) => {
     const cleanReg = queryReg.trim();
     if (!cleanReg || cleanReg.length < 3) {
-      setSearchError("Harap masukkan Nomor Registrasi yang valid (contoh: KNS2026-xxxxx).");
+      setSearchError("Harap masukkan Nomor Registrasi atau No. WhatsApp (minimal 3 karakter).");
       return;
     }
 
@@ -128,11 +130,31 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
     setSelectedParticipant(null);
 
     try {
+      // Jalur 1: Coba lewat RPC cari_tiket_peserta (SECURITY DEFINER - Aman & Privasi Terjaga)
+      const { data: rpcData, error: rpcError } = await supabase.rpc("cari_tiket_peserta", {
+        p_keyword: cleanReg,
+        p_nama: "",
+      });
+
+      if (!rpcError && Array.isArray(rpcData)) {
+        if (rpcData.length === 0) {
+          setParticipants([]);
+          return;
+        }
+        setParticipants(rpcData);
+        if (rpcData.length === 1) {
+          setSelectedParticipant(rpcData[0]);
+        }
+        return;
+      }
+
+      // Jalur 2: Fallback query langsung jika RPC belum dieksekusi di database
+      const cleanWa = normalizePhone(cleanReg);
       const { data, error } = await supabase
         .from("pendaftar")
-        .select("*")
-        .ilike("no_registrasi", `%${cleanReg}%`)
-        .limit(10);
+        .select("id, no_registrasi, nama_lengkap, whatsapp, kategori_peserta, pilihan_kegiatan, institusi, cabang_persadia, status_pembayaran")
+        .or(`no_registrasi.ilike.%${cleanReg}%,whatsapp.ilike.%${cleanWa}%,nama_lengkap.ilike.%${cleanReg}%`)
+        .limit(20);
 
       if (error) throw error;
 
@@ -146,17 +168,18 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
         setSelectedParticipant(data[0]);
       }
     } catch (err: any) {
-      setSearchError(err.message || "Terjadi kesalahan saat mencari tiket Simposium.");
+      console.error("Search ticket error:", err);
+      setSearchError(err.message || "Terjadi kesalahan saat mencari tiket.");
     } finally {
       setIsSearching(false);
     }
   };
 
-  // 2. Pencarian Pesta Rakyat (NO WHATSAPP + SEBAGIAN NAMA)
+  // 2. Pencarian Pesta Rakyat (Mendukung No. WhatsApp / No. Registrasi + Sebagian Nama)
   const searchPestaRakyat = async (waQuery: string, nameQuery: string) => {
-    const cleanWa = normalizePhone(waQuery);
-    if (!cleanWa || cleanWa.length < 8) {
-      setSearchError("Harap masukkan nomor WhatsApp yang valid (minimal 8 angka).");
+    const rawInput = waQuery.trim();
+    if (!rawInput || rawInput.length < 3) {
+      setSearchError("Harap masukkan Nomor WhatsApp atau Nomor Registrasi (minimal 3 karakter).");
       return;
     }
 
@@ -171,12 +194,34 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
     setSelectedParticipant(null);
 
     try {
-      const coreWa = cleanWa.length > 8 ? cleanWa.slice(-8) : cleanWa;
+      const cleanWa = normalizePhone(rawInput);
+      const searchKeyword = cleanWa.length >= 8 ? cleanWa : rawInput;
 
+      // Jalur 1: Coba lewat RPC cari_tiket_peserta (SECURITY DEFINER - Aman & Privasi Terjaga)
+      const { data: rpcData, error: rpcError } = await supabase.rpc("cari_tiket_peserta", {
+        p_keyword: searchKeyword,
+        p_nama: nameQuery.trim(),
+      });
+
+      if (!rpcError && Array.isArray(rpcData)) {
+        if (rpcData.length === 0) {
+          setParticipants([]);
+          return;
+        }
+        setParticipants(rpcData);
+        if (rpcData.length === 1) {
+          setSelectedParticipant(rpcData[0]);
+        }
+        return;
+      }
+
+      // Jalur 2: Fallback query langsung jika RPC belum dieksekusi di database
+      const coreWa = cleanWa.length > 8 ? cleanWa.slice(-8) : cleanWa;
       const { data, error } = await supabase
         .from("pendaftar")
-        .select("*")
-        .or(`whatsapp.ilike.%${cleanWa}%,whatsapp.ilike.%${coreWa}%`);
+        .select("id, no_registrasi, nama_lengkap, whatsapp, kategori_peserta, pilihan_kegiatan, institusi, cabang_persadia, status_pembayaran")
+        .or(`whatsapp.ilike.%${cleanWa}%,whatsapp.ilike.%${coreWa}%,no_registrasi.ilike.%${rawInput}%`)
+        .limit(25);
 
       if (error) throw error;
 
@@ -185,8 +230,7 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
         return;
       }
 
-      let results = data.filter(isPestaRakyatParticipant);
-
+      let results = data;
       const cleanPartialName = nameQuery.trim().toLowerCase();
       if (cleanPartialName.length > 0) {
         results = results.filter((p) =>
@@ -199,6 +243,7 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
         setSelectedParticipant(results[0]);
       }
     } catch (err: any) {
+      console.error("Search ticket error:", err);
       setSearchError(err.message || "Terjadi kesalahan saat mencari tiket Pesta Rakyat.");
     } finally {
       setIsSearching(false);
@@ -346,7 +391,7 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
 
               <div>
                 <label htmlFor="reg-input" className="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">
-                  Nomor Registrasi <span className="text-red-500">*</span>
+                  Nomor Registrasi atau No. WhatsApp <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -354,13 +399,13 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
                     type="text"
                     value={regInput}
                     onChange={(e) => setRegInput(e.target.value)}
-                    placeholder="Contoh: KNS2026-35263407"
+                    placeholder="Contoh: KNS2026-35263407 atau 08123456789"
                     className="w-full px-3.5 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm font-mono font-bold text-slate-900 uppercase focus:outline-none focus:ring-2 focus:ring-[#0B3D5E] focus:bg-white transition"
                     required
                   />
                 </div>
                 <p className="text-[11px] text-slate-500 mt-1">
-                  Cukup masukkan Nomor Registrasi resmi yang Anda terima saat mendaftar atau dari panitia.
+                  Masukkan Nomor Registrasi resmi atau Nomor WhatsApp yang terdaftar.
                 </p>
               </div>
 
@@ -390,7 +435,7 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
               </button>
             </form>
           ) : (
-            /* TAB 2: PESTA RAKYAT (NO WHATSAPP + SEBAGIAN NAMA) */
+            /* TAB 2: PESTA RAKYAT (NO WHATSAPP / NO REGISTRASI + SEBAGIAN NAMA) */
             <form onSubmit={handlePestaRakyatSubmit} className="space-y-4">
               <div className="border-b border-slate-100 pb-3 mb-2">
                 <span className="inline-block text-[11px] font-black uppercase tracking-wider text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full mb-1">
@@ -403,19 +448,19 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
 
               <div>
                 <label htmlFor="wa-input" className="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">
-                  Nomor WhatsApp Pendaftaran <span className="text-red-500">*</span>
+                  Nomor WhatsApp atau No. Registrasi <span className="text-red-500">*</span>
                 </label>
                 <input
                   id="wa-input"
-                  type="tel"
+                  type="text"
                   value={whatsappInput}
                   onChange={(e) => setWhatsappInput(e.target.value)}
-                  placeholder="Contoh: 08123456789 atau 628123456789"
+                  placeholder="Contoh: 08123456789 atau KNS2026-xxxxx"
                   className="w-full px-3.5 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#ea580c] focus:bg-white transition"
                   required
                 />
                 <p className="text-[11px] text-slate-500 mt-1">
-                  Masukkan nomor WhatsApp yang digunakan saat mendaftar.
+                  Masukkan nomor WhatsApp atau Nomor Registrasi yang digunakan saat mendaftar.
                 </p>
               </div>
 
