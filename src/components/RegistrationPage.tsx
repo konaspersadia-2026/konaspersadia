@@ -58,8 +58,7 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
 
   // Status jalur online FKTP (disembunyikan jika ada flag 'fktp_online' di closedCategories)
   const isFktpOnlineHidden = closedCategories.includes("fktp_online");
-
-  const [modeFktp, setModeFktp] = useState<"onsite" | "online">("onsite");
+  const isDhfClosed = closedCategories.includes("diabetes_health_forum");
 
   // Jika jalur online FKTP disembunyikan panitia, pastikan mode terkunci ke onsite
   useEffect(() => {
@@ -67,6 +66,14 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
       setModeFktp("onsite");
     }
   }, [isFktpOnlineHidden, modeFktp]);
+
+  // Jika Diabetes Health Forum ditutup panitia, pastikan pilihan add-on dinonaktifkan
+  useEffect(() => {
+    if (isDhfClosed) {
+      if (ikutHealthTalk) setIkutHealthTalk(false);
+      if (ikutDhfUmum) setIkutDhfUmum(false);
+    }
+  }, [isDhfClosed, ikutHealthTalk, ikutDhfUmum]);
 
   const [pilihanKegiatan, setPilihanKegiatan] = useState<"Symposium" | "Symposium + Workshop" | "Workshop">("Symposium + Workshop");
   const [namaLengkap, setNamaLengkap] = useState("");
@@ -783,9 +790,16 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
 
 
             {kat.id === "persadia" && (
-              <Check checked={ikutHealthTalk} onChange={setIkutHealthTalk}>
-                Ikut Diabetes Health Forum, 7 Nov di Novotel (+ {rupiah(DIABETES_HEALTH_FORUM_CONFIG.biaya)})
-              </Check>
+              !isDhfClosed ? (
+                <Check checked={ikutHealthTalk} onChange={setIkutHealthTalk}>
+                  Ikut Diabetes Health Forum, 7 Nov di Novotel (+ {rupiah(DIABETES_HEALTH_FORUM_CONFIG.biaya)})
+                </Check>
+              ) : (
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-500 flex items-center justify-between">
+                  <span className="font-medium">🩺 Diabetes Health Forum (Novotel Bogor)</span>
+                  <span className="px-2 py-0.5 bg-rose-100 text-rose-700 font-bold rounded-full text-[10px]">Ditutup Panitia</span>
+                </div>
+              )
             )}
 
             {kat.id === "umum" && (
@@ -804,9 +818,16 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
                     </label>
                   </div>
                 )}
-                <Check checked={ikutDhfUmum} onChange={setIkutDhfUmum}>
-                  Diabetes Health Forum, 7 Nov di Novotel (+ {rupiah(DIABETES_HEALTH_FORUM_CONFIG.biaya)})
-                </Check>
+                {!isDhfClosed ? (
+                  <Check checked={ikutDhfUmum} onChange={setIkutDhfUmum}>
+                    Diabetes Health Forum, 7 Nov di Novotel (+ {rupiah(DIABETES_HEALTH_FORUM_CONFIG.biaya)})
+                  </Check>
+                ) : (
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-500 flex items-center justify-between">
+                    <span className="font-medium">🩺 Diabetes Health Forum (Novotel Bogor)</span>
+                    <span className="px-2 py-0.5 bg-rose-100 text-rose-700 font-bold rounded-full text-[10px]">Ditutup Panitia</span>
+                  </div>
+                )}
               </div>
             )}
 

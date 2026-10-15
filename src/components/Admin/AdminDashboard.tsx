@@ -121,6 +121,15 @@ const matchesCategory = (rowCategory: string, targetCategory: string): boolean =
     return rowLower.startsWith("dokter umum");
   }
 
+  // 3. Kategori Diabetes Health Forum
+  if (targetCategory === "Diabetes Health Forum") {
+    return (
+      rowCategory === "Diabetes Health Forum" ||
+      rowLower.includes("health forum") ||
+      rowLower.includes("health talk")
+    );
+  }
+
   // Normalisasi variasi data masa lalu ke kategori resmi form
   if (targetCategory.startsWith("Dokter Spesialis") && rowCategory.startsWith("Dokter Spesialis")) return true;
   if (targetCategory.startsWith("Residen") && rowCategory.startsWith("Residen")) return true;
@@ -1146,9 +1155,12 @@ _Panitia KONAS PERSADIA 2026_`;
 
     const dhfItems = data.filter((d) => 
       matchesCategory(d["Kategori Peserta"] || "", "Diabetes Health Forum") ||
-      (d["Akses Kegiatan"] && d["Akses Kegiatan"].includes("Health Forum")) ||
+      (d["Akses Kegiatan"] && (d["Akses Kegiatan"].includes("Health Forum") || d["Akses Kegiatan"].includes("Health Talk"))) ||
       (d.ikut_health_talk === true)
     );
+
+    const dhfAnggota = dhfItems.filter((d) => matchesCategory(d["Kategori Peserta"] || "", "Anggota PERSADIA")).length;
+    const dhfUmum = dhfItems.filter((d) => matchesCategory(d["Kategori Peserta"] || "", "Masyarakat Umum")).length;
 
     const dhfCard = {
       id: "diabetes_health_forum",
@@ -1159,8 +1171,8 @@ _Panitia KONAS PERSADIA 2026_`;
       batal: dhfItems.filter((d) => d["Status Pembayaran"] === "Dibatalkan").length,
       onsite: dhfItems.length,
       online: 0,
-      anggota: 0,
-      umum: 0,
+      anggota: dhfAnggota,
+      umum: dhfUmum,
       isClosed: closedCategories.includes("diabetes_health_forum"),
       isPartiallyClosed: false,
     };
@@ -1208,8 +1220,16 @@ _Panitia KONAS PERSADIA 2026_`;
       }
 
       // 2. Fast path: check category filter
-      if (kategoriFilter !== "Semua" && !matchesCategory(item["Kategori Peserta"] || "", kategoriFilter)) {
-        return false;
+      if (kategoriFilter !== "Semua") {
+        if (kategoriFilter === "Diabetes Health Forum") {
+          const isDhf =
+            matchesCategory(item["Kategori Peserta"] || "", "Diabetes Health Forum") ||
+            (item["Akses Kegiatan"] && (item["Akses Kegiatan"].includes("Health Forum") || item["Akses Kegiatan"].includes("Health Talk"))) ||
+            item.ikut_health_talk === true;
+          if (!isDhf) return false;
+        } else if (!matchesCategory(item["Kategori Peserta"] || "", kategoriFilter)) {
+          return false;
+        }
       }
 
       // 3. Search query: match all terms against pre-computed lowercase search index
@@ -1701,7 +1721,7 @@ _Panitia KONAS PERSADIA 2026_`;
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2 sm:gap-2.5">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-2 sm:gap-2.5">
                     {categoryCardData.map((cat) => {
                       const isSelected = kategoriFilter === cat.name;
                       const isClosed = cat.isClosed;
@@ -1777,6 +1797,18 @@ _Panitia KONAS PERSADIA 2026_`;
                                   </span>
                                   <span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-800 rounded font-bold border border-indigo-100">
                                     💻 {cat.online} Online
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* DHF breakdown (Anggota PERSADIA vs Umum) */}
+                              {cat.id === "diabetes_health_forum" && (
+                                <div className="flex items-center gap-1.5 text-[9px] font-medium text-slate-600 mt-1.5 flex-wrap">
+                                  <span className="px-1.5 py-0.5 bg-purple-50 text-purple-800 rounded font-bold border border-purple-200">
+                                    🏅 {cat.anggota} Anggota
+                                  </span>
+                                  <span className="px-1.5 py-0.5 bg-amber-50 text-amber-800 rounded font-bold border border-amber-200">
+                                    👥 {cat.umum} Umum
                                   </span>
                                 </div>
                               )}
@@ -1895,7 +1927,8 @@ _Panitia KONAS PERSADIA 2026_`;
                         <option value="Pesta Rakyat">🎪 Pesta Rakyat (Semua)</option>
                         <option value="Anggota PERSADIA">　↳ Anggota PERSADIA</option>
                         <option value="Masyarakat Umum">　↳ Masyarakat Umum</option>
-                        {KATEGORI_PESERTA.filter(k => k.akses !== "pesta_rakyat").map((k) => (
+                        <option value="Diabetes Health Forum">🩺 Diabetes Health Forum</option>
+                        {KATEGORI_PESERTA.filter(k => k.akses !== "pesta_rakyat" && k.id !== "diabetes_health_forum").map((k) => (
                           <option key={k.id} value={k.label}>{k.label}</option>
                         ))}
                       </select>
@@ -2015,6 +2048,11 @@ _Panitia KONAS PERSADIA 2026_`;
                                     {row["Akses Kegiatan"] && row["Akses Kegiatan"].includes("Onsite") && (
                                       <span className="px-1.5 py-0.2 bg-slate-100 text-slate-700 border border-slate-200 rounded text-[10px] font-medium" title="Hadir Langsung di Novotel">
                                         🏛️ Onsite
+                                      </span>
+                                    )}
+                                    {(row.ikut_health_talk === true || (row["Akses Kegiatan"] && (row["Akses Kegiatan"].includes("Health Forum") || row["Akses Kegiatan"].includes("Health Talk")))) && (
+                                      <span className="px-1.5 py-0.2 bg-purple-100 text-purple-800 border border-purple-200 rounded text-[10px] font-bold" title="Peserta Sesi Diabetes Health Forum Novotel">
+                                        🩺 Health Forum
                                       </span>
                                     )}
                                     {(row.KodeVoucher || row.kode_voucher) && (row.KodeVoucher !== '-' && row.kode_voucher !== '-') && (
@@ -2671,6 +2709,11 @@ _Panitia KONAS PERSADIA 2026_`;
                       {selectedParticipant["Akses Kegiatan"] && selectedParticipant["Akses Kegiatan"].includes("Onsite") && (
                         <span className="px-2 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 rounded text-xs font-medium">
                           🏛️ Hadir Onsite (Novotel)
+                        </span>
+                      )}
+                      {(selectedParticipant.ikut_health_talk === true || (selectedParticipant["Akses Kegiatan"] && (selectedParticipant["Akses Kegiatan"].includes("Health Forum") || selectedParticipant["Akses Kegiatan"].includes("Health Talk")))) && (
+                        <span className="px-2 py-0.5 bg-purple-100 text-purple-800 border border-purple-200 rounded text-xs font-bold">
+                          🩺 Diabetes Health Forum (Novotel)
                         </span>
                       )}
                     </div>
