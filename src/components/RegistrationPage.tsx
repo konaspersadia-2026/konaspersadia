@@ -60,21 +60,7 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
   const isFktpOnlineHidden = closedCategories.includes("fktp_online");
   const isDhfClosed = closedCategories.includes("diabetes_health_forum");
 
-  // Jika jalur online FKTP disembunyikan panitia, pastikan mode terkunci ke onsite
-  useEffect(() => {
-    if (isFktpOnlineHidden && modeFktp === "online") {
-      setModeFktp("onsite");
-    }
-  }, [isFktpOnlineHidden, modeFktp]);
-
-  // Jika Diabetes Health Forum ditutup panitia, pastikan pilihan add-on dinonaktifkan
-  useEffect(() => {
-    if (isDhfClosed) {
-      if (ikutHealthTalk) setIkutHealthTalk(false);
-      if (ikutDhfUmum) setIkutDhfUmum(false);
-    }
-  }, [isDhfClosed, ikutHealthTalk, ikutDhfUmum]);
-
+  const [modeFktp, setModeFktp] = useState<"onsite" | "online">("onsite");
   const [pilihanKegiatan, setPilihanKegiatan] = useState<"Symposium" | "Symposium + Workshop" | "Workshop">("Symposium + Workshop");
   const [namaLengkap, setNamaLengkap] = useState("");
   const [email, setEmail] = useState("");
@@ -90,6 +76,21 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
   const [ikutPestaRakyatUmum, setIkutPestaRakyatUmum] = useState(true);
   const [tipePestaRakyatUmum, setTipePestaRakyatUmum] = useState<"gratis" | "berbayar">("gratis");
   const [ikutDhfUmum, setIkutDhfUmum] = useState(false);
+
+  // Jika jalur online FKTP disembunyikan panitia, pastikan mode terkunci ke onsite
+  useEffect(() => {
+    if (isFktpOnlineHidden && modeFktp === "online") {
+      setModeFktp("onsite");
+    }
+  }, [isFktpOnlineHidden, modeFktp]);
+
+  // Jika Diabetes Health Forum ditutup panitia, pastikan pilihan add-on dinonaktifkan
+  useEffect(() => {
+    if (isDhfClosed) {
+      if (ikutHealthTalk) setIkutHealthTalk(false);
+      if (ikutDhfUmum) setIkutDhfUmum(false);
+    }
+  }, [isDhfClosed, ikutHealthTalk, ikutDhfUmum]);
 
   const [bersediaAnggotaPersadia, setBersediaAnggotaPersadia] = useState(false);
   const [alamatLengkap, setAlamatLengkap] = useState("");
