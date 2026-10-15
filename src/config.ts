@@ -82,6 +82,21 @@ export const KATEGORI_PESERTA: KategoriPeserta[] = [
     fieldTambahan: ["institusi", "nim"],
   },
   {
+    id: "diabetes_health_forum",
+    label: "Diabetes Health Forum",
+    akses: "pesta_rakyat",
+    hargaEarlyBird: 200000,
+    hargaReguler: 200000,
+    fieldTambahan: ["tanggalLahir", "jenisKelamin", "institusi"],
+    topikMateri: [
+      "Temu 6 Tokoh Diabetisi Nasional & Edukasi Pola Hidup Sehat",
+      "Talkshow Interaktif Eksklusif bersama dr. Boyke Dian Nugraha, SpOG (Kesehatan Seksual & Komplikasi Diabetes)",
+      "Sesi Diskusi & Tanya Jawab Langsung bersama Pakar Endokrin",
+      "Seminar Kit Lengkap, Goodie Bag, Jamuan Konsumsi & Sertifikat",
+      "Sabtu, 7 November 2026 (08.00 WIB - Selesai) di Ballroom Novotel Bogor Golf Resort"
+    ],
+  },
+  {
     id: "persadia",
     label: "Anggota PERSADIA",
     akses: "pesta_rakyat",

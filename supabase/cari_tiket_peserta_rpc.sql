@@ -1,11 +1,15 @@
 -- ==============================================================================
--- KONAS PERSADIA 2026 - RPC PENCARIAN TIKET PUBLIK (AMAN & PRIVASI TERJAGA)
--- Jalankan script ini di Supabase SQL Editor:
+-- KONAS PERSADIA 2026 - FIX RPC PENCARIAN TIKET PUBLIK (TYPE CAST & PRIVASI)
+-- Jalankan SELURUH script ini di Supabase SQL Editor:
 -- Dashboard Supabase -> SQL Editor -> New Query -> Tempel (Paste) -> Run
 -- ==============================================================================
 
--- 1. Buat fungsi RPC cari_tiket_peserta dengan SECURITY DEFINER
--- Fungsi ini hanya mengembalikan field untuk e-ticket tanpa membocorkan data medis/alamat.
+-- 1. Hapus fungsi lama terlebih dahulu untuk mencegah error:
+-- "cannot change return type of existing function"
+DROP FUNCTION IF EXISTS public.cari_tiket_peserta(text, text);
+DROP FUNCTION IF EXISTS public.cari_tiket_peserta(text);
+
+-- 2. Buat fungsi RPC dengan casting tipe eksplisit (p.id::bigint)
 CREATE OR REPLACE FUNCTION public.cari_tiket_peserta(
   p_keyword text,
   p_nama text DEFAULT ''
@@ -34,7 +38,7 @@ BEGIN
   v_clean := trim(coalesce(p_keyword, ''));
   v_nama_clean := trim(coalesce(p_nama, ''));
 
-  -- Tolak jika keyword terlalu pendek (minimal 3 karakter untuk mencegah scraping)
+  -- Tolak jika keyword terlalu pendek (minimal 3 karakter)
   IF length(v_clean) < 3 THEN
     RETURN;
   END IF;
@@ -50,20 +54,20 @@ BEGIN
 
   RETURN QUERY
   SELECT 
-    p.id,
-    p.no_registrasi,
-    p.nama_lengkap,
+    p.id::bigint AS id,
+    coalesce(p.no_registrasi, '')::text AS no_registrasi,
+    coalesce(p.nama_lengkap, '')::text AS nama_lengkap,
     -- Samarkan sebagian nomor WhatsApp demi privasi peserta (misal: 0812****9821)
     CASE 
-      WHEN length(p.whatsapp) > 7 THEN 
+      WHEN length(coalesce(p.whatsapp, '')) > 7 THEN 
         substring(p.whatsapp from 1 for 4) || '****' || substring(p.whatsapp from length(p.whatsapp) - 3)
-      ELSE p.whatsapp 
-    END AS whatsapp,
-    p.kategori_peserta,
-    p.pilihan_kegiatan,
-    p.institusi,
-    p.cabang_persadia,
-    p.status_pembayaran
+      ELSE coalesce(p.whatsapp, '') 
+    END::text AS whatsapp,
+    coalesce(p.kategori_peserta, '')::text AS kategori_peserta,
+    coalesce(p.pilihan_kegiatan, '')::text AS pilihan_kegiatan,
+    coalesce(p.institusi, '')::text AS institusi,
+    coalesce(p.cabang_persadia, '')::text AS cabang_persadia,
+    coalesce(p.status_pembayaran, 'Menunggu Verifikasi')::text AS status_pembayaran
   FROM public.pendaftar p
   WHERE 
     (
@@ -92,9 +96,9 @@ BEGIN
 END;
 $$;
 
--- 2. Berikan izin eksekusi ke anonim (publik website) dan authenticated (admin)
+-- 3. Berikan izin eksekusi ke anonim (publik website), authenticated (admin), dan service_role
 GRANT EXECUTE ON FUNCTION public.cari_tiket_peserta(text, text) TO anon, authenticated, service_role;
 
--- 3. Berikan komentar dokumentasi
+-- 4. Dokumentasi
 COMMENT ON FUNCTION public.cari_tiket_peserta(text, text) IS 
-'Fungsi pencarian tiket publik aman. Hanya mengembalikan data tiket resmi tanpa membocorkan data medis, riwayat kesehatan, atau alamat pribadi peserta.';
+'Fungsi pencarian tiket publik aman. Hanya mengembalikan data tiket resmi dengan casting tipe data p.id::bigint.';

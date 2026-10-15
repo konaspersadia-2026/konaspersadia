@@ -558,11 +558,16 @@ function App() {
   let rejectionReason = "";
   
   const isLunas = selectedUser ? (selectedUser["Status Pembayaran"] === 'Lunas' || selectedUser.status_pembayaran === 'Lunas') : false;
+  const isCancelled = selectedUser ? (
+    String(selectedUser["Status Pembayaran"] || selectedUser.status_pembayaran || "").toLowerCase().includes("batal") ||
+    String(selectedUser["Status Pembayaran"] || selectedUser.status_pembayaran || "").toLowerCase().includes("cancel")
+  ) : false;
   const kategori = selectedUser ? String(selectedUser["Kategori Peserta"] || selectedUser.kategori_peserta || "") : "";
   const pilihanKegiatan = selectedUser ? String(selectedUser["pilihan_kegiatan"] || selectedUser["Akses Kegiatan"] || selectedUser.pilihan_kegiatan || "") : "";
   
   const isIlmiah = ["Dokter Umum", "Dokter Spesialis", "Residen", "Perawat", "Mahasiswa"].includes(kategori);
   const isPestaRakyat = ["Anggota PERSADIA", "Masyarakat Umum"].includes(kategori);
+  const isDHF = kategori.toLowerCase().includes("health forum") || pilihanKegiatan.toLowerCase().includes("health forum") || pilihanKegiatan.toLowerCase().includes("health talk");
   const bersediaAnggota = selectedUser ? (
     selectedUser["bersedia_anggota_persadia"] === true || 
     selectedUser["bersedia_anggota_persadia"] === 'Ya' || 
@@ -571,14 +576,18 @@ function App() {
   ) : false;
 
   if (selectedUser) {
-    // 1. Peserta Ilmiah berbayar wajib berstatus Lunas untuk seluruh aktivitas
-    if (isIlmiah && !isLunas) {
+    // 0. Pendaftaran Dibatalkan langsung ditolak untuk semua pos/kegiatan
+    if (isCancelled) {
+      hasAccess = false;
+      rejectionReason = "PENDAFTARAN DIBATALKAN: Tiket ini telah dinonaktifkan oleh panitia dan tidak dapat digunakan.";
+    } else if ((isIlmiah || isDHF) && !isLunas) {
+      // 1. Peserta Ilmiah & DHF berbayar wajib berstatus Lunas untuk seluruh aktivitas
       hasAccess = false;
       rejectionReason = "Pembayaran belum lunas. Registrasi & rangkaian kegiatan belum dapat diikuti.";
     } else {
       // 2. Validasi per mode scanner
       if (scannerMode === 'registrasi') {
-        // Registrasi on-site dibuka untuk seluruh peserta sah (Ilmiah lunas & Pesta Rakyat)
+        // Registrasi on-site dibuka untuk seluruh peserta sah (Ilmiah lunas, DHF lunas & Pesta Rakyat)
         hasAccess = true;
       } else if (scannerMode === 'workshop') {
         if (isIlmiah && (pilihanKegiatan.toLowerCase().includes("workshop") || pilihanKegiatan.toLowerCase().includes("paket"))) {
@@ -586,13 +595,16 @@ function App() {
         } else if (isIlmiah) {
           hasAccess = false;
           rejectionReason = "Akses Ditolak: Tiket peserta adalah Simposium Saja (tidak termasuk Workshop).";
+        } else if (isDHF) {
+          hasAccess = false;
+          rejectionReason = "Akses Ditolak: Tiket peserta adalah Diabetes Health Forum (bukan Workshop Medis).";
         } else {
           hasAccess = false;
           rejectionReason = "Akses Ditolak: Peserta bukan kategori Sesi Ilmiah / Workshop.";
         }
       } else if (scannerMode === 'pesta_rakyat') {
-        // Cek Gula Darah: Pesta Rakyat & Peserta Ilmiah berbayar (Lunas) BERHAK ikut Hari ke-2!
-        if (isPestaRakyat || isIlmiah) {
+        // Cek Gula Darah / Hari ke-2
+        if (isPestaRakyat || isIlmiah || isDHF) {
           hasAccess = true;
         } else {
           hasAccess = false;
@@ -776,7 +788,13 @@ function App() {
             </button>
 
             {/* Profile Card */}
-            <div className={`bg-white rounded-2xl shadow-sm border p-4 sm:p-6 ${selectedUser["Status Pembayaran"] === 'Lunas' ? 'border-emerald-200' : 'border-red-200'}`}>
+            <div className={`bg-white rounded-2xl shadow-sm border p-4 sm:p-6 ${
+              isCancelled 
+                ? 'border-rose-400 bg-rose-50/20' 
+                : selectedUser["Status Pembayaran"] === 'Lunas' 
+                ? 'border-emerald-200' 
+                : 'border-red-200'
+            }`}>
               <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-1.5 sm:gap-2 mb-2 flex-wrap">
@@ -784,15 +802,21 @@ function App() {
                       {selectedUser["No. Registrasi"]}
                     </span>
                     <span className={`text-[11px] sm:text-xs font-bold px-2 py-1 rounded-md uppercase tracking-wider ${
-                      selectedUser["Status Pembayaran"] === 'Lunas' 
+                      isCancelled
+                        ? 'bg-rose-600 text-white font-black'
+                        : selectedUser["Status Pembayaran"] === 'Lunas' 
                         ? 'bg-emerald-100 text-emerald-700' 
                         : 'bg-red-100 text-red-700'
                     }`}>
-                      {selectedUser["Status Pembayaran"]}
+                      {isCancelled ? 'Dibatalkan' : (selectedUser["Status Pembayaran"] || "Belum Lunas")}
                     </span>
 
                     {/* Badge Akses Acara */}
-                    {isIlmiah ? (
+                    {isDHF ? (
+                      <span className="text-[11px] sm:text-xs font-bold px-2.5 py-1 bg-purple-50 text-purple-800 border border-purple-300 rounded-md shadow-xs">
+                        ✨ Akses: Hari 1 - Diabetes Health Forum (Novotel Bogor)
+                      </span>
+                    ) : isIlmiah ? (
                       <span className="text-[11px] sm:text-xs font-bold px-2.5 py-1 bg-emerald-50 text-emerald-800 border border-emerald-300 rounded-md shadow-xs">
                         🎫 Akses: Hari 1 (Novotel) + Hari 2 (GOR Pakansari)
                       </span>

@@ -448,6 +448,19 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
 
       if (error) throw error;
       setIsHealthTalkEnabled(newValue);
+
+      // Sinkronkan juga ke closed_categories agar form registrasi langsung menyesuaikan
+      const isCurrentlyClosed = closedCategories.includes("diabetes_health_forum");
+      if (newValue && isCurrentlyClosed) {
+        const updated = closedCategories.filter(id => id !== "diabetes_health_forum");
+        setClosedCategories(updated);
+        await supabase.from('app_settings').upsert({ key: 'closed_categories', value: JSON.stringify(updated) }, { onConflict: 'key' });
+      } else if (!newValue && !isCurrentlyClosed) {
+        const updated = [...closedCategories, "diabetes_health_forum"];
+        setClosedCategories(updated);
+        await supabase.from('app_settings').upsert({ key: 'closed_categories', value: JSON.stringify(updated) }, { onConflict: 'key' });
+      }
+
       showToast(`Pendaftaran Diabetes Health Forum berhasil ${newValue ? 'dibuka' : 'ditutup'}`);
     } catch (err: any) {
       alert("Gagal mengubah status Diabetes Health Forum: " + err.message);
@@ -489,6 +502,10 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
       } else {
         const catObj = KATEGORI_PESERTA.find(k => k.id === categoryId);
         const label = catObj ? catObj.label : categoryId;
+        if (categoryId === "diabetes_health_forum") {
+          setIsHealthTalkEnabled(isClosed);
+          await supabase.from('app_settings').upsert({ key: 'health_talk_enabled', value: isClosed.toString() }, { onConflict: 'key' });
+        }
         showToast(`Pendaftaran ${label} berhasil ${isClosed ? 'DIBUKA' : 'DITUTUP'}`);
       }
     } catch (err: any) {
@@ -1127,7 +1144,28 @@ _Panitia KONAS PERSADIA 2026_`;
       isPartiallyClosed: isAnyPestaClosed && !isAllPestaClosed,
     };
 
-    const cardData = [...scientificCardData, pestaRakyatCard];
+    const dhfItems = data.filter((d) => 
+      matchesCategory(d["Kategori Peserta"] || "", "Diabetes Health Forum") ||
+      (d["Akses Kegiatan"] && d["Akses Kegiatan"].includes("Health Forum")) ||
+      (d.ikut_health_talk === true)
+    );
+
+    const dhfCard = {
+      id: "diabetes_health_forum",
+      name: "Diabetes Health Forum",
+      total: dhfItems.length,
+      lunas: dhfItems.filter((d) => d["Status Pembayaran"] === "Lunas").length,
+      menunggu: dhfItems.filter((d) => d["Status Pembayaran"] === "Menunggu Verifikasi").length,
+      batal: dhfItems.filter((d) => d["Status Pembayaran"] === "Dibatalkan").length,
+      onsite: dhfItems.length,
+      online: 0,
+      anggota: 0,
+      umum: 0,
+      isClosed: closedCategories.includes("diabetes_health_forum"),
+      isPartiallyClosed: false,
+    };
+
+    const cardData = [...scientificCardData, dhfCard, pestaRakyatCard];
 
     const pData = cardData
       .filter((cat) => cat.total > 0)
@@ -1629,11 +1667,15 @@ _Panitia KONAS PERSADIA 2026_`;
                                   <span className={isClosed ? "text-rose-700 font-bold" : "text-emerald-700 font-bold"}>
                                     {isClosed ? "DITUTUP" : "DIBUKA"}
                                   </span>
-                                  {k.akses === "pesta_rakyat" && (
+                                  {k.id === "diabetes_health_forum" ? (
+                                    <span className="px-1.5 py-0.2 bg-purple-100 text-purple-800 rounded font-semibold text-[9px]">
+                                      Novotel Ballroom
+                                    </span>
+                                  ) : k.akses === "pesta_rakyat" ? (
                                     <span className="px-1.5 py-0.2 bg-amber-100 text-amber-800 rounded font-semibold text-[9px]">
                                       Pesta Rakyat
                                     </span>
-                                  )}
+                                  ) : null}
                                 </div>
                               </div>
 

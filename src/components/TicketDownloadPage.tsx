@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent } from "react";
-import { ArrowLeft, Search, Download, Copy, Check, Loader2, AlertCircle, HelpCircle, QrCode, Stethoscope, Sparkles } from "lucide-react";
+import { ArrowLeft, Search, Download, Copy, Check, Loader2, AlertCircle, HelpCircle, QrCode, Stethoscope, Sparkles, XCircle, AlertTriangle, Ban, MessageCircle } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { toJpeg } from "html-to-image";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
@@ -79,6 +79,18 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
       kat.includes("umum") ||
       keg.includes("pesta rakyat")
     );
+  };
+
+  const isCancelledParticipant = (row: any): boolean => {
+    if (!row) return false;
+    const status = (row.status_pembayaran || "").toLowerCase();
+    return status.includes("batal") || status.includes("cancel");
+  };
+
+  const isDhfParticipant = (row: any): boolean => {
+    const kat = (row?.kategori_peserta || "").toLowerCase();
+    const keg = (row?.pilihan_kegiatan || "").toLowerCase();
+    return kat.includes("health forum") || keg.includes("health forum") || keg.includes("health talk");
   };
 
   // Cek parameter dari URL dan hash saat inisialisasi
@@ -268,6 +280,10 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
 
   const downloadTicketImage = async () => {
     if (!selectedParticipant) return;
+    if (isCancelledParticipant(selectedParticipant)) {
+      alert("Tiket pendaftaran ini telah dibatalkan oleh panitia dan tidak dapat diunduh.");
+      return;
+    }
     setIsDownloading(true);
     try {
       const el = document.getElementById("universal-badge-print-area");
@@ -559,44 +575,78 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
                 </div>
 
                 <div className="space-y-3">
-                  {participants.map((p, idx) => (
-                    <div
-                      key={p.id || idx}
-                      className="bg-white border border-slate-200 hover:border-[#00B4AC] rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
-                    >
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="w-5 h-5 bg-slate-100 rounded-full text-[10px] font-bold text-slate-600 flex items-center justify-center">
-                            {idx + 1}
-                          </span>
-                          <h4 className="font-black text-sm sm:text-base text-slate-900 uppercase">
-                            {p.nama_lengkap}
-                          </h4>
-                        </div>
-                        <div className="flex flex-wrap gap-1.5 text-[11px]">
-                          <span className="font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold">
-                            {p.no_registrasi}
-                          </span>
-                          <span className="bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded font-semibold">
-                            {p.kategori_peserta}
-                          </span>
-                          {p.institusi && p.institusi !== "-" && (
-                            <span className="bg-slate-50 text-slate-600 px-2 py-0.5 rounded font-medium">
-                              {p.institusi}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() => setSelectedParticipant(p)}
-                        className="w-full sm:w-auto px-4 py-2 bg-[#0B3D5E] hover:bg-[#082d46] text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
+                  {participants.map((p, idx) => {
+                    const isCancelled = isCancelledParticipant(p);
+                    return (
+                      <div
+                        key={p.id || idx}
+                        className={`bg-white border rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
+                          isCancelled
+                            ? "border-rose-200 bg-rose-50/20 hover:border-rose-300"
+                            : "border-slate-200 hover:border-[#00B4AC]"
+                        }`}
                       >
-                        <QrCode className="h-3.5 w-3.5" />
-                        <span>Buka Tiket</span>
-                      </button>
-                    </div>
-                  ))}
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center ${
+                                isCancelled ? "bg-rose-100 text-rose-700" : "bg-slate-100 text-slate-600"
+                              }`}
+                            >
+                              {idx + 1}
+                            </span>
+                            <h4 className="font-black text-sm sm:text-base text-slate-900 uppercase">
+                              {p.nama_lengkap}
+                            </h4>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                            <span className="font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold">
+                              {p.no_registrasi}
+                            </span>
+                            <span className="bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded font-semibold">
+                              {p.kategori_peserta}
+                            </span>
+                            {p.institusi && p.institusi !== "-" && (
+                              <span className="bg-slate-50 text-slate-600 px-2 py-0.5 rounded font-medium">
+                                {p.institusi}
+                              </span>
+                            )}
+                            {isCancelled ? (
+                              <span className="bg-rose-100 text-rose-700 border border-rose-300 px-2 py-0.5 rounded font-black uppercase text-[10px] flex items-center gap-1">
+                                <XCircle className="w-3 h-3 text-rose-600" />
+                                Dibatalkan
+                              </span>
+                            ) : (
+                              <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded font-semibold text-[10px]">
+                                {p.status_pembayaran || "Terverifikasi Lunas"}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => setSelectedParticipant(p)}
+                          className={`w-full sm:w-auto px-4 py-2 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 shrink-0 cursor-pointer ${
+                            isCancelled
+                              ? "bg-rose-700 hover:bg-rose-800"
+                              : "bg-[#0B3D5E] hover:bg-[#082d46]"
+                          }`}
+                        >
+                          {isCancelled ? (
+                            <>
+                              <AlertCircle className="h-3.5 w-3.5" />
+                              <span>Lihat Status Tiket</span>
+                            </>
+                          ) : (
+                            <>
+                              <QrCode className="h-3.5 w-3.5" />
+                              <span>Buka Tiket</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ) : selectedParticipant ? (
@@ -612,13 +662,44 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
                   </button>
                 )}
 
+                {/* Alert Banner jika Dibatalkan */}
+                {isCancelledParticipant(selectedParticipant) && (
+                  <div className="bg-rose-50 border-2 border-rose-300 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 text-left text-rose-950 shadow-sm animate-in fade-in duration-300">
+                    <div className="p-2 bg-rose-100 text-rose-700 rounded-xl shrink-0 mt-0.5">
+                      <AlertTriangle className="w-5 h-5 text-rose-600" />
+                    </div>
+                    <div className="space-y-1.5 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-black text-sm sm:text-base text-rose-900 uppercase">
+                          Status Pendaftaran: Dibatalkan
+                        </h4>
+                        <span className="bg-rose-200 text-rose-900 border border-rose-300 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase">
+                          Tiket Tidak Aktif
+                        </span>
+                      </div>
+                      <p className="text-xs sm:text-sm text-rose-800 leading-relaxed">
+                        Pendaftaran dengan nomor registrasi <strong>{selectedParticipant.no_registrasi}</strong> atas nama <strong>{selectedParticipant.nama_lengkap}</strong> berstatus <strong>Dibatalkan</strong> oleh panitia (misal: duplikasi data, pembatalan pendaftaran, atau revisi kepesertaan).
+                      </p>
+                      <p className="text-xs text-rose-700">
+                        QR Code check-in dinonaktifkan sehingga tiket ini <strong>tidak dapat digunakan untuk akses masuk</strong> lokasi acara. Jika Anda membutuhkan klarifikasi atau merasa ini kekeliruan data, silakan klik tombol bantuan panitia di bawah.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* E-Ticket Card Preview */}
-                <div className="bg-white rounded-3xl border-2 border-slate-900 overflow-hidden shadow-2xl">
+                <div className={`bg-white rounded-3xl border-2 overflow-hidden shadow-2xl ${
+                  isCancelledParticipant(selectedParticipant) ? "border-rose-400" : "border-slate-900"
+                }`}>
                   {/* Ticket Header */}
                   <div
                     className="text-white px-6 py-5"
                     style={{
-                      background: isIlmiahParticipant(selectedParticipant)
+                      background: isCancelledParticipant(selectedParticipant)
+                        ? "linear-gradient(135deg, #991b1b 0%, #dc2626 100%)"
+                        : isDhfParticipant(selectedParticipant)
+                        ? "linear-gradient(135deg, #7c3aed 0%, #00B4AC 100%)"
+                        : isIlmiahParticipant(selectedParticipant)
                         ? "linear-gradient(135deg, #0B3D5E 0%, #00B4AC 100%)"
                         : "linear-gradient(135deg, #ea580c 0%, #f97316 100%)",
                     }}
@@ -636,14 +717,22 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
                         <div>
                           <h2 className="text-base font-black tracking-wider leading-tight">KONAS PERSADIA 2026</h2>
                           <p className="text-[10px] text-white/90 uppercase tracking-widest mt-0.5 font-bold">
-                            {isIlmiahParticipant(selectedParticipant)
+                            {isDhfParticipant(selectedParticipant)
+                              ? "Diabetes Health Forum • Novotel Bogor"
+                              : isIlmiahParticipant(selectedParticipant)
                               ? "Simposium & Workshop • Novotel Bogor"
                               : "Pesta Rakyat • Stadion Pakansari Bogor"}
                           </p>
                         </div>
                       </div>
                       <div className="bg-white/20 px-3 py-1 rounded-full text-[10px] font-black tracking-wider uppercase border border-white/30">
-                        {isIlmiahParticipant(selectedParticipant) ? "E-TICKET ILMIAH" : "E-TICKET PESTA RAKYAT"}
+                        {isCancelledParticipant(selectedParticipant)
+                          ? "E-TICKET DIBATALKAN"
+                          : isDhfParticipant(selectedParticipant)
+                          ? "E-TICKET HEALTH FORUM"
+                          : isIlmiahParticipant(selectedParticipant)
+                          ? "E-TICKET ILMIAH"
+                          : "E-TICKET PESTA RAKYAT"}
                       </div>
                     </div>
                   </div>
@@ -674,48 +763,89 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
                         {selectedParticipant.kategori_peserta}
                       </div>
                       <div className="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-bold uppercase tracking-wider">
-                        {isIlmiahParticipant(selectedParticipant)
+                        {isDhfParticipant(selectedParticipant)
+                          ? "Health Forum (Novotel)"
+                          : isIlmiahParticipant(selectedParticipant)
                           ? "Sesi Ilmiah (Novotel)"
                           : "Pesta Rakyat (Pakansari)"}
                       </div>
-                      <div className="px-3 py-1 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-800 text-[11px] font-black uppercase tracking-wider">
-                        {selectedParticipant.status_pembayaran || "Terverifikasi Lunas"}
-                      </div>
+                      {isCancelledParticipant(selectedParticipant) ? (
+                        <div className="px-3 py-1 rounded-full bg-rose-100 border border-rose-300 text-rose-800 text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5">
+                          <XCircle className="w-3.5 h-3.5 text-rose-600" />
+                          <span>Status: Dibatalkan</span>
+                        </div>
+                      ) : (
+                        <div className="px-3 py-1 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-800 text-[11px] font-black uppercase tracking-wider">
+                          {selectedParticipant.status_pembayaran || "Terverifikasi Lunas"}
+                        </div>
+                      )}
                     </div>
 
                     {/* QR Code Container */}
-                    <div className="p-4 bg-white rounded-2xl border-2 border-slate-900 flex flex-col items-center w-full max-w-[260px] shadow-sm my-2">
-                      <QRCodeSVG
-                        value={`${window.location.origin}/scanner.html?id=${selectedParticipant.no_registrasi}`}
-                        size={190}
-                        level="H"
-                        includeMargin
-                      />
-                      <div className="mt-3 text-center border-t border-slate-200 pt-2 w-full">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
-                          NOMOR REGISTRASI
+                    {isCancelledParticipant(selectedParticipant) ? (
+                      <div className="p-6 bg-rose-50/70 rounded-2xl border-2 border-dashed border-rose-300 flex flex-col items-center w-full max-w-[280px] shadow-sm my-2 text-center">
+                        <div className="w-16 h-16 rounded-full bg-rose-100 border border-rose-200 flex items-center justify-center text-rose-600 mb-2">
+                          <Ban className="h-8 w-8" />
+                        </div>
+                        <span className="text-xs font-black text-rose-900 uppercase tracking-wider">
+                          QR CODE NONAKTIF
                         </span>
-                        <div className="flex items-center justify-center gap-1.5 mt-0.5">
-                          <strong className="text-base font-mono font-black text-slate-900 tracking-wider">
+                        <p className="text-[11px] text-rose-700 mt-1 leading-snug">
+                          Tiket telah dibatalkan &amp; tidak dapat digunakan untuk presensi/check-in di lokasi acara.
+                        </p>
+                        <div className="mt-4 text-center border-t border-rose-200 pt-2.5 w-full">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
+                            NOMOR REGISTRASI (ARSIP)
+                          </span>
+                          <strong className="text-base font-mono font-black text-slate-400 line-through tracking-wider block mt-0.5">
                             {selectedParticipant.no_registrasi}
                           </strong>
-                          <button
-                            onClick={() => copyToClipboard(selectedParticipant.no_registrasi)}
-                            className="p-1 text-slate-400 hover:text-slate-800 transition cursor-pointer"
-                            title="Salin Nomor Registrasi"
-                          >
-                            {copiedId === selectedParticipant.no_registrasi ? (
-                              <Check className="h-4 w-4 text-emerald-600" />
-                            ) : (
-                              <Copy className="h-4 w-4" />
-                            )}
-                          </button>
                         </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="p-4 bg-white rounded-2xl border-2 border-slate-900 flex flex-col items-center w-full max-w-[260px] shadow-sm my-2">
+                        <QRCodeSVG
+                          value={`${window.location.origin}/scanner.html?id=${selectedParticipant.no_registrasi}`}
+                          size={190}
+                          level="H"
+                          includeMargin
+                        />
+                        <div className="mt-3 text-center border-t border-slate-200 pt-2 w-full">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
+                            NOMOR REGISTRASI
+                          </span>
+                          <div className="flex items-center justify-center gap-1.5 mt-0.5">
+                            <strong className="text-base font-mono font-black text-slate-900 tracking-wider">
+                              {selectedParticipant.no_registrasi}
+                            </strong>
+                            <button
+                              onClick={() => copyToClipboard(selectedParticipant.no_registrasi)}
+                              className="p-1 text-slate-400 hover:text-slate-800 transition cursor-pointer"
+                              title="Salin Nomor Registrasi"
+                            >
+                              {copiedId === selectedParticipant.no_registrasi ? (
+                                <Check className="h-4 w-4 text-emerald-600" />
+                              ) : (
+                                <Copy className="h-4 w-4" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="text-xs text-slate-500 max-w-sm leading-relaxed">
-                      {isIlmiahParticipant(selectedParticipant) ? (
+                      {isDhfParticipant(selectedParticipant) ? (
+                        <>
+                          📅 <strong>Sabtu, 7 November 2026</strong> (08.00 WIB - Selesai)
+                          <br />
+                          📍 <strong>Novotel Bogor Golf Resort &amp; Convention Center</strong> (Ballroom 2)
+                          <br />
+                          <span className="text-[11px] text-purple-700 font-semibold block mt-1">
+                            *Talkshow Edukasi Interaktif bersama dr. Boyke Dian Nugraha, SpOG
+                          </span>
+                        </>
+                      ) : isIlmiahParticipant(selectedParticipant) ? (
                         <>
                           📅 <strong>Sabtu, 7 November 2026</strong> (07.30 WIB - Selesai)
                           <br />
@@ -737,26 +867,48 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
 
                   {/* Ticket Footer Action Bar */}
                   <div className="bg-slate-900 text-white p-5 flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <p className="text-[11px] text-amber-400 font-bold text-center sm:text-left">
-                      💡 Simpan gambar e-tiket ini di galeri HP Anda dan tunjukkan saat registrasi ulang.
-                    </p>
-                    <button
-                      onClick={downloadTicketImage}
-                      disabled={isDownloading}
-                      className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white text-xs font-black rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 whitespace-nowrap"
-                    >
-                      {isDownloading ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>Menyiapkan Gambar...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Download className="h-4 w-4" />
-                          <span>Unduh Gambar Tiket (JPG)</span>
-                        </>
-                      )}
-                    </button>
+                    {isCancelledParticipant(selectedParticipant) ? (
+                      <>
+                        <p className="text-[11px] text-rose-300 font-bold text-center sm:text-left flex items-center justify-center sm:justify-start gap-1.5">
+                          <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
+                          <span>E-Ticket dibatalkan sehingga pengunduhan berkas tiket dinonaktifkan.</span>
+                        </p>
+                        <a
+                          href={`https://wa.me/${KONTAK_PANITIA.whatsapp.replace(/\D/g, "").replace(/^0/, "62")}?text=${encodeURIComponent(
+                            `Halo Panitia KONAS PERSADIA 2026, saya ingin menanyakan mengenai pendaftaran saya yang berstatus Dibatalkan.\n\nNo. Registrasi: ${selectedParticipant.no_registrasi}\nNama: ${selectedParticipant.nama_lengkap}\nKategori: ${selectedParticipant.kategori_peserta}`
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full sm:w-auto px-5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-black rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                          <span>Hubungi Bantuan Panitia (WA)</span>
+                        </a>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-[11px] text-amber-400 font-bold text-center sm:text-left">
+                          💡 Simpan gambar e-tiket ini di galeri HP Anda dan tunjukkan saat registrasi ulang.
+                        </p>
+                        <button
+                          onClick={downloadTicketImage}
+                          disabled={isDownloading}
+                          className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white text-xs font-black rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 whitespace-nowrap"
+                        >
+                          {isDownloading ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <span>Menyiapkan Gambar...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Download className="h-4 w-4" />
+                              <span>Unduh Gambar Tiket (JPG)</span>
+                            </>
+                          )}
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -784,7 +936,7 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
       </footer>
 
       {/* Hidden Render Container for High-Resolution Image Export (html-to-image) */}
-      {selectedParticipant && (
+      {selectedParticipant && !isCancelledParticipant(selectedParticipant) && (
         <div
           id="universal-badge-print-area"
           style={{
@@ -804,7 +956,7 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
             <div
               className="px-6 py-5 text-white"
               style={{
-                backgroundColor: isIlmiahParticipant(selectedParticipant) ? "#0B3D5E" : "#ea580c",
+                backgroundColor: isDhfParticipant(selectedParticipant) ? "#7c3aed" : isIlmiahParticipant(selectedParticipant) ? "#0B3D5E" : "#ea580c",
               }}
             >
               <div className="flex justify-between items-center">
@@ -820,14 +972,20 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
                   <div>
                     <h2 className="text-base font-black tracking-wider leading-tight">KONAS PERSADIA 2026</h2>
                     <p className="text-[10px] opacity-90 uppercase tracking-widest mt-0.5">
-                      {isIlmiahParticipant(selectedParticipant)
+                      {isDhfParticipant(selectedParticipant)
+                        ? "Diabetes Health Forum • Novotel Bogor"
+                        : isIlmiahParticipant(selectedParticipant)
                         ? "Simposium & Workshop • Novotel Bogor"
                         : "Pesta Rakyat • Stadion Pakansari Bogor"}
                     </p>
                   </div>
                 </div>
                 <div className="bg-white/20 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase border border-white/30">
-                  {isIlmiahParticipant(selectedParticipant) ? "E-TICKET ILMIAH" : "E-TICKET PESTA RAKYAT"}
+                  {isDhfParticipant(selectedParticipant)
+                    ? "E-TICKET HEALTH FORUM"
+                    : isIlmiahParticipant(selectedParticipant)
+                    ? "E-TICKET ILMIAH"
+                    : "E-TICKET PESTA RAKYAT"}
                 </div>
               </div>
             </div>
@@ -856,7 +1014,9 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
                   {selectedParticipant.kategori_peserta}
                 </div>
                 <div className="px-3.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-bold uppercase tracking-wider">
-                  {isIlmiahParticipant(selectedParticipant)
+                  {isDhfParticipant(selectedParticipant)
+                    ? "Health Forum (Novotel)"
+                    : isIlmiahParticipant(selectedParticipant)
                     ? "Sesi Ilmiah (Novotel)"
                     : "Pesta Rakyat (Pakansari)"}
                 </div>
@@ -880,7 +1040,9 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
               </div>
 
               <div className="text-[11px] text-slate-500">
-                {isIlmiahParticipant(selectedParticipant)
+                {isDhfParticipant(selectedParticipant)
+                  ? "Sabtu, 7 November 2026 • Novotel Bogor Golf Resort"
+                  : isIlmiahParticipant(selectedParticipant)
                   ? "Sabtu, 7 November 2026 • Novotel Bogor Golf Resort"
                   : "Minggu, 8 November 2026 • Stadion Pakansari Cibinong"}
               </div>

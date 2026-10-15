@@ -1,5 +1,5 @@
 import { useState, useEffect, type ReactNode } from "react";
-import { ArrowLeft, ChevronRight, Copy, Download, Loader2, CheckCircle2, Clock, AlertCircle, X, MessageCircle, BookOpen } from "lucide-react";
+import { ArrowLeft, ChevronRight, Copy, Download, Loader2, CheckCircle2, Clock, AlertCircle, X, MessageCircle, BookOpen, Sparkles } from "lucide-react";
 import {
   KATEGORI_PESERTA, EVENT_INFO, REKENING_PEMBAYARAN,
   VOUCHER_DOKTER_UMUM_CONFIG, DIABETES_HEALTH_FORUM_CONFIG, KONTAK_PANITIA
@@ -200,6 +200,8 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
         const h = pilihanKegiatan === "Symposium" ? kat.hargaSymposium : kat.hargaSymposiumWorkshop;
         if (h) price = eb ? h.earlyBird : h.onsite;
       }
+    } else if (kat.id === "diabetes_health_forum") {
+      price = DIABETES_HEALTH_FORUM_CONFIG.biaya || 200000;
     } else if (kat.id === "persadia") {
       price = ikutHealthTalk ? DIABETES_HEALTH_FORUM_CONFIG.biaya : 0;
     } else if (kat.id === "umum") {
@@ -262,7 +264,7 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
     if (email.trim() && !email.includes("@")) return setError("Format email tidak valid.");
     if (!whatsapp.trim() || whatsapp.length < 9) return setError("Nomor WhatsApp yang valid wajib diisi.");
     const f = kat.fieldTambahan;
-    if (f.includes("institusi") && !institusi.trim()) return setError("Institusi wajib diisi.");
+    if (f.includes("institusi") && kat.id !== "diabetes_health_forum" && !institusi.trim()) return setError("Institusi wajib diisi.");
     if (f.includes("nim") && !nim.trim()) return setError("NIM wajib diisi.");
     if (f.includes("cabangPersadia") && !cabangPersadia.trim()) return setError("Cabang PERSADIA wajib diisi.");
     if (f.includes("namaKetuaCabang") && !namaKetuaCabang.trim()) return setError("Nama Ketua Cabang wajib diisi.");
@@ -313,6 +315,8 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
         } else {
           kegiatan = pilihanKegiatan;
         }
+      } else if (kat.id === "diabetes_health_forum") {
+        kegiatan = "Diabetes Health Forum";
       } else if (kat.id === "persadia") {
         kegiatan = ikutHealthTalk ? "Pesta Rakyat + Diabetes Health Forum" : "Pesta Rakyat";
       } else if (kat.id === "umum") {
@@ -421,6 +425,7 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
 
   const isPaid = Boolean(successData && (successData.totalAkhir > 0 || kat.akses === "ilmiah"));
   const hargaTampil = (k: typeof KATEGORI_PESERTA[number]) => {
+    if (k.id === "diabetes_health_forum") return rupiah(DIABETES_HEALTH_FORUM_CONFIG.biaya || 200000);
     if (k.akses === "pesta_rakyat") return k.id === "persadia" ? "Gratis" : "Mulai Gratis";
     if (k.id === "dokter_fktp") return isFktpOnlineHidden ? "Rp 600.000" : "Mulai Rp 300.000";
     const h = k.id === "perawat" ? k.hargaWorkshop || k.hargaSymposiumWorkshop : k.hargaSymposiumWorkshop || k.hargaSymposium;
@@ -467,7 +472,9 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
             )}
           </div>
           <span className="text-xs text-slate-500 block mt-0.5">
-            {k.akses === "ilmiah"
+            {k.id === "diabetes_health_forum"
+              ? "Talkshow interaktif bersama dr. Boyke Dian Nugraha, SpOG & Temu Tokoh Diabetisi (Novotel Bogor)"
+              : k.akses === "ilmiah"
               ? (k.id === "dokter_fktp"
                   ? (isFktpOnlineHidden
                       ? "Sesi tata laksana & deteksi dini FKTP (Novotel Bogor)"
@@ -477,7 +484,7 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
                   : k.id === "perawat"
                   ? "Khusus workshop medis terapan"
                   : "Akses simposium & workshop ilmiah")
-              : (k.id === "persadia" ? "Gratis bagi anggota cabang PERSADIA" : "Pesta Rakyat & Diabetes Health Forum")}
+              : (k.id === "persadia" ? "Gratis bagi anggota cabang PERSADIA" : "Pesta Rakyat (Senam Massal & Skrining)")}
           </span>
         </div>
         <div className="shrink-0 flex items-center gap-2">
@@ -558,10 +565,18 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
             </section>
 
             <section className="space-y-2.5 pt-2">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                2. Pesta Rakyat &amp; Diabetes Health Forum · Stadion Pakansari
+              <h2 className="text-xs font-bold uppercase tracking-wider text-purple-800 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                2. Edukasi Awam: Diabetes Health Forum · Novotel Bogor (7 Nov 2026)
               </h2>
-              {KATEGORI_PESERTA.filter((k) => k.akses === "pesta_rakyat").map(kategoriRow)}
+              {KATEGORI_PESERTA.filter((k) => k.id === "diabetes_health_forum").map(kategoriRow)}
+            </section>
+
+            <section className="space-y-2.5 pt-2">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                3. Pesta Rakyat (Senam Massal &amp; Skrining) · Stadion Pakansari (8 Nov 2026)
+              </h2>
+              {KATEGORI_PESERTA.filter((k) => k.akses === "pesta_rakyat" && k.id !== "diabetes_health_forum").map(kategoriRow)}
             </section>
           </div>
         )}
@@ -619,8 +634,17 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
               </Field>
 
               {kat.fieldTambahan.includes("institusi") && (
-                <Field label="Institusi / tempat bertugas" required>
-                  <input className={inputCls} value={institusi} onChange={(e) => setInstitusi(e.target.value)} />
+                <Field
+                  label={kat.id === "diabetes_health_forum" ? "Institusi / Asal Cabang / Kota" : "Institusi / tempat bertugas"}
+                  required={kat.id !== "diabetes_health_forum"}
+                  optional={kat.id === "diabetes_health_forum"}
+                >
+                  <input
+                    className={inputCls}
+                    value={institusi}
+                    onChange={(e) => setInstitusi(e.target.value)}
+                    placeholder={kat.id === "diabetes_health_forum" ? "Contoh: PERSADIA Bogor / RSUD / Mandiri" : ""}
+                  />
                 </Field>
               )}
               {kat.fieldTambahan.includes("nim") && (
@@ -986,7 +1010,11 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
               <div className="flex flex-wrap justify-center gap-2 mb-4 w-full">
                 <div className="px-3.5 py-1 rounded-full border border-slate-300 text-[11px] font-black uppercase tracking-wider text-slate-700 bg-slate-50">{kat.label}</div>
                 <div className="px-3.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-bold uppercase tracking-wider">
-                  {kat.akses === "ilmiah" ? "Sesi Ilmiah (Novotel)" : "Pesta Rakyat (Pakansari)"}
+                  {kat.id === "diabetes_health_forum"
+                    ? "Diabetes Health Forum (Novotel)"
+                    : kat.akses === "ilmiah"
+                    ? "Sesi Ilmiah (Novotel)"
+                    : "Pesta Rakyat (Pakansari)"}
                 </div>
               </div>
               <div className="my-auto p-4 bg-white rounded-2xl border-2 border-slate-900 flex flex-col items-center w-full max-w-[270px]">
@@ -1041,7 +1069,11 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
                   Mohon maaf, pendaftaran untuk kategori{" "}
                   <strong className="text-slate-900">{closedModalCategory.label}</strong> saat ini telah resmi ditutup karena jumlah pendaftar telah mencapai batas kapasitas kuota maksimal yang disediakan panitia.
                 </p>
-                {closedModalCategory.akses === "pesta_rakyat" ? (
+                {closedModalCategory.id === "diabetes_health_forum" ? (
+                  <div className="text-xs text-slate-600 bg-purple-50 p-3 rounded-xl border border-purple-200 leading-relaxed">
+                    🏛️ Kapasitas ruang talkshow <strong>Diabetes Health Forum di Novotel Bogor</strong> telah mencapai kuota maksimal.
+                  </div>
+                ) : closedModalCategory.akses === "pesta_rakyat" ? (
                   <div className="text-xs text-slate-600 bg-amber-50/70 p-3 rounded-xl border border-amber-200/80 leading-relaxed">
                     🎉 <strong className="text-amber-950">Antusiasme Luar Biasa:</strong> Banyaknya peserta yang mendaftar pada <strong>Pesta Rakyat di Stadion Pakansari</strong> membuat kuota terisi dengan sangat cepat. Panitia saat ini membatasi pendaftaran baru demi menjaga kenyamanan, keamanan, dan kelancaran seluruh peserta.
                   </div>
