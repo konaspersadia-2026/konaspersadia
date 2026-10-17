@@ -10,7 +10,8 @@ import {
   Loader2, LogOut, CheckSquare, XCircle, MessageCircle, Activity, X,
   Ticket, Copy, Check, Plus, RefreshCw, Share2, Sparkles, Trash2, Filter,
   Download, Eye, ExternalLink, Calendar, MapPin, Building, CreditCard,
-  UserCheck, RotateCcw, AlertTriangle, SlidersHorizontal, Power, AlertCircle, Video
+  UserCheck, RotateCcw, AlertTriangle, SlidersHorizontal, Power, AlertCircle, Video,
+  Pencil, Save
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -172,6 +173,18 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
 
   // Participant Detail Modal
   const [selectedParticipant, setSelectedParticipant] = useState<Pendaftar | null>(null);
+  const [isEditingParticipant, setIsEditingParticipant] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    namaLengkap: "",
+    whatsapp: "",
+    jenisKelamin: "Laki-laki",
+    tanggalLahir: "",
+    institusi: "",
+    cabangPersadia: "",
+    email: ""
+  });
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   // Status Action & Dialogs
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
@@ -619,6 +632,139 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
       setActionError("Terjadi kesalahan jaringan saat update status: " + err.message);
     } finally {
       setActionLoadingId(null);
+    }
+  };
+
+  const handleStartEdit = (p: Pendaftar) => {
+    let tgl = p.tanggal_lahir || "";
+    if (tgl === "-" || !/^\d{4}-\d{2}-\d{2}$/.test(tgl)) {
+      tgl = "";
+    }
+
+    setEditFormData({
+      namaLengkap: p["Nama Lengkap"] === "-" ? "" : p["Nama Lengkap"],
+      whatsapp: (p["No. WhatsApp"] && p["No. WhatsApp"] !== "-") ? p["No. WhatsApp"].replace(/\D/g, "") : "",
+      jenisKelamin: p.jenis_kelamin && p.jenis_kelamin !== "-" ? p.jenis_kelamin : "Laki-laki",
+      tanggalLahir: tgl,
+      institusi: p.Institusi && p.Institusi !== "-" ? p.Institusi : "",
+      cabangPersadia: p.CabangPersadia && p.CabangPersadia !== "-" ? p.CabangPersadia : "",
+      email: p.Email && p.Email !== "-" ? p.Email : ""
+    });
+    setEditError(null);
+    setIsEditingParticipant(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingParticipant(false);
+    setEditError(null);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedParticipant) return;
+    const regId = selectedParticipant["No. Registrasi"];
+
+    // 1. Validasi Nama
+    const cleanNama = editFormData.namaLengkap.trim();
+    if (!cleanNama) {
+      setEditError("Nama lengkap peserta wajib diisi.");
+      return;
+    }
+
+    // 2. Validasi & Sanitasi Nomor WhatsApp
+    let rawDigits = editFormData.whatsapp.replace(/\D/g, "");
+    if (!rawDigits) {
+      setEditError("Nomor WhatsApp peserta wajib diisi.");
+      return;
+    }
+    if (rawDigits.startsWith("62")) {
+      rawDigits = "0" + rawDigits.slice(2);
+    }
+    if (!rawDigits.startsWith("08")) {
+      setEditError("Nomor WhatsApp harus berawalan 08 atau 62.");
+      return;
+    }
+    if (rawDigits.length < 9 || rawDigits.length > 15) {
+      setEditError("Nomor WhatsApp harus terdiri dari 9 hingga 15 digit angka.");
+      return;
+    }
+
+    setIsSavingEdit(true);
+    setEditError(null);
+
+    try {
+      const updatePayload: Record<string, any> = {
+        nama_lengkap: cleanNama,
+        whatsapp: rawDigits,
+        jenis_kelamin: editFormData.jenisKelamin,
+        tanggal_lahir: editFormData.tanggalLahir || null,
+        institusi: editFormData.institusi.trim() || "-",
+        cabang_persadia: editFormData.cabangPersadia.trim() || "-",
+        email: editFormData.email.trim() || "-"
+      };
+
+      const { error: updateError } = await supabase
+        .from('pendaftar')
+        .update(updatePayload)
+        .eq('no_registrasi', regId);
+
+      if (updateError) throw updateError;
+
+      // 3. Update data state lokal & search index
+      setData(prev => prev.map(item => {
+        if (item["No. Registrasi"] !== regId) return item;
+
+        const searchTerms = [
+          regId,
+          cleanNama,
+          updatePayload.email,
+          rawDigits,
+          updatePayload.institusi,
+          updatePayload.cabang_persadia,
+          item.NamaKetuaCabang,
+          item.KodeVoucher,
+          item["Kategori Peserta"],
+          item.nim,
+          item.KotaKabupaten,
+          item.Provinsi,
+          item["Akses Kegiatan"]
+        ];
+        const searchIndex = searchTerms.filter(Boolean).join(" ").toLowerCase();
+
+        return {
+          ...item,
+          "Nama Lengkap": cleanNama,
+          "No. WhatsApp": rawDigits,
+          jenis_kelamin: editFormData.jenisKelamin,
+          tanggal_lahir: editFormData.tanggalLahir || "-",
+          Institusi: updatePayload.institusi,
+          CabangPersadia: updatePayload.cabang_persadia,
+          Email: updatePayload.email,
+          _searchIndex: searchIndex
+        };
+      }));
+
+      // Update selectedParticipant di modal agar langsung sinkron
+      setSelectedParticipant(prev => {
+        if (!prev || prev["No. Registrasi"] !== regId) return prev;
+        return {
+          ...prev,
+          "Nama Lengkap": cleanNama,
+          "No. WhatsApp": rawDigits,
+          jenis_kelamin: editFormData.jenisKelamin,
+          tanggal_lahir: editFormData.tanggalLahir || "-",
+          Institusi: updatePayload.institusi,
+          CabangPersadia: updatePayload.cabang_persadia,
+          Email: updatePayload.email
+        };
+      });
+
+      setIsEditingParticipant(false);
+      showToast(`Data peserta ${cleanNama} (${regId}) berhasil diperbarui!`);
+    } catch (err: any) {
+      console.error("Gagal update data peserta:", err);
+      setEditError("Gagal menyimpan perubahan: " + err.message);
+    } finally {
+      setIsSavingEdit(false);
     }
   };
 
@@ -2184,6 +2330,18 @@ _Panitia KONAS PERSADIA 2026_`;
                                       {isLunas ? "E-Tiket WA" : isDibatalkan ? "Chat WA" : "Tagih WA"}
                                     </button>
 
+                                    {/* Action: Quick Edit */}
+                                    <button
+                                      onClick={() => {
+                                        setSelectedParticipant(row);
+                                        handleStartEdit(row);
+                                      }}
+                                      className="p-1.5 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
+                                      title="Edit Data Peserta (Nama, No HP, dll)"
+                                    >
+                                      <Pencil className="w-4 h-4" />
+                                    </button>
+
                                     {/* Action: Detail Modal */}
                                     <button
                                       onClick={() => setSelectedParticipant(row)}
@@ -2616,16 +2774,29 @@ _Panitia KONAS PERSADIA 2026_`;
             {/* Modal Header */}
             <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
               <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-xs">
-                  <UserCheck className="w-5 h-5" />
+                <div className={`h-9 w-9 ${isEditingParticipant ? 'bg-amber-600' : 'bg-blue-600'} rounded-xl flex items-center justify-center text-white shadow-xs transition-colors`}>
+                  {isEditingParticipant ? <Pencil className="w-5 h-5" /> : <UserCheck className="w-5 h-5" />}
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-800 text-base leading-tight">Detail Lengkap Peserta</h3>
-                  <span className="font-mono text-xs text-blue-700 font-bold">{selectedParticipant["No. Registrasi"]}</span>
+                  <h3 className="font-bold text-slate-800 text-base leading-tight">
+                    {isEditingParticipant ? "Edit Data Peserta" : "Detail Lengkap Peserta"}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="font-mono text-xs text-blue-700 font-bold">{selectedParticipant["No. Registrasi"]}</span>
+                    {isEditingParticipant && (
+                      <span className="px-1.5 py-0.2 bg-amber-100 text-amber-800 rounded font-bold text-[10px]">
+                        Mode Edit
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
               <button
-                onClick={() => setSelectedParticipant(null)}
+                onClick={() => {
+                  setSelectedParticipant(null);
+                  setIsEditingParticipant(false);
+                  setEditError(null);
+                }}
                 className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-full transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
@@ -2634,7 +2805,132 @@ _Panitia KONAS PERSADIA 2026_`;
 
             {/* Modal Body */}
             <div className="p-5 overflow-y-auto space-y-4 text-xs sm:text-sm">
-              {/* Status Header Chip */}
+              {isEditingParticipant ? (
+                /* FORM EDIT PESERTA */
+                <div className="space-y-4">
+                  {/* Alert Error jika ada */}
+                  {editError && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+                      <span>{editError}</span>
+                    </div>
+                  )}
+
+                  {/* Info Box */}
+                  <div className="p-3 bg-blue-50/70 border border-blue-200/80 rounded-xl text-xs text-blue-800 flex items-start gap-2">
+                    <ShieldAlert className="w-4 h-4 shrink-0 text-blue-600 mt-0.5" />
+                    <div>
+                      <p className="font-semibold">Informasi Pengubahan Data</p>
+                      <p className="text-blue-700 text-[11px] mt-0.5">
+                        Nomor Registrasi, Kategori, dan Status Pembayaran terkunci demi integritas tiket dan transaksi.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Nama Lengkap */}
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Nama Lengkap Peserta <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={editFormData.namaLengkap}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, namaLengkap: e.target.value }))}
+                        placeholder="Contoh: dr. John Doe, Sp.PD"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      />
+                    </div>
+
+                    {/* Nomor WhatsApp */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Nomor WhatsApp <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="tel"
+                        value={editFormData.whatsapp}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, whatsapp: e.target.value.replace(/\D/g, '') }))}
+                        placeholder="Contoh: 081234567890"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono"
+                      />
+                      <span className="text-[10px] text-slate-500 block mt-0.5">Hanya angka (format 08... atau 62...)</span>
+                    </div>
+
+                    {/* Jenis Kelamin */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Jenis Kelamin
+                      </label>
+                      <select
+                        value={editFormData.jenisKelamin}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, jenisKelamin: e.target.value }))}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white cursor-pointer"
+                      >
+                        <option value="Laki-laki">Laki-laki</option>
+                        <option value="Perempuan">Perempuan</option>
+                      </select>
+                    </div>
+
+                    {/* Tanggal Lahir */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Tanggal Lahir
+                      </label>
+                      <input
+                        type="date"
+                        value={editFormData.tanggalLahir}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, tanggalLahir: e.target.value }))}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                      />
+                    </div>
+
+                    {/* Email */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Alamat Email
+                      </label>
+                      <input
+                        type="email"
+                        value={editFormData.email}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, email: e.target.value }))}
+                        placeholder="Contoh: nama@domain.com"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      />
+                    </div>
+
+                    {/* Institusi / RS */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Institusi / Rumah Sakit
+                      </label>
+                      <input
+                        type="text"
+                        value={editFormData.institusi}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, institusi: e.target.value }))}
+                        placeholder="Contoh: RSUD Cibinong / Puskesmas"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      />
+                    </div>
+
+                    {/* Cabang PERSADIA */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Cabang PERSADIA
+                      </label>
+                      <input
+                        type="text"
+                        value={editFormData.cabangPersadia}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, cabangPersadia: e.target.value }))}
+                        placeholder="Contoh: PERSADIA Cabang Bogor"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Status Header Chip */}
               <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
                 <div>
                   <span className="text-[11px] text-slate-400 uppercase font-bold block">Status Pembayaran</span>
@@ -2684,6 +2980,12 @@ _Panitia KONAS PERSADIA 2026_`;
                     <div>
                       <span className="text-slate-400 text-xs block">Jenis Kelamin</span>
                       <strong className="text-slate-800">{selectedParticipant.jenis_kelamin}</strong>
+                    </div>
+                  )}
+                  {selectedParticipant.tanggal_lahir && selectedParticipant.tanggal_lahir !== '-' && (
+                    <div>
+                      <span className="text-slate-400 text-xs block">Tanggal Lahir</span>
+                      <strong className="text-slate-800">{selectedParticipant.tanggal_lahir}</strong>
                     </div>
                   )}
                 </div>
@@ -2773,108 +3075,155 @@ _Panitia KONAS PERSADIA 2026_`;
                   </div>
                 </div>
               )}
+                </>
+              )}
             </div>
 
             {/* Modal Footer Actions */}
             <div className="px-5 py-3.5 border-t border-slate-200 bg-slate-50 flex items-center justify-between gap-2 flex-wrap">
-              <div className="flex items-center gap-2 flex-wrap">
-                {selectedParticipant["Status Pembayaran"] === 'Menunggu Verifikasi' && (
-                  <>
-                    <button
-                      onClick={() => {
-                        const p = selectedParticipant;
-                        setSelectedParticipant(null);
-                        setConfirmDialog({
-                          isOpen: true,
-                          id: p["No. Registrasi"],
-                          status: "Lunas",
-                          currentStatus: p["Status Pembayaran"],
-                          nama: p["Nama Lengkap"],
-                          totalBayar: p["Total Bayar"]
-                        });
-                      }}
-                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-xs transition-colors cursor-pointer"
-                    >
-                      Set Lunas
-                    </button>
-                    <button
-                      onClick={() => {
-                        const p = selectedParticipant;
-                        setSelectedParticipant(null);
-                        setConfirmDialog({
-                          isOpen: true,
-                          id: p["No. Registrasi"],
-                          status: "Dibatalkan",
-                          currentStatus: p["Status Pembayaran"],
-                          nama: p["Nama Lengkap"],
-                          totalBayar: p["Total Bayar"]
-                        });
-                      }}
-                      className="px-3 py-1.5 bg-white hover:bg-red-50 text-red-600 border border-slate-200 hover:border-red-300 rounded-lg font-semibold text-xs transition-colors cursor-pointer"
-                    >
-                      Batalkan
-                    </button>
-                  </>
-                )}
+              {isEditingParticipant ? (
+                <>
+                  <button
+                    onClick={handleCancelEdit}
+                    disabled={isSavingEdit}
+                    className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg font-semibold text-xs transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    Batal
+                  </button>
 
-                {selectedParticipant["Status Pembayaran"] === 'Lunas' && (
+                  <button
+                    onClick={handleSaveEdit}
+                    disabled={isSavingEdit}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-xs shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {isSavingEdit ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Menyimpan...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-3.5 h-3.5" />
+                        <span>Simpan Perubahan</span>
+                      </>
+                    )}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      onClick={() => handleStartEdit(selectedParticipant)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-semibold text-xs transition-colors cursor-pointer shadow-2xs"
+                      title="Perbaiki identitas, nomor WhatsApp, atau tanggal lahir peserta"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                      Edit Data
+                    </button>
+
+                    {selectedParticipant["Status Pembayaran"] === 'Menunggu Verifikasi' && (
+                      <>
+                        <button
+                          onClick={() => {
+                            const p = selectedParticipant;
+                            setSelectedParticipant(null);
+                            setConfirmDialog({
+                              isOpen: true,
+                              id: p["No. Registrasi"],
+                              status: "Lunas",
+                              currentStatus: p["Status Pembayaran"],
+                              nama: p["Nama Lengkap"],
+                              totalBayar: p["Total Bayar"]
+                            });
+                          }}
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-xs transition-colors cursor-pointer"
+                        >
+                          Set Lunas
+                        </button>
+                        <button
+                          onClick={() => {
+                            const p = selectedParticipant;
+                            setSelectedParticipant(null);
+                            setConfirmDialog({
+                              isOpen: true,
+                              id: p["No. Registrasi"],
+                              status: "Dibatalkan",
+                              currentStatus: p["Status Pembayaran"],
+                              nama: p["Nama Lengkap"],
+                              totalBayar: p["Total Bayar"]
+                            });
+                          }}
+                          className="px-3 py-1.5 bg-white hover:bg-red-50 text-red-600 border border-slate-200 hover:border-red-300 rounded-lg font-semibold text-xs transition-colors cursor-pointer"
+                        >
+                          Batalkan
+                        </button>
+                      </>
+                    )}
+
+                    {selectedParticipant["Status Pembayaran"] === 'Lunas' && (
+                      <button
+                        onClick={() => {
+                          const p = selectedParticipant;
+                          setSelectedParticipant(null);
+                          setConfirmDialog({
+                            isOpen: true,
+                            id: p["No. Registrasi"],
+                            status: "Dibatalkan",
+                            currentStatus: p["Status Pembayaran"],
+                            nama: p["Nama Lengkap"],
+                            totalBayar: p["Total Bayar"]
+                          });
+                        }}
+                        className="px-3 py-1.5 bg-white hover:bg-red-50 text-slate-600 hover:text-red-600 border border-slate-200 hover:border-red-300 rounded-lg font-medium text-xs transition-colors cursor-pointer"
+                        title="Batalkan Pendaftaran (misal: pendaftar ganda / duplikat)"
+                      >
+                        Batalkan Pendaftaran
+                      </button>
+                    )}
+
+                    {selectedParticipant["Status Pembayaran"] === 'Dibatalkan' && (
+                      <button
+                        onClick={() => {
+                          const p = selectedParticipant;
+                          setSelectedParticipant(null);
+                          setConfirmDialog({
+                            isOpen: true,
+                            id: p["No. Registrasi"],
+                            status: "Lunas",
+                            currentStatus: p["Status Pembayaran"],
+                            nama: p["Nama Lengkap"],
+                            totalBayar: p["Total Bayar"]
+                          });
+                        }}
+                        className="px-3 py-1.5 bg-white hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 border border-slate-200 hover:border-emerald-300 rounded-lg font-medium text-xs transition-colors cursor-pointer flex items-center gap-1"
+                        title="Pulihkan status ke Lunas"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        Pulihkan ke Lunas
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => handleSendWhatsapp(selectedParticipant)}
+                      className="px-3 py-1.5 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg font-semibold text-xs transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" />
+                      Kirim WhatsApp
+                    </button>
+                  </div>
+
                   <button
                     onClick={() => {
-                      const p = selectedParticipant;
                       setSelectedParticipant(null);
-                      setConfirmDialog({
-                        isOpen: true,
-                        id: p["No. Registrasi"],
-                        status: "Dibatalkan",
-                        currentStatus: p["Status Pembayaran"],
-                        nama: p["Nama Lengkap"],
-                        totalBayar: p["Total Bayar"]
-                      });
+                      setIsEditingParticipant(false);
+                      setEditError(null);
                     }}
-                    className="px-3 py-1.5 bg-white hover:bg-red-50 text-slate-600 hover:text-red-600 border border-slate-200 hover:border-red-300 rounded-lg font-medium text-xs transition-colors cursor-pointer"
-                    title="Batalkan Pendaftaran (misal: pendaftar ganda / duplikat)"
+                    className="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-semibold text-xs transition-colors cursor-pointer"
                   >
-                    Batalkan Pendaftaran
+                    Tutup
                   </button>
-                )}
-
-                {selectedParticipant["Status Pembayaran"] === 'Dibatalkan' && (
-                  <button
-                    onClick={() => {
-                      const p = selectedParticipant;
-                      setSelectedParticipant(null);
-                      setConfirmDialog({
-                        isOpen: true,
-                        id: p["No. Registrasi"],
-                        status: "Lunas",
-                        currentStatus: p["Status Pembayaran"],
-                        nama: p["Nama Lengkap"],
-                        totalBayar: p["Total Bayar"]
-                      });
-                    }}
-                    className="px-3 py-1.5 bg-white hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 border border-slate-200 hover:border-emerald-300 rounded-lg font-medium text-xs transition-colors cursor-pointer flex items-center gap-1"
-                    title="Pulihkan status ke Lunas"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    Pulihkan ke Lunas
-                  </button>
-                )}
-
-                <button
-                  onClick={() => handleSendWhatsapp(selectedParticipant)}
-                  className="px-3 py-1.5 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg font-semibold text-xs transition-colors flex items-center gap-1 cursor-pointer"
-                >
-                  <MessageCircle className="w-3.5 h-3.5" />
-                  Kirim WhatsApp
-                </button>
-              </div>
-
-              <button
-                onClick={() => setSelectedParticipant(null)}
-                className="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-semibold text-xs transition-colors cursor-pointer"
-              >
-                Tutup
-              </button>
+                </>
+              )}
             </div>
           </div>
         </div>
