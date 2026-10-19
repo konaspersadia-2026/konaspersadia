@@ -11,7 +11,7 @@ import {
   Ticket, Copy, Check, Plus, RefreshCw, Share2, Sparkles, Trash2, Filter,
   Download, Eye, ExternalLink, Calendar, MapPin, Building, CreditCard,
   UserCheck, RotateCcw, AlertTriangle, SlidersHorizontal, Power, AlertCircle, Video,
-  Pencil, Save
+  Pencil, Save, UserPlus
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -185,6 +185,36 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
   });
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+
+  // Add Participant Modal State (Hak Akses Admin)
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isSavingNewParticipant, setIsSavingNewParticipant] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
+  const [addFormData, setAddFormData] = useState({
+    kategoriId: "persadia",
+    namaLengkap: "",
+    whatsapp: "",
+    email: "",
+    jenisKelamin: "Laki-laki",
+    tanggalLahir: "",
+    institusi: "",
+    cabangPersadia: "",
+    namaKetuaCabang: "",
+    nim: "",
+    alamatLengkap: "",
+    kelurahan: "",
+    kecamatan: "",
+    kotaKabupaten: "",
+    provinsi: "",
+    ikutDhf: false,
+    tipePestaRakyatUmum: "gratis" as "gratis" | "berbayar",
+    ikutPestaRakyatUmum: true,
+    modeFktp: "onsite" as "onsite" | "online",
+    pilihanIlmiah: "Simposium & Workshop",
+    statusPembayaran: "Lunas",
+    totalTagihan: 0,
+    manualTotalOverride: false,
+  });
 
   // Status Action & Dialogs
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
@@ -765,6 +795,298 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
       setEditError("Gagal menyimpan perubahan: " + err.message);
     } finally {
       setIsSavingEdit(false);
+    }
+  };
+
+  const computeCategoryPrice = (
+    catId: string,
+    ikutDhf: boolean,
+    tipeUmum: "gratis" | "berbayar",
+    ikutPestaUmum: boolean,
+    modeFktp: "onsite" | "online"
+  ): number => {
+    if (catId === "persadia") {
+      return ikutDhf ? 200000 : 0;
+    }
+    if (catId === "umum") {
+      let sum = 0;
+      if (ikutPestaUmum && tipeUmum === "berbayar") sum += 100000;
+      if (ikutDhf) sum += 200000;
+      return sum;
+    }
+    if (catId === "diabetes_health_forum") {
+      return 200000;
+    }
+    if (catId === "dokter_fktp") {
+      return modeFktp === "online" ? 300000 : 600000;
+    }
+    if (catId === "dokter_umum") {
+      return 1500000;
+    }
+    if (catId === "dokter_spesialis") {
+      return 2500000;
+    }
+    if (catId === "residen") {
+      return 1000000;
+    }
+    if (catId === "perawat") {
+      return 400000;
+    }
+    if (catId === "mahasiswa") {
+      return 400000;
+    }
+    return 0;
+  };
+
+  const handleOpenAddModal = (presetCategory?: string) => {
+    let targetCat = "persadia";
+    if (presetCategory) {
+      targetCat = presetCategory;
+    } else if (kategoriFilter === "Anggota PERSADIA") {
+      targetCat = "persadia";
+    } else if (kategoriFilter === "Masyarakat Umum") {
+      targetCat = "umum";
+    } else if (kategoriFilter === "Pesta Rakyat") {
+      targetCat = "persadia";
+    } else if (kategoriFilter === "Diabetes Health Forum") {
+      targetCat = "diabetes_health_forum";
+    } else {
+      const found = KATEGORI_PESERTA.find(k => k.label === kategoriFilter);
+      if (found) targetCat = found.id;
+    }
+
+    const defaultPrice = computeCategoryPrice(targetCat, false, "gratis", true, "onsite");
+
+    setAddFormData({
+      kategoriId: targetCat,
+      namaLengkap: "",
+      whatsapp: "",
+      email: "",
+      jenisKelamin: "Laki-laki",
+      tanggalLahir: "",
+      institusi: "",
+      cabangPersadia: "",
+      namaKetuaCabang: "",
+      nim: "",
+      alamatLengkap: "",
+      kelurahan: "",
+      kecamatan: "",
+      kotaKabupaten: "",
+      provinsi: "",
+      ikutDhf: false,
+      tipePestaRakyatUmum: "gratis",
+      ikutPestaRakyatUmum: true,
+      modeFktp: "onsite",
+      pilihanIlmiah: "Simposium & Workshop",
+      statusPembayaran: "Lunas",
+      totalTagihan: defaultPrice,
+      manualTotalOverride: false,
+    });
+    setAddError(null);
+    setIsAddModalOpen(true);
+  };
+
+  const handleSubmitNewParticipant = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isSupabaseConfigured) {
+      setAddError("Supabase tidak dikonfigurasi.");
+      return;
+    }
+
+    const cleanNama = addFormData.namaLengkap.trim();
+    if (!cleanNama) {
+      setAddError("Nama lengkap peserta wajib diisi.");
+      return;
+    }
+
+    let rawDigits = addFormData.whatsapp.replace(/\D/g, "");
+    if (rawDigits.startsWith("62")) {
+      rawDigits = "0" + rawDigits.slice(2);
+    }
+    if (!rawDigits.startsWith("08")) {
+      setAddError("Nomor WhatsApp harus diawali 08 atau 62.");
+      return;
+    }
+    if (rawDigits.length < 9 || rawDigits.length > 15) {
+      setAddError("Nomor WhatsApp harus terdiri dari 9 hingga 15 digit angka.");
+      return;
+    }
+
+    const selectedCat = KATEGORI_PESERTA.find(k => k.id === addFormData.kategoriId) || KATEGORI_PESERTA[0];
+
+    if (selectedCat.akses === "ilmiah" && selectedCat.id !== "dokter_fktp" && !addFormData.institusi.trim()) {
+      setAddError("Institusi / Rumah Sakit / Instansi wajib diisi untuk kategori ilmiah.");
+      return;
+    }
+    if (selectedCat.id === "dokter_fktp" && !addFormData.institusi.trim()) {
+      setAddError("Institusi / Puskesmas / Klinik wajib diisi untuk kategori Dokter FKTP.");
+      return;
+    }
+    if (selectedCat.id === "mahasiswa" && !addFormData.nim.trim()) {
+      setAddError("NIM (Nomor Induk Mahasiswa) wajib diisi untuk kategori mahasiswa.");
+      return;
+    }
+
+    setIsSavingNewParticipant(true);
+    setAddError(null);
+
+    try {
+      // Generate Unique Registration ID
+      const existingIds = new Set(data.map(d => d["No. Registrasi"]));
+      let regId = "";
+      let attempts = 0;
+      do {
+        regId = `KNS2026-${Date.now().toString().slice(-4)}${Math.floor(1000 + Math.random() * 9000)}`;
+        attempts++;
+      } while (existingIds.has(regId) && attempts < 20);
+
+      const nowIso = new Date().toISOString();
+
+      // Tentukan pilihan kegiatan
+      let kegiatan = "-";
+      if (selectedCat.akses === "ilmiah") {
+        if (selectedCat.id === "dokter_fktp") {
+          kegiatan = addFormData.modeFktp === "online" ? "Sesi Ilmiah FKTP (Online)" : "Simposium & Workshop FKTP (Onsite)";
+        } else if (selectedCat.id === "perawat") {
+          kegiatan = "Workshop";
+        } else {
+          kegiatan = addFormData.pilihanIlmiah;
+        }
+      } else if (selectedCat.id === "diabetes_health_forum") {
+        kegiatan = "Diabetes Health Forum";
+      } else if (selectedCat.id === "persadia") {
+        kegiatan = addFormData.ikutDhf ? "Pesta Rakyat + Diabetes Health Forum" : "Pesta Rakyat";
+      } else if (selectedCat.id === "umum") {
+        const pesta = addFormData.tipePestaRakyatUmum === "berbayar" ? "Pesta Rakyat (Paket Kaos)" : "Pesta Rakyat (Gratis)";
+        if (addFormData.ikutPestaRakyatUmum && addFormData.ikutDhf) {
+          kegiatan = `${pesta} + Diabetes Health Forum`;
+        } else if (addFormData.ikutPestaRakyatUmum) {
+          kegiatan = pesta;
+        } else if (addFormData.ikutDhf) {
+          kegiatan = "Diabetes Health Forum";
+        }
+      }
+
+      const basePayload: any = {
+        timestamp: nowIso,
+        no_registrasi: regId,
+        status_pembayaran: addFormData.statusPembayaran,
+        nama_lengkap: cleanNama,
+        email: addFormData.email.trim() || "-",
+        whatsapp: rawDigits,
+        kategori_peserta: selectedCat.label,
+        pilihan_kegiatan: kegiatan,
+        total_tagihan: Number(addFormData.totalTagihan) || 0,
+        ikut_health_talk: (selectedCat.id === "persadia" && addFormData.ikutDhf) || (selectedCat.id === "umum" && addFormData.ikutDhf),
+        bersedia_anggota_persadia: selectedCat.id === "persadia" || !!addFormData.alamatLengkap.trim(),
+        alamat_lengkap: addFormData.alamatLengkap.trim() || "-",
+        kelurahan: addFormData.kelurahan.trim() || "-",
+        kecamatan: addFormData.kecamatan.trim() || "-",
+        kota_kabupaten: addFormData.kotaKabupaten.trim() || "-",
+        provinsi: addFormData.provinsi.trim() || "-",
+        institusi: addFormData.institusi.trim() || "-",
+        nim: addFormData.nim.trim() || "-",
+        cabang_persadia: addFormData.cabangPersadia.trim() || "-",
+        nama_ketua_cabang: addFormData.namaKetuaCabang.trim() || "-",
+        tanggal_lahir: addFormData.tanggalLahir || "-",
+        jenis_kelamin: addFormData.jenisKelamin || "-",
+        kode_voucher: "-",
+      };
+
+      const payloadWithMode = {
+        ...basePayload,
+        mode_kehadiran: selectedCat.id === "dokter_fktp" && addFormData.modeFktp === "online" ? "Online" : "Onsite"
+      };
+
+      let insertError: any = null;
+      let insertedResult: any[] | null = null;
+
+      const { data: insertedRows, error: errWithMode } = await supabase
+        .from('pendaftar')
+        .insert([payloadWithMode])
+        .select();
+
+      if (errWithMode) {
+        if (errWithMode.message && errWithMode.message.includes("mode_kehadiran")) {
+          const { data: fallbackRows, error: fallbackErr } = await supabase
+            .from('pendaftar')
+            .insert([basePayload])
+            .select();
+          if (fallbackErr) insertError = fallbackErr;
+          else insertedResult = fallbackRows;
+        } else {
+          insertError = errWithMode;
+        }
+      } else {
+        insertedResult = insertedRows;
+      }
+
+      if (insertError) {
+        if (insertError.message && insertError.message.includes("pendaftar_pkey")) {
+          throw new Error(`Gagal menyimpan: Sequence ID Supabase perlu disinkronkan. Silakan jalankan script supabase/fix_pendaftar_id_sequence.sql di SQL Editor Supabase.`);
+        }
+        throw insertError;
+      }
+
+      // Build search index
+      const searchTerms = [
+        regId,
+        cleanNama,
+        basePayload.email,
+        rawDigits,
+        basePayload.institusi,
+        basePayload.cabang_persadia,
+        basePayload.nama_ketua_cabang,
+        basePayload.kode_voucher,
+        selectedCat.label,
+        basePayload.nim,
+        basePayload.kota_kabupaten,
+        basePayload.provinsi,
+        kegiatan
+      ];
+      const searchIndex = searchTerms.filter(Boolean).join(" ").toLowerCase();
+
+      const newParticipant: Pendaftar = {
+        id: insertedResult?.[0]?.id,
+        Timestamp: nowIso,
+        "No. Registrasi": regId,
+        "Status Pembayaran": addFormData.statusPembayaran,
+        "Nama Lengkap": cleanNama,
+        Email: basePayload.email,
+        "No. WhatsApp": rawDigits,
+        "Kategori Peserta": selectedCat.label,
+        "Akses Kegiatan": kegiatan,
+        "Total Bayar": basePayload.total_tagihan,
+        Institusi: basePayload.institusi,
+        CabangPersadia: basePayload.cabang_persadia,
+        NamaKetuaCabang: basePayload.nama_ketua_cabang,
+        KodeVoucher: "-",
+        BersediaAnggota: basePayload.bersedia_anggota_persadia,
+        AlamatLengkap: basePayload.alamat_lengkap,
+        Kelurahan: basePayload.kelurahan,
+        Kecamatan: basePayload.kecamatan,
+        KotaKabupaten: basePayload.kota_kabupaten,
+        Provinsi: basePayload.provinsi,
+        nim: basePayload.nim,
+        tanggal_lahir: basePayload.tanggal_lahir,
+        jenis_kelamin: basePayload.jenis_kelamin,
+        mode_kehadiran: payloadWithMode.mode_kehadiran,
+        ikut_health_talk: basePayload.ikut_health_talk,
+        _searchIndex: searchIndex
+      };
+
+      // Update local state (prepend so it's at the top of the table)
+      setData(prev => [newParticipant, ...prev]);
+      setIsAddModalOpen(false);
+      showToast(`Peserta ${cleanNama} (${regId}) berhasil ditambahkan ke kategori ${selectedCat.label}!`);
+
+      // Reset search query to the new participant so admin can inspect or verify immediately
+      setSearchQuery(regId);
+    } catch (err: any) {
+      console.error("Gagal menambahkan peserta baru:", err);
+      setAddError(err.message || "Gagal menyimpan peserta baru.");
+    } finally {
+      setIsSavingNewParticipant(false);
     }
   };
 
@@ -1704,7 +2026,7 @@ _Panitia KONAS PERSADIA 2026_`;
                         </div>
 
                         {/* Batch Pesta Rakyat Actions */}
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <button
                             type="button"
                             onClick={() => handleTogglePestaRakyatBatch(true)}
@@ -1720,6 +2042,15 @@ _Panitia KONAS PERSADIA 2026_`;
                             className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold shadow-2xs transition cursor-pointer disabled:opacity-50"
                           >
                             ✅ Buka Semua Pesta Rakyat
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenAddModal("persadia")}
+                            className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-bold shadow-2xs transition cursor-pointer flex items-center gap-1"
+                            title="Tambah peserta Pesta Rakyat secara manual dengan hak akses admin"
+                          >
+                            <UserPlus className="w-3.5 h-3.5" />
+                            <span>+ Tambah Peserta Manual</span>
                           </button>
                         </div>
                       </div>
@@ -1976,34 +2307,50 @@ _Panitia KONAS PERSADIA 2026_`;
                           {/* Quick Toggle switch on card footer */}
                           <div className="mt-2.5 pt-2 border-t border-slate-200/60 flex items-center justify-between text-[10px]">
                             <span className="text-slate-400 font-medium">Akses:</span>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (cat.id === "pesta_rakyat") {
-                                  handleTogglePestaRakyatBatch(!isClosed);
-                                } else {
-                                  handleToggleCategory(cat.id);
+                            <div className="flex items-center gap-1.5">
+                              {cat.id === "pesta_rakyat" && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenAddModal("persadia");
+                                  }}
+                                  className="px-1.5 py-0.5 rounded font-bold text-[9px] bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition cursor-pointer flex items-center gap-0.5"
+                                  title="Tambah peserta susulan Pesta Rakyat (Admin)"
+                                >
+                                  <UserPlus className="w-2.5 h-2.5" />
+                                  <span>+ Peserta</span>
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (cat.id === "pesta_rakyat") {
+                                    handleTogglePestaRakyatBatch(!isClosed);
+                                  } else {
+                                    handleToggleCategory(cat.id);
+                                  }
+                                }}
+                                disabled={isUpdatingCategoryStatus !== null}
+                                className={`px-2 py-0.5 rounded font-bold transition cursor-pointer disabled:opacity-50 ${
+                                  isClosed
+                                    ? "bg-rose-100 text-rose-700 hover:bg-rose-200 border border-rose-200"
+                                    : isPartiallyClosed
+                                      ? "bg-amber-100 text-amber-800 hover:bg-amber-200 border border-amber-200"
+                                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200"
+                                }`}
+                                title={
+                                  isClosed
+                                    ? "Klik untuk MEMBUKA pendaftaran"
+                                    : isPartiallyClosed
+                                      ? "Klik untuk MENUTUP SEMUA pendaftaran Pesta Rakyat"
+                                      : "Klik untuk MENUTUP pendaftaran"
                                 }
-                              }}
-                              disabled={isUpdatingCategoryStatus !== null}
-                              className={`px-2 py-0.5 rounded font-bold transition cursor-pointer disabled:opacity-50 ${
-                                isClosed
-                                  ? "bg-rose-100 text-rose-700 hover:bg-rose-200 border border-rose-200"
-                                  : isPartiallyClosed
-                                    ? "bg-amber-100 text-amber-800 hover:bg-amber-200 border border-amber-200"
-                                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200"
-                              }`}
-                              title={
-                                isClosed
-                                  ? "Klik untuk MEMBUKA pendaftaran"
-                                  : isPartiallyClosed
-                                    ? "Klik untuk MENUTUP SEMUA pendaftaran Pesta Rakyat"
-                                    : "Klik untuk MENUTUP pendaftaran"
-                              }
-                            >
-                              {isClosed ? "Buka" : isPartiallyClosed ? "Tutup Semua" : "Tutup"}
-                            </button>
+                              >
+                                {isClosed ? "Buka" : isPartiallyClosed ? "Tutup Semua" : "Tutup"}
+                              </button>
+                            </div>
                           </div>
                         </div>
                       );
@@ -2087,6 +2434,16 @@ _Panitia KONAS PERSADIA 2026_`;
                       >
                         <Download className="w-3.5 h-3.5 text-slate-500" />
                         <span>Export CSV</span>
+                      </button>
+
+                      {/* Tambah Peserta Baru */}
+                      <button
+                        onClick={() => handleOpenAddModal()}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                        title="Tambah Peserta Baru (Hak Akses Admin)"
+                      >
+                        <UserPlus className="w-3.5 h-3.5" />
+                        <span>Tambah Peserta</span>
                       </button>
                     </div>
                   </div>
@@ -3225,6 +3582,537 @@ _Panitia KONAS PERSADIA 2026_`;
                 </>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Participant Modal (Hak Akses Admin) */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between bg-gradient-to-r from-slate-50 via-blue-50/40 to-slate-50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 shadow-xs">
+                  <UserPlus className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-800 text-base leading-tight">
+                    Tambah Peserta Baru
+                  </h3>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-bold text-[10px] tracking-wide">
+                      Hak Akses Admin Panitia
+                    </span>
+                    <span className="text-[11px] text-slate-500">
+                      Bypass batasan kuota &amp; kategori ditutup
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  if (!isSavingNewParticipant) {
+                    setIsAddModalOpen(false);
+                    setAddError(null);
+                  }
+                }}
+                disabled={isSavingNewParticipant}
+                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-full transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <form onSubmit={handleSubmitNewParticipant} className="p-4 sm:p-5 overflow-y-auto space-y-4 text-xs sm:text-sm flex-1">
+              {/* Alert Error jika ada */}
+              {addError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+                  <span>{addError}</span>
+                </div>
+              )}
+
+              {/* Info Hak Akses Admin */}
+              <div className="p-3 bg-amber-50/80 border border-amber-200/90 rounded-xl text-xs text-amber-900 flex items-start gap-2.5">
+                <ShieldAlert className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
+                <div>
+                  <p className="font-bold">Akses Penuh Admin Aktif</p>
+                  <p className="text-amber-800 text-[11px] mt-0.5 leading-relaxed">
+                    Anda dapat menambahkan peserta untuk <strong>semua kategori</strong>, termasuk kategori <strong>Pesta Rakyat (Anggota PERSADIA &amp; Umum)</strong> yang saat ini ditutup untuk publik. Peserta yang ditambahkan akan langsung menerima nomor registrasi resmi.
+                  </p>
+                </div>
+              </div>
+
+              {/* 1. Pilih Kategori Peserta */}
+              <div>
+                <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                  Kategori Peserta <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={addFormData.kategoriId}
+                  onChange={(e) => {
+                    const newCatId = e.target.value;
+                    const newPrice = computeCategoryPrice(
+                      newCatId,
+                      addFormData.ikutDhf,
+                      addFormData.tipePestaRakyatUmum,
+                      addFormData.ikutPestaRakyatUmum,
+                      addFormData.modeFktp
+                    );
+                    setAddFormData(prev => ({
+                      ...prev,
+                      kategoriId: newCatId,
+                      totalTagihan: newPrice,
+                      manualTotalOverride: false
+                    }));
+                  }}
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                >
+                  <optgroup label="🎪 PESTA RAKYAT (Minggu, 8 Nov 2026 - Stadion Pakansari)">
+                    <option value="persadia">🏅 Anggota PERSADIA (Pesta Rakyat) — Rp 0</option>
+                    <option value="umum">👥 Masyarakat Umum (Pesta Rakyat) — Rp 0 / Rp 100.000</option>
+                  </optgroup>
+                  <optgroup label="🩺 DIABETES HEALTH FORUM (Sabtu, 7 Nov 2026 - Ballroom Novotel)">
+                    <option value="diabetes_health_forum">🏛️ Diabetes Health Forum — Rp 200.000</option>
+                  </optgroup>
+                  <optgroup label="📚 SIMPOSIUM &amp; WORKSHOP ILMIAH (7–8 Nov 2026 - Novotel Bogor)">
+                    <option value="dokter_fktp">🩺 Dokter Layanan Primer (FKTP) — Onsite Rp 600rb / Online Rp 300rb</option>
+                    <option value="dokter_umum">🩺 Dokter Umum — Rp 1.500.000</option>
+                    <option value="dokter_spesialis">🩺 Dokter Spesialis (Sp.PD, Sp.PD-KEMD) — Rp 2.500.000</option>
+                    <option value="residen">🩺 Residen / PPDS — Rp 1.000.000</option>
+                    <option value="perawat">🩺 Perawat, Ahli Gizi &amp; Edukator Diabetes — Rp 400.000</option>
+                    <option value="mahasiswa">🎓 Mahasiswa Kedokteran S1 — Rp 400.000</option>
+                  </optgroup>
+                </select>
+              </div>
+
+              {/* Data Diri Peserta */}
+              <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-200/80 space-y-3">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                  Identitas Peserta
+                </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Nama Lengkap */}
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Nama Lengkap Peserta <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={addFormData.namaLengkap}
+                      onChange={(e) => setAddFormData(prev => ({ ...prev, namaLengkap: e.target.value }))}
+                      placeholder="Nama lengkap beserta gelar (jika ada)"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                    />
+                  </div>
+
+                  {/* Nomor WhatsApp */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Nomor WhatsApp <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      value={addFormData.whatsapp}
+                      onChange={(e) => setAddFormData(prev => ({ ...prev, whatsapp: e.target.value.replace(/\D/g, '') }))}
+                      placeholder="08123456789"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono bg-white"
+                    />
+                    <span className="text-[10px] text-slate-500 block mt-0.5">Format angka berawalan 08...</span>
+                  </div>
+
+                  {/* Jenis Kelamin */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Jenis Kelamin
+                    </label>
+                    <select
+                      value={addFormData.jenisKelamin}
+                      onChange={(e) => setAddFormData(prev => ({ ...prev, jenisKelamin: e.target.value }))}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white cursor-pointer"
+                    >
+                      <option value="Laki-laki">Laki-laki</option>
+                      <option value="Perempuan">Perempuan</option>
+                    </select>
+                  </div>
+
+                  {/* Tanggal Lahir */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Tanggal Lahir
+                    </label>
+                    <input
+                      type="date"
+                      value={addFormData.tanggalLahir}
+                      onChange={(e) => setAddFormData(prev => ({ ...prev, tanggalLahir: e.target.value }))}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                    />
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Alamat Email (Opsional)
+                    </label>
+                    <input
+                      type="email"
+                      value={addFormData.email}
+                      onChange={(e) => setAddFormData(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="email@domain.com"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Field Spesifik Kategori */}
+              {addFormData.kategoriId === "persadia" && (
+                <div className="bg-emerald-50/70 p-3.5 rounded-xl border border-emerald-200/80 space-y-3">
+                  <span className="text-[11px] font-bold text-emerald-900 uppercase tracking-wider block">
+                    Data Khusus Anggota PERSADIA
+                  </span>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Cabang PERSADIA
+                      </label>
+                      <input
+                        type="text"
+                        value={addFormData.cabangPersadia}
+                        onChange={(e) => setAddFormData(prev => ({ ...prev, cabangPersadia: e.target.value }))}
+                        placeholder="Contoh: PERSADIA Cabang Ciamis / Bogor"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Nama Ketua Cabang (Opsional)
+                      </label>
+                      <input
+                        type="text"
+                        value={addFormData.namaKetuaCabang}
+                        onChange={(e) => setAddFormData(prev => ({ ...prev, namaKetuaCabang: e.target.value }))}
+                        placeholder="Nama Ketua Cabang"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Add-on DHF */}
+                  <label className="flex items-start gap-2.5 p-2.5 rounded-lg bg-white border border-emerald-200/90 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={addFormData.ikutDhf}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        const newPrice = computeCategoryPrice(
+                          addFormData.kategoriId,
+                          checked,
+                          addFormData.tipePestaRakyatUmum,
+                          addFormData.ikutPestaRakyatUmum,
+                          addFormData.modeFktp
+                        );
+                        setAddFormData(prev => ({
+                          ...prev,
+                          ikutDhf: checked,
+                          totalTagihan: prev.manualTotalOverride ? prev.totalTagihan : newPrice
+                        }));
+                      }}
+                      className="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-slate-800 block">
+                        Ikut Sesi Diabetes Health Forum (Novotel Bogor, 7 Nov 2026) (+Rp 200.000)
+                      </span>
+                      <span className="text-[11px] text-slate-500">
+                        Termasuk Talkshow bersama dr. Boyke Dian Nugraha, Sp.OG, jamuan makan Novotel, dan goodie bag.
+                      </span>
+                    </div>
+                  </label>
+                </div>
+              )}
+
+              {addFormData.kategoriId === "umum" && (
+                <div className="bg-amber-50/70 p-3.5 rounded-xl border border-amber-200/80 space-y-3">
+                  <span className="text-[11px] font-bold text-amber-900 uppercase tracking-wider block">
+                    Pilihan Paket Pesta Rakyat (Masyarakat Umum)
+                  </span>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <label className={`p-2.5 rounded-lg border cursor-pointer flex items-center gap-2 ${
+                      addFormData.tipePestaRakyatUmum === 'gratis' ? 'bg-amber-100/70 border-amber-400 font-bold' : 'bg-white border-slate-200'
+                    }`}>
+                      <input
+                        type="radio"
+                        name="tipePestaRakyatUmum"
+                        checked={addFormData.tipePestaRakyatUmum === 'gratis'}
+                        onChange={() => {
+                          const newPrice = computeCategoryPrice("umum", addFormData.ikutDhf, "gratis", true, addFormData.modeFktp);
+                          setAddFormData(prev => ({
+                            ...prev,
+                            tipePestaRakyatUmum: "gratis",
+                            totalTagihan: prev.manualTotalOverride ? prev.totalTagihan : newPrice
+                          }));
+                        }}
+                        className="text-amber-600"
+                      />
+                      <span className="text-xs">Pesta Rakyat Gratis (Rp 0)</span>
+                    </label>
+
+                    <label className={`p-2.5 rounded-lg border cursor-pointer flex items-center gap-2 ${
+                      addFormData.tipePestaRakyatUmum === 'berbayar' ? 'bg-amber-100/70 border-amber-400 font-bold' : 'bg-white border-slate-200'
+                    }`}>
+                      <input
+                        type="radio"
+                        name="tipePestaRakyatUmum"
+                        checked={addFormData.tipePestaRakyatUmum === 'berbayar'}
+                        onChange={() => {
+                          const newPrice = computeCategoryPrice("umum", addFormData.ikutDhf, "berbayar", true, addFormData.modeFktp);
+                          setAddFormData(prev => ({
+                            ...prev,
+                            tipePestaRakyatUmum: "berbayar",
+                            totalTagihan: prev.manualTotalOverride ? prev.totalTagihan : newPrice
+                          }));
+                        }}
+                        className="text-amber-600"
+                      />
+                      <span className="text-xs">Paket Kaos Pesta Rakyat (Rp 100.000)</span>
+                    </label>
+                  </div>
+
+                  {/* Add-on DHF */}
+                  <label className="flex items-start gap-2.5 p-2.5 rounded-lg bg-white border border-amber-200/90 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={addFormData.ikutDhf}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        const newPrice = computeCategoryPrice("umum", checked, addFormData.tipePestaRakyatUmum, true, addFormData.modeFktp);
+                        setAddFormData(prev => ({
+                          ...prev,
+                          ikutDhf: checked,
+                          totalTagihan: prev.manualTotalOverride ? prev.totalTagihan : newPrice
+                        }));
+                      }}
+                      className="mt-0.5 rounded text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-slate-800 block">
+                        Ikut Sesi Diabetes Health Forum (Novotel Bogor, 7 Nov 2026) (+Rp 200.000)
+                      </span>
+                      <span className="text-[11px] text-slate-500">
+                        Termasuk Talkshow bersama dr. Boyke Dian Nugraha, Sp.OG di Ballroom Novotel.
+                      </span>
+                    </div>
+                  </label>
+                </div>
+              )}
+
+              {addFormData.kategoriId === "dokter_fktp" && (
+                <div className="bg-blue-50/70 p-3.5 rounded-xl border border-blue-200/80 space-y-3">
+                  <span className="text-[11px] font-bold text-blue-900 uppercase tracking-wider block">
+                    Pilihan Mode Kehadiran Dokter Layanan Primer (FKTP)
+                  </span>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Institusi / Puskesmas / Klinik <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={addFormData.institusi}
+                      onChange={(e) => setAddFormData(prev => ({ ...prev, institusi: e.target.value }))}
+                      placeholder="Contoh: Puskesmas Cibinong / Klinik Pratama Sehat"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                    <label className={`p-2.5 rounded-lg border cursor-pointer flex items-center gap-2 ${
+                      addFormData.modeFktp === 'onsite' ? 'bg-blue-100/70 border-blue-400 font-bold' : 'bg-white border-slate-200'
+                    }`}>
+                      <input
+                        type="radio"
+                        name="modeFktp"
+                        checked={addFormData.modeFktp === 'onsite'}
+                        onChange={() => {
+                          const newPrice = computeCategoryPrice("dokter_fktp", false, "gratis", true, "onsite");
+                          setAddFormData(prev => ({
+                            ...prev,
+                            modeFktp: "onsite",
+                            totalTagihan: prev.manualTotalOverride ? prev.totalTagihan : newPrice
+                          }));
+                        }}
+                        className="text-blue-600"
+                      />
+                      <span className="text-xs">🏛️ Onsite Novotel (Rp 600.000)</span>
+                    </label>
+
+                    <label className={`p-2.5 rounded-lg border cursor-pointer flex items-center gap-2 ${
+                      addFormData.modeFktp === 'online' ? 'bg-blue-100/70 border-blue-400 font-bold' : 'bg-white border-slate-200'
+                    }`}>
+                      <input
+                        type="radio"
+                        name="modeFktp"
+                        checked={addFormData.modeFktp === 'online'}
+                        onChange={() => {
+                          const newPrice = computeCategoryPrice("dokter_fktp", false, "gratis", true, "online");
+                          setAddFormData(prev => ({
+                            ...prev,
+                            modeFktp: "online",
+                            totalTagihan: prev.manualTotalOverride ? prev.totalTagihan : newPrice
+                          }));
+                        }}
+                        className="text-blue-600"
+                      />
+                      <span className="text-xs">💻 Online Live Zoom (Rp 300.000)</span>
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Field Institusi untuk kategori Ilmiah lainnya & DHF */}
+              {(addFormData.kategoriId === "dokter_umum" ||
+                addFormData.kategoriId === "dokter_spesialis" ||
+                addFormData.kategoriId === "residen" ||
+                addFormData.kategoriId === "perawat" ||
+                addFormData.kategoriId === "mahasiswa" ||
+                addFormData.kategoriId === "diabetes_health_forum") && (
+                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Institusi / Rumah Sakit / Instansi {addFormData.kategoriId !== "diabetes_health_forum" && <span className="text-red-500">*</span>}
+                    </label>
+                    <input
+                      type="text"
+                      required={addFormData.kategoriId !== "diabetes_health_forum"}
+                      value={addFormData.institusi}
+                      onChange={(e) => setAddFormData(prev => ({ ...prev, institusi: e.target.value }))}
+                      placeholder="Contoh: RSUP Dr. Kariadi / FKUI / Sobat Diabet"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                    />
+                  </div>
+
+                  {addFormData.kategoriId === "mahasiswa" && (
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        NIM (Nomor Induk Mahasiswa) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={addFormData.nim}
+                        onChange={(e) => setAddFormData(prev => ({ ...prev, nim: e.target.value }))}
+                        placeholder="Contoh: 010112345"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white font-mono"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Status Pembayaran & Tagihan */}
+              <div className="bg-blue-50/60 p-3.5 rounded-xl border border-blue-200/80 space-y-3">
+                <span className="text-[11px] font-bold text-blue-950 uppercase tracking-wider block">
+                  Status &amp; Pembayaran Transaksi
+                </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Status Pembayaran <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={addFormData.statusPembayaran}
+                      onChange={(e) => setAddFormData(prev => ({ ...prev, statusPembayaran: e.target.value }))}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white cursor-pointer font-semibold"
+                    >
+                      <option value="Lunas">✅ Lunas (Langsung Aktifkan E-Ticket)</option>
+                      <option value="Menunggu Verifikasi">⏳ Menunggu Verifikasi</option>
+                      <option value="Dibatalkan">❌ Dibatalkan</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Total Tagihan (Rp)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="0"
+                        step="1000"
+                        value={addFormData.totalTagihan}
+                        onChange={(e) => setAddFormData(prev => ({
+                          ...prev,
+                          totalTagihan: Number(e.target.value),
+                          manualTotalOverride: true
+                        }))}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white font-bold text-slate-900"
+                      />
+                      {addFormData.manualTotalOverride && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const stdPrice = computeCategoryPrice(
+                              addFormData.kategoriId,
+                              addFormData.ikutDhf,
+                              addFormData.tipePestaRakyatUmum,
+                              addFormData.ikutPestaRakyatUmum,
+                              addFormData.modeFktp
+                            );
+                            setAddFormData(prev => ({
+                              ...prev,
+                              totalTagihan: stdPrice,
+                              manualTotalOverride: false
+                            }));
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-blue-600 hover:underline font-semibold cursor-pointer"
+                        >
+                          Reset Standar
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer Buttons */}
+              <div className="pt-2 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  disabled={isSavingNewParticipant}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer disabled:opacity-50"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingNewParticipant}
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50"
+                >
+                  {isSavingNewParticipant ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Menyimpan Peserta...</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-4 h-4" />
+                      <span>Simpan &amp; Tambahkan Peserta</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -48,3 +48,7 @@ Data peserta/
 scripts/clean_pendaftar_database.py
 scripts/generate_update_sql.py
 scripts/rebuild_excel_master.py
+
+# Internal Media Planning
+rencana_video_promosi_remotion.md
+
