@@ -43,3 +43,39 @@ body {
   width: 100%;
 }
 
+/* Html5Qrcode custom styling - Full square cover & clean overlay */
+#reader {
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+  position: relative !important;
+  background-color: #000 !important;
+  overflow: hidden !important;
+}
+
+#reader video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 1rem !important;
+}
+
+#reader canvas {
+  display: none !important;
+}
+
+#reader__scan_region {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+}
+
+#reader__dashboard_section,
+#reader img[alt="Info icon"],
+#qr-shaded-region {
+  display: none !important;
+}
+

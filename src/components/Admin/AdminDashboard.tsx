@@ -11,7 +11,7 @@ import {
   Ticket, Copy, Check, Plus, RefreshCw, Share2, Sparkles, Trash2, Filter,
   Download, Eye, ExternalLink, Calendar, MapPin, Building, CreditCard,
   UserCheck, RotateCcw, AlertTriangle, SlidersHorizontal, Power, AlertCircle, Video,
-  Pencil, Save, UserPlus
+  Pencil, Save, UserPlus, UtensilsCrossed
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -46,6 +46,13 @@ interface Pendaftar {
   jenis_kelamin?: string;
   registrasi_onsite?: string | null;
   waktu_registrasi_onsite?: string | null;
+  kehadiran_workshop?: string | null;
+  waktu_kehadiran_workshop?: string | null;
+  hak_gala_dinner?: boolean | null;
+  kehadiran_gala_dinner?: string | null;
+  waktu_kehadiran_gala_dinner?: string | null;
+  akses_gala_dinner?: string | null;
+  waktu_akses_gala_dinner?: string | null;
   tinggi_badan?: number | null;
   berat_badan?: number | null;
   tensi?: string | null;
@@ -143,6 +150,55 @@ const matchesCategory = (rowCategory: string, targetCategory: string): boolean =
   return false;
 };
 
+// Helper: Memastikan HANYA peserta Simposium + Workshop Onsite yang berhak mendapat akses Gala Dinner
+export const isEligibleForGalaDinner = (participant: Pendaftar | null | undefined): boolean => {
+  if (!participant) return false;
+
+  const keg = (participant["Akses Kegiatan"] || (participant as any).pilihan_kegiatan || "").toLowerCase();
+  const kat = (participant["Kategori Peserta"] || (participant as any).kategori_peserta || "").toLowerCase();
+  const mode = (participant.mode_kehadiran || "").toLowerCase();
+
+  // 1. Bukan peserta Online (kegiatan Gala Dinner diadakan secara fisik di Ballroom Novotel)
+  if (mode === "online" || keg.includes("online")) {
+    return false;
+  }
+
+  // 2. Bukan Pesta Rakyat / Masyarakat Umum / Anggota Persadia / DHF
+  if (
+    kat.includes("persadia") ||
+    kat.includes("masyarakat") ||
+    kat.includes("umum") ||
+    kat.includes("diabetes health forum") ||
+    keg.includes("pesta rakyat") ||
+    keg.includes("health forum")
+  ) {
+    return false;
+  }
+
+  // 3. Harus Kategori Ilmiah Onsite
+  const isIlmiah =
+    kat.includes("dokter") ||
+    kat.includes("spesialis") ||
+    kat.includes("residen") ||
+    kat.includes("ppds") ||
+    kat.includes("perawat") ||
+    kat.includes("edukator") ||
+    kat.includes("gizi") ||
+    kat.includes("mahasiswa") ||
+    kat.includes("fktp") ||
+    keg.includes("simposium") ||
+    keg.includes("symposium") ||
+    keg.includes("workshop");
+
+  if (!isIlmiah) return false;
+
+  // 4. Khusus paket Simposium + Workshop (Workshop Medis Terapan)
+  // Peserta yang HANYA mengambil Simposium saja (tanpa workshop) TIDAK berhak
+  const hasWorkshop = keg.includes("workshop") || kat.includes("perawat") || kat.includes("edukator");
+
+  return hasWorkshop;
+};
+
 export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [email, setEmail] = useState("");
@@ -234,6 +290,12 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
     id: "",
     status: ""
   });
+
+  // Gala Dinner Management State
+  const [galaFilter, setGalaFilter] = useState<"Semua" | "Granted" | "NotGranted" | "Eligible" | "CheckedIn">("Semua");
+  const [isGalaModalOpen, setIsGalaModalOpen] = useState(false);
+  const [galaLoadingId, setGalaLoadingId] = useState<string | null>(null);
+  const [isBatchGalaLoading, setIsBatchGalaLoading] = useState(false);
 
   // Voucher Management State
   const [vouchers, setVouchers] = useState<VoucherItem[]>([]);
@@ -433,6 +495,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
             row.kota_kabupaten,
             row.provinsi,
             row.pilihan_kegiatan,
+            row.hak_gala_dinner ? "gala dinner galadinner" : "",
           ];
           const searchIndex = searchTerms.filter(Boolean).join(" ").toLowerCase();
 
@@ -463,6 +526,13 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
             jenis_kelamin: row.jenis_kelamin || "-",
             registrasi_onsite: row.registrasi_onsite || null,
             waktu_registrasi_onsite: row.waktu_registrasi_onsite || null,
+            kehadiran_workshop: row.kehadiran_workshop || null,
+            waktu_kehadiran_workshop: row.waktu_kehadiran_workshop || null,
+            hak_gala_dinner: row.hak_gala_dinner === true,
+            kehadiran_gala_dinner: row.kehadiran_gala_dinner || row.akses_gala_dinner || null,
+            waktu_kehadiran_gala_dinner: row.waktu_kehadiran_gala_dinner || row.waktu_akses_gala_dinner || null,
+            akses_gala_dinner: row.akses_gala_dinner || null,
+            waktu_akses_gala_dinner: row.waktu_akses_gala_dinner || null,
             tinggi_badan: row.tinggi_badan,
             berat_badan: row.berat_badan,
             tensi: row.tensi,
@@ -667,6 +737,204 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
       setActionError("Terjadi kesalahan jaringan saat update status: " + err.message);
     } finally {
       setActionLoadingId(null);
+    }
+  };
+
+  // ==============================================================================
+  // GALA DINNER ACCESS CONTROLS (Khusus Simposium + Workshop Onsite)
+  // ==============================================================================
+  const handleToggleGalaDinner = async (participant: Pendaftar, grant: boolean) => {
+    // Validasi ketat: Hanya boleh jika peserta adalah Simposium + Workshop
+    if (!isEligibleForGalaDinner(participant)) {
+      alert("Akses Gala Dinner HANYA diperuntukkan bagi peserta kategori Simposium & Workshop Onsite.");
+      return;
+    }
+
+    const regId = participant["No. Registrasi"];
+    setGalaLoadingId(regId);
+    try {
+      const updatePayload: Record<string, any> = {
+        hak_gala_dinner: grant,
+      };
+      if (!grant) {
+        // Jika hak akses dicabut, reset juga status kehadiran ballroom
+        updatePayload.kehadiran_gala_dinner = null;
+        updatePayload.waktu_kehadiran_gala_dinner = null;
+        updatePayload.akses_gala_dinner = null;
+        updatePayload.waktu_akses_gala_dinner = null;
+      }
+
+      const { error } = await supabase
+        .from('pendaftar')
+        .update(updatePayload)
+        .eq('no_registrasi', regId);
+
+      if (error) throw error;
+
+      // Update state lokal
+      setData(prev => prev.map(item => {
+        if (item["No. Registrasi"] === regId) {
+          const updatedSearch = (item._searchIndex || "")
+            .replace(/gala dinner galadinner/g, "")
+            + (grant ? " gala dinner galadinner" : "");
+          return {
+            ...item,
+            hak_gala_dinner: grant,
+            ...(grant ? {} : { kehadiran_gala_dinner: null, waktu_kehadiran_gala_dinner: null }),
+            _searchIndex: updatedSearch
+          };
+        }
+        return item;
+      }));
+
+      // Update selectedParticipant jika sedang dibuka
+      setSelectedParticipant(prev => {
+        if (!prev || prev["No. Registrasi"] !== regId) return prev;
+        return {
+          ...prev,
+          hak_gala_dinner: grant,
+          ...(grant ? {} : { kehadiran_gala_dinner: null, waktu_kehadiran_gala_dinner: null })
+        };
+      });
+
+      showToast(grant
+        ? `Akses Gala Dinner diberikan ke ${participant["Nama Lengkap"]}!`
+        : `Akses Gala Dinner untuk ${participant["Nama Lengkap"]} telah dicabut.`
+      );
+    } catch (err: any) {
+      console.error("Gagal update Gala Dinner:", err);
+      alert("Gagal memperbarui akses Gala Dinner: " + err.message);
+    } finally {
+      setGalaLoadingId(null);
+    }
+  };
+
+  const handleBatchGrantGalaDinner = async () => {
+    const candidates = data.filter(
+      p => isEligibleForGalaDinner(p) && p["Status Pembayaran"] === "Lunas" && !p.hak_gala_dinner
+    );
+
+    if (candidates.length === 0) {
+      alert("Tidak ada peserta Simposium + Workshop (Lunas) baru yang belum memiliki akses Gala Dinner.");
+      return;
+    }
+
+    const confirmMsg = `Konfirmasi Pemberian Hak Akses Gala Dinner:\n\n` +
+      `Apakah Anda yakin ingin memberikan hak akses Gala Dinner kepada ${candidates.length} peserta Simposium + Workshop (Status: Lunas)?\n\n` +
+      `Peserta ini akan diizinkan masuk oleh scanner pos Gala Dinner di Novotel.`;
+
+    if (!window.confirm(confirmMsg)) return;
+
+    setIsBatchGalaLoading(true);
+    try {
+      const regIds = candidates.map(c => c["No. Registrasi"]);
+      const chunkSize = 100;
+      for (let i = 0; i < regIds.length; i += chunkSize) {
+        const chunk = regIds.slice(i, i + chunkSize);
+        const { error } = await supabase
+          .from('pendaftar')
+          .update({ hak_gala_dinner: true })
+          .in('no_registrasi', chunk);
+        if (error) throw error;
+      }
+
+      // Update state lokal
+      const idSet = new Set(regIds);
+      setData(prev => prev.map(item => {
+        if (idSet.has(item["No. Registrasi"])) {
+          const updatedSearch = (item._searchIndex || "").replace(/gala dinner galadinner/g, "") + " gala dinner galadinner";
+          return {
+            ...item,
+            hak_gala_dinner: true,
+            _searchIndex: updatedSearch
+          };
+        }
+        return item;
+      }));
+
+      // Update selectedParticipant jika termasuk
+      setSelectedParticipant(prev => {
+        if (!prev || !idSet.has(prev["No. Registrasi"])) return prev;
+        return {
+          ...prev,
+          hak_gala_dinner: true
+        };
+      });
+
+      showToast(`Berhasil memberikan hak akses Gala Dinner ke ${regIds.length} peserta Simposium + Workshop!`);
+      setIsGalaModalOpen(false);
+    } catch (err: any) {
+      console.error("Gagal batch update Gala Dinner:", err);
+      alert("Terjadi kesalahan saat memproses batch update: " + err.message);
+    } finally {
+      setIsBatchGalaLoading(false);
+    }
+  };
+
+  const handleBatchRevokeGalaDinner = async () => {
+    const granted = data.filter(p => isEligibleForGalaDinner(p) && p.hak_gala_dinner);
+
+    if (granted.length === 0) {
+      alert("Saat ini belum ada peserta yang memiliki akses Gala Dinner.");
+      return;
+    }
+
+    const confirmMsg = `PERINGATAN CABUT AKSES GALA DINNER:\n\n` +
+      `Apakah Anda yakin ingin mencabut hak akses Gala Dinner untuk SELURUH ${granted.length} peserta?\n` +
+      `Tindakan ini akan membuat seluruh peserta ditolak saat scan di pintu Ballroom Novotel.`;
+
+    if (!window.confirm(confirmMsg)) return;
+
+    setIsBatchGalaLoading(true);
+    try {
+      const regIds = granted.map(c => c["No. Registrasi"]);
+      const chunkSize = 100;
+      for (let i = 0; i < regIds.length; i += chunkSize) {
+        const chunk = regIds.slice(i, i + chunkSize);
+        const { error } = await supabase
+          .from('pendaftar')
+          .update({
+            hak_gala_dinner: false,
+            kehadiran_gala_dinner: null,
+            waktu_kehadiran_gala_dinner: null,
+            akses_gala_dinner: null,
+            waktu_akses_gala_dinner: null
+          })
+          .in('no_registrasi', chunk);
+        if (error) throw error;
+      }
+
+      const idSet = new Set(regIds);
+      setData(prev => prev.map(item => {
+        if (idSet.has(item["No. Registrasi"])) {
+          return {
+            ...item,
+            hak_gala_dinner: false,
+            kehadiran_gala_dinner: null,
+            waktu_kehadiran_gala_dinner: null,
+            _searchIndex: (item._searchIndex || "").replace(/gala dinner galadinner/g, "")
+          };
+        }
+        return item;
+      }));
+
+      setSelectedParticipant(prev => {
+        if (!prev || !idSet.has(prev["No. Registrasi"])) return prev;
+        return {
+          ...prev,
+          hak_gala_dinner: false,
+          kehadiran_gala_dinner: null,
+          waktu_kehadiran_gala_dinner: null
+        };
+      });
+
+      showToast(`Seluruh akses Gala Dinner (${regIds.length} peserta) berhasil dicabut.`);
+      setIsGalaModalOpen(false);
+    } catch (err: any) {
+      console.error("Gagal cabut akses massal:", err);
+      alert("Terjadi kesalahan: " + err.message);
+    } finally {
+      setIsBatchGalaLoading(false);
     }
   };
 
@@ -1127,6 +1395,42 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
         insertedResult = insertedRows;
       }
 
+      if (insertError && insertError.message && insertError.message.includes("pendaftar_pkey")) {
+        try {
+          const { data: syncRes, error: rpcErr } = await supabase.rpc("sync_pendaftar_id_sequence");
+          if (!rpcErr && syncRes) {
+            const { data: retryRows, error: retryErr } = await supabase
+              .from('pendaftar')
+              .insert([payloadWithMode])
+              .select();
+            if (!retryErr && retryRows) {
+              insertedResult = retryRows;
+              insertError = null;
+            }
+          }
+        } catch (e) {
+          console.warn("Auto-sync sequence failed:", e);
+        }
+
+        if (insertError) {
+          try {
+            const { data: nextId, error: nextIdErr } = await supabase.rpc("get_next_pendaftar_id");
+            if (!nextIdErr && nextId) {
+              const { data: retryIdRows, error: retryIdErr } = await supabase
+                .from('pendaftar')
+                .insert([{ ...payloadWithMode, id: Number(nextId) }])
+                .select();
+              if (!retryIdErr && retryIdRows) {
+                insertedResult = retryIdRows;
+                insertError = null;
+              }
+            }
+          } catch (e) {
+            console.warn("Auto get_next_pendaftar_id failed:", e);
+          }
+        }
+      }
+
       if (insertError) {
         if (insertError.message && insertError.message.includes("pendaftar_pkey")) {
           throw new Error(`Gagal menyimpan: Sequence ID Supabase perlu disinkronkan. Silakan jalankan script supabase/fix_pendaftar_id_sequence.sql di SQL Editor Supabase.`);
@@ -1572,7 +1876,12 @@ _Panitia KONAS PERSADIA 2026_`;
       "Kota/Kabupaten",
       "Provinsi",
       "Registrasi Onsite",
-      "Waktu Check-in"
+      "Waktu Check-in",
+      "Presensi Workshop",
+      "Waktu Workshop",
+      "Hak Gala Dinner",
+      "Presensi Gala Dinner",
+      "Waktu Masuk Gala Dinner"
     ];
 
     const rows = filteredData.map(d => [
@@ -1594,7 +1903,12 @@ _Panitia KONAS PERSADIA 2026_`;
       `"${(d.kota_kabupaten || "").replace(/"/g, '""')}"`,
       `"${(d.provinsi || "").replace(/"/g, '""')}"`,
       `"${d.registrasi_onsite || "Belum"}"`,
-      `"${d.waktu_registrasi_onsite || ""}"`
+      `"${d.waktu_registrasi_onsite || ""}"`,
+      `"${d.kehadiran_workshop || "Belum"}"`,
+      `"${d.waktu_kehadiran_workshop || ""}"`,
+      `"${d.hak_gala_dinner ? "Ya (Diundang)" : "Tidak"}"`,
+      `"${d.kehadiran_gala_dinner || "Belum"}"`,
+      `"${d.waktu_kehadiran_gala_dinner || ""}"`
     ]);
 
     const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
@@ -1786,6 +2100,40 @@ _Panitia KONAS PERSADIA 2026_`;
     return map;
   }, [categoryCardData]);
 
+  // Memoized Gala Dinner statistics
+  const galaStats = useMemo(() => {
+    let eligibleTotal = 0;
+    let eligibleLunas = 0;
+    let grantedTotal = 0;
+    let checkedInTotal = 0;
+
+    data.forEach(p => {
+      const eligible = isEligibleForGalaDinner(p);
+      if (eligible) {
+        eligibleTotal++;
+        if (p["Status Pembayaran"] === "Lunas") {
+          eligibleLunas++;
+        }
+      }
+      if (p.hak_gala_dinner) {
+        grantedTotal++;
+      }
+      if (p.kehadiran_gala_dinner === "Ya") {
+        checkedInTotal++;
+      }
+    });
+
+    const pendingGrant = data.filter(p => isEligibleForGalaDinner(p) && p["Status Pembayaran"] === "Lunas" && !p.hak_gala_dinner).length;
+
+    return {
+      eligibleTotal,
+      eligibleLunas,
+      grantedTotal,
+      checkedInTotal,
+      pendingGrant
+    };
+  }, [data]);
+
   // Ultra-fast search and filter for 5,600+ registrants using pre-computed search index and deferred value
   const filteredData = useMemo(() => {
     const q = deferredSearchQuery.toLowerCase().trim();
@@ -1810,13 +2158,21 @@ _Panitia KONAS PERSADIA 2026_`;
         }
       }
 
+      // 2.1 Fast path: check Gala Dinner filter
+      if (galaFilter !== "Semua") {
+        if (galaFilter === "Granted" && !item.hak_gala_dinner) return false;
+        if (galaFilter === "NotGranted" && (!isEligibleForGalaDinner(item) || item.hak_gala_dinner)) return false;
+        if (galaFilter === "Eligible" && !isEligibleForGalaDinner(item)) return false;
+        if (galaFilter === "CheckedIn" && item.kehadiran_gala_dinner !== "Ya") return false;
+      }
+
       // 3. Search query: match all terms against pre-computed lowercase search index
       if (queryTerms.length === 0) return true;
 
       const idx = item._searchIndex || "";
       return queryTerms.every((term) => idx.includes(term));
     });
-  }, [data, deferredSearchQuery, statusFilter, kategoriFilter]);
+  }, [data, deferredSearchQuery, statusFilter, kategoriFilter, galaFilter]);
 
   if (!isAuthenticated) {
     return (
@@ -2536,6 +2892,35 @@ _Panitia KONAS PERSADIA 2026_`;
                         ))}
                       </select>
 
+                      {/* Gala Dinner Filter */}
+                      <select
+                        value={galaFilter}
+                        onChange={(e) => setGalaFilter(e.target.value as any)}
+                        className="px-2.5 py-1.5 rounded-lg border border-purple-200 bg-purple-50/50 text-xs font-semibold text-purple-900 outline-none focus:ring-1 focus:ring-purple-500 cursor-pointer"
+                        title="Filter berdasarkan hak akses Gala Dinner"
+                      >
+                        <option value="Semua">Semua Akses Gala</option>
+                        <option value="Granted">🍽️ Diundang Gala ({galaStats.grantedTotal})</option>
+                        <option value="NotGranted">⏳ Belum Diundang ({galaStats.pendingGrant})</option>
+                        <option value="Eligible">🎯 Simposium + Workshop ({galaStats.eligibleTotal})</option>
+                        <option value="CheckedIn">✅ Hadir Ballroom ({galaStats.checkedInTotal})</option>
+                      </select>
+
+                      {/* Kelola Hak Akses Gala Dinner */}
+                      <button
+                        onClick={() => setIsGalaModalOpen(true)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-purple-300 bg-purple-50 hover:bg-purple-100 text-xs font-semibold text-purple-800 shadow-xs transition-colors cursor-pointer"
+                        title="Kelola & Berikan Akses Gala Dinner untuk Peserta Simposium + Workshop"
+                      >
+                        <UtensilsCrossed className="w-3.5 h-3.5 text-purple-600" />
+                        <span>Gala Dinner</span>
+                        {galaStats.pendingGrant > 0 && (
+                          <span className="px-1.5 py-0.2 bg-purple-700 text-white text-[10px] rounded-full font-bold">
+                            +{galaStats.pendingGrant}
+                          </span>
+                        )}
+                      </button>
+
                       {/* Export CSV */}
                       <button
                         onClick={handleExportCSV}
@@ -2673,6 +3058,16 @@ _Panitia KONAS PERSADIA 2026_`;
                                         🎟️ {row.KodeVoucher || row.kode_voucher}
                                       </span>
                                     )}
+                                    {row.hak_gala_dinner && (
+                                      <span className="px-1.5 py-0.2 bg-purple-100 text-purple-800 border border-purple-200 rounded text-[10px] font-bold inline-flex items-center gap-1" title="Mendapatkan Undangan Gala Dinner Novotel">
+                                        🍽️ Gala Dinner
+                                      </span>
+                                    )}
+                                    {row.kehadiran_gala_dinner === 'Ya' && (
+                                      <span className="px-1.5 py-0.2 bg-emerald-100 text-emerald-800 border border-emerald-200 rounded text-[10px] font-bold inline-flex items-center gap-0.5" title="Presensi Masuk Ballroom Novotel Selesai">
+                                        ✅ Hadir Ballroom
+                                      </span>
+                                    )}
                                   </div>
                                   <div className="text-xs font-semibold text-slate-700 mt-0.5">
                                     Rp {typeof row["Total Bayar"] === 'number'
@@ -2778,6 +3173,31 @@ _Panitia KONAS PERSADIA 2026_`;
                                       >
                                         <RotateCcw className="w-3 h-3 mr-1" />
                                         Pulihkan
+                                      </button>
+                                    )}
+
+                                    {/* Action: Toggle Gala Dinner (Khusus Simposium + Workshop) */}
+                                    {isEligibleForGalaDinner(row) && (
+                                      <button
+                                        onClick={() => handleToggleGalaDinner(row, !row.hak_gala_dinner)}
+                                        disabled={galaLoadingId === row["No. Registrasi"]}
+                                        className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-lg border transition-all cursor-pointer disabled:opacity-50 ${
+                                          row.hak_gala_dinner
+                                            ? "bg-purple-100 hover:bg-purple-200 text-purple-800 border-purple-300"
+                                            : "bg-white hover:bg-purple-50 text-slate-600 hover:text-purple-700 border-slate-200"
+                                        }`}
+                                        title={
+                                          row.hak_gala_dinner
+                                            ? "Akses Gala Dinner Aktif. Klik untuk mencabut hak akses."
+                                            : "Klik untuk memberikan hak akses Gala Dinner (Khusus Simposium + Workshop)"
+                                        }
+                                      >
+                                        {galaLoadingId === row["No. Registrasi"] ? (
+                                          <Loader2 className="w-3 h-3 animate-spin" />
+                                        ) : (
+                                          <UtensilsCrossed className="w-3 h-3 mr-1 text-purple-600" />
+                                        )}
+                                        {row.hak_gala_dinner ? "Gala: Ya" : "+Gala"}
                                       </button>
                                     )}
 
@@ -3553,14 +3973,79 @@ _Panitia KONAS PERSADIA 2026_`;
                 </div>
               )}
 
+              {/* Hak Akses Gala Dinner Section */}
+              <div className="space-y-2">
+                <h4 className="font-bold text-xs uppercase tracking-wider text-slate-400">Hak Akses Gala Dinner (Novotel Ballroom)</h4>
+                <div className={`p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                  isEligibleForGalaDinner(selectedParticipant)
+                    ? selectedParticipant.hak_gala_dinner
+                      ? "bg-purple-50/70 border-purple-200"
+                      : "bg-amber-50/70 border-amber-200"
+                    : "bg-slate-50 border-slate-200 opacity-80"
+                }`}>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <UtensilsCrossed className={`w-4 h-4 ${
+                        isEligibleForGalaDinner(selectedParticipant)
+                          ? selectedParticipant.hak_gala_dinner ? "text-purple-700" : "text-amber-700"
+                          : "text-slate-400"
+                      }`} />
+                      <span className="font-bold text-xs sm:text-sm text-slate-800">
+                        {!isEligibleForGalaDinner(selectedParticipant)
+                          ? "Tidak Berhak Mendapatkan Akses Gala Dinner"
+                          : selectedParticipant.hak_gala_dinner
+                          ? "Undangan Gala Dinner: DIBERIKAN (Boleh Masuk)"
+                          : "Undangan Gala Dinner: BELUM DIBERIKAN (Ditolak Masuk)"}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-600">
+                      {!isEligibleForGalaDinner(selectedParticipant)
+                        ? "Akses Gala Dinner dibatasi ketat khusus untuk peserta kategori Simposium & Workshop Onsite."
+                        : selectedParticipant.hak_gala_dinner
+                        ? `Peserta diizinkan masuk ke Ballroom Novotel Bogor. ${selectedParticipant.kehadiran_gala_dinner === 'Ya' ? `Sudah presensi masuk (${selectedParticipant.waktu_kehadiran_gala_dinner ? new Date(selectedParticipant.waktu_kehadiran_gala_dinner).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : 'Ya'}).` : 'Belum tiba / belum presensi di pos pintu masuk.'}`
+                        : "Peserta memenuhi kriteria (Simposium & Workshop), namun hak akses Gala Dinner belum diaktifkan."}
+                    </p>
+                  </div>
+
+                  {isEligibleForGalaDinner(selectedParticipant) && (
+                    <div className="shrink-0">
+                      <button
+                        onClick={() => handleToggleGalaDinner(selectedParticipant, !selectedParticipant.hak_gala_dinner)}
+                        disabled={galaLoadingId === selectedParticipant["No. Registrasi"]}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer disabled:opacity-50 ${
+                          selectedParticipant.hak_gala_dinner
+                            ? "bg-white hover:bg-red-50 text-red-600 border border-red-200 hover:border-red-300"
+                            : "bg-purple-700 hover:bg-purple-800 text-white shadow-xs"
+                        }`}
+                      >
+                        {galaLoadingId === selectedParticipant["No. Registrasi"] ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <UtensilsCrossed className="w-3.5 h-3.5" />
+                        )}
+                        <span>{selectedParticipant.hak_gala_dinner ? "Cabut Hak Akses" : "Beri Hak Akses Gala Dinner"}</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Data Onsite & Kesehatan (Jika ada) */}
-              {(selectedParticipant.registrasi_onsite || selectedParticipant.cek_gula_darah || selectedParticipant.gula_darah || selectedParticipant.tensi) && (
+              {(selectedParticipant.registrasi_onsite || selectedParticipant.kehadiran_workshop || selectedParticipant.kehadiran_gala_dinner || selectedParticipant.cek_gula_darah || selectedParticipant.gula_darah || selectedParticipant.tensi) && (
                 <div className="space-y-2">
-                  <h4 className="font-bold text-xs uppercase tracking-wider text-slate-400">Pemeriksaan Onsite & Pesta Rakyat</h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
+                  <h4 className="font-bold text-xs uppercase tracking-wider text-slate-400">Presensi & Pemeriksaan Onsite</h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
                     <div>
                       <span className="text-slate-400 text-xs block">Check-in Onsite</span>
                       <strong className="text-slate-800">{selectedParticipant.registrasi_onsite || 'Belum'}</strong>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 text-xs block">Presensi Workshop</span>
+                      <strong className="text-slate-800">{selectedParticipant.kehadiran_workshop || 'Belum'}</strong>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 text-xs block">Gala Dinner</span>
+                      <strong className="text-slate-800">{selectedParticipant.kehadiran_gala_dinner || 'Belum'}</strong>
                     </div>
                     <div>
                       <span className="text-slate-400 text-xs block">Gula Darah</span>
@@ -4280,6 +4765,106 @@ _Panitia KONAS PERSADIA 2026_`;
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Gala Dinner Management Modal */}
+      {isGalaModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 animate-in zoom-in-95 duration-200 border border-slate-200 space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
+                  <UtensilsCrossed className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-800">Manajemen Hak Akses Gala Dinner</h3>
+                  <p className="text-xs text-slate-500">Khusus Peserta Kategori Simposium + Workshop Onsite</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsGalaModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Stats Breakdown Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                <span className="text-[10px] font-semibold text-slate-500 uppercase block">Simposium+Workshop</span>
+                <span className="text-lg font-bold text-slate-800">{galaStats.eligibleTotal}</span>
+                <span className="text-[10px] text-slate-400 block mt-0.5">Total Terdaftar</span>
+              </div>
+              <div className="p-3 rounded-xl bg-blue-50/60 border border-blue-200/80">
+                <span className="text-[10px] font-semibold text-blue-700 uppercase block">Status Lunas</span>
+                <span className="text-lg font-bold text-blue-700">{galaStats.eligibleLunas}</span>
+                <span className="text-[10px] text-blue-500 block mt-0.5">Siap Diundang</span>
+              </div>
+              <div className="p-3 rounded-xl bg-purple-50 border border-purple-200">
+                <span className="text-[10px] font-semibold text-purple-700 uppercase block">Akses Diberikan</span>
+                <span className="text-lg font-bold text-purple-800">{galaStats.grantedTotal}</span>
+                <span className="text-[10px] text-purple-500 block mt-0.5">Undangan Aktif</span>
+              </div>
+              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200">
+                <span className="text-[10px] font-semibold text-emerald-700 uppercase block">Hadir Ballroom</span>
+                <span className="text-lg font-bold text-emerald-800">{galaStats.checkedInTotal}</span>
+                <span className="text-[10px] text-emerald-600 block mt-0.5">Presensi Masuk</span>
+              </div>
+            </div>
+
+            {/* Information Notice */}
+            <div className="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 space-y-1">
+              <div className="flex items-center gap-1.5 font-bold">
+                <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
+                <span>Ketentuan Akses Gala Dinner Novotel:</span>
+              </div>
+              <p className="text-[11px] text-amber-800 leading-relaxed">
+                Secara default semua akses masuk ditolak. Hanya peserta yang telah <strong>di-marking (hak_gala_dinner = true)</strong> yang akan diizinkan masuk oleh scanner di pos Ballroom. Sesuai ketentuan, penambahan hak akses ini <strong>HANYA berlaku bagi peserta Simposium + Workshop Onsite</strong>.
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-2 pt-2">
+              <button
+                onClick={handleBatchGrantGalaDinner}
+                disabled={isBatchGalaLoading || galaStats.pendingGrant === 0}
+                className="w-full py-2.5 px-4 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isBatchGalaLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Memproses Pemberian Akses...</span>
+                  </>
+                ) : (
+                  <>
+                    <UtensilsCrossed className="w-4 h-4" />
+                    <span>
+                      Beri Akses ke Semua Peserta Simposium + Workshop Lunas ({galaStats.pendingGrant} Peserta)
+                    </span>
+                  </>
+                )}
+              </button>
+
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  onClick={handleBatchRevokeGalaDinner}
+                  disabled={isBatchGalaLoading || galaStats.grantedTotal === 0}
+                  className="text-xs text-red-600 hover:text-red-800 hover:underline cursor-pointer disabled:opacity-40 disabled:no-underline font-medium"
+                >
+                  Cabut Semua Akses Gala Dinner ({galaStats.grantedTotal})
+                </button>
+
+                <button
+                  onClick={() => setIsGalaModalOpen(false)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

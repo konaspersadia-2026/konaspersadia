@@ -379,7 +379,44 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
           ...basePayload,
           mode_kehadiran: kat.id === "dokter_fktp" && activeFktpMode === "online" ? "Online" : "Onsite",
         };
-        const { error: err } = await supabase.from("pendaftar").insert([payloadWithMode]);
+
+        // Helper untuk melakukan insert dengan pemulihan otomatis jika terjadi benturan sequence ID (pendaftar_pkey)
+        const executeInsert = async (payloadToInsert: any) => {
+          let { error: err } = await supabase.from("pendaftar").insert([payloadToInsert]);
+
+          // Jika terjadi collision sequence id ("pendaftar_pkey"), coba auto-heal via RPC Supabase
+          if (err && err.message && err.message.includes("pendaftar_pkey")) {
+            console.warn("Sequence ID collision terdeteksi, mencoba pemulihan sequence Supabase...");
+            try {
+              // 1. Coba panggil RPC sync_pendaftar_id_sequence jika sudah terpasang di database
+              const { data: syncRes, error: rpcErr } = await supabase.rpc("sync_pendaftar_id_sequence");
+              if (!rpcErr && syncRes) {
+                const { error: retrySyncErr } = await supabase.from("pendaftar").insert([payloadToInsert]);
+                if (!retrySyncErr) return null;
+                err = retrySyncErr;
+              }
+            } catch (e) {
+              console.warn("Gagal memanggil sync_pendaftar_id_sequence:", e);
+            }
+
+            try {
+              // 2. Coba minta ID cadangan via RPC get_next_pendaftar_id
+              const { data: nextId, error: nextIdErr } = await supabase.rpc("get_next_pendaftar_id");
+              if (!nextIdErr && nextId) {
+                const payloadWithExplicitId = { ...payloadToInsert, id: Number(nextId) };
+                const { error: retryIdErr } = await supabase.from("pendaftar").insert([payloadWithExplicitId]);
+                if (!retryIdErr) return null;
+                err = retryIdErr;
+              }
+            } catch (e) {
+              console.warn("Gagal meminta get_next_pendaftar_id:", e);
+            }
+          }
+
+          return err;
+        };
+
+        let err = await executeInsert(payloadWithMode);
         if (err) {
           // Fallback tanpa kolom nik atau mode_kehadiran jika kolom belum dibuat di tabel Supabase
           if (err.message && (err.message.includes("nik") || err.message.includes("mode_kehadiran"))) {
@@ -387,17 +424,27 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
             if (err.message.includes("nik")) delete fallbackPayload.nik;
             if (err.message.includes("mode_kehadiran")) delete fallbackPayload.mode_kehadiran;
 
-            const { error: retryErr } = await supabase.from("pendaftar").insert([fallbackPayload]);
+            let retryErr = await executeInsert(fallbackPayload);
             if (retryErr) {
               if (retryErr.message && (retryErr.message.includes("nik") || retryErr.message.includes("mode_kehadiran"))) {
                 delete fallbackPayload.nik;
                 delete fallbackPayload.mode_kehadiran;
-                const { error: finalErr } = await supabase.from("pendaftar").insert([fallbackPayload]);
-                if (finalErr) throw new Error(`Gagal menyimpan pendaftaran: ${finalErr.message}`);
+                const finalErr = await executeInsert(fallbackPayload);
+                if (finalErr) {
+                  if (finalErr.message && finalErr.message.includes("pendaftar_pkey")) {
+                    throw new Error("Antrean database pendaftaran sedang disinkronkan. Silakan klik 'Kirim pendaftaran' kembali dalam beberapa saat, atau hubungi panitia.");
+                  }
+                  throw new Error(`Gagal menyimpan pendaftaran: ${finalErr.message}`);
+                }
               } else {
+                if (retryErr.message && retryErr.message.includes("pendaftar_pkey")) {
+                  throw new Error("Antrean database pendaftaran sedang disinkronkan. Silakan klik 'Kirim pendaftaran' kembali dalam beberapa saat, atau hubungi panitia.");
+                }
                 throw new Error(`Gagal menyimpan pendaftaran: ${retryErr.message}`);
               }
             }
+          } else if (err.message && err.message.includes("pendaftar_pkey")) {
+            throw new Error("Antrean database pendaftaran sedang disinkronkan. Silakan klik 'Kirim pendaftaran' kembali dalam beberapa saat, atau hubungi panitia.");
           } else {
             throw new Error(`Gagal menyimpan pendaftaran: ${err.message}`);
           }
