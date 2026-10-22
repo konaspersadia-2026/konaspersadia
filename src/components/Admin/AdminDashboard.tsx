@@ -41,6 +41,7 @@ interface Pendaftar {
   "Total Bayar": number | string;
   Institusi: string;
   nim?: string;
+  nik?: string;
   tanggal_lahir?: string;
   jenis_kelamin?: string;
   registrasi_onsite?: string | null;
@@ -176,6 +177,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
   const [isEditingParticipant, setIsEditingParticipant] = useState(false);
   const [editFormData, setEditFormData] = useState({
     namaLengkap: "",
+    nik: "",
     whatsapp: "",
     jenisKelamin: "Laki-laki",
     tanggalLahir: "",
@@ -193,6 +195,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
   const [addFormData, setAddFormData] = useState({
     kategoriId: "persadia",
     namaLengkap: "",
+    nik: "",
     whatsapp: "",
     email: "",
     jenisKelamin: "Laki-laki",
@@ -426,6 +429,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
             row.kode_voucher,
             row.kategori_peserta,
             row.nim,
+            row.nik,
             row.kota_kabupaten,
             row.provinsi,
             row.pilihan_kegiatan,
@@ -454,6 +458,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
             KotaKabupaten: row.kota_kabupaten || "-",
             Provinsi: row.provinsi || "-",
             nim: row.nim || "-",
+            nik: row.nik || "-",
             tanggal_lahir: row.tanggal_lahir || "-",
             jenis_kelamin: row.jenis_kelamin || "-",
             registrasi_onsite: row.registrasi_onsite || null,
@@ -673,6 +678,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
 
     setEditFormData({
       namaLengkap: p["Nama Lengkap"] === "-" ? "" : p["Nama Lengkap"],
+      nik: (p.nik && p.nik !== "-") ? p.nik.replace(/\D/g, "") : "",
       whatsapp: (p["No. WhatsApp"] && p["No. WhatsApp"] !== "-") ? p["No. WhatsApp"].replace(/\D/g, "") : "",
       jenisKelamin: p.jenis_kelamin && p.jenis_kelamin !== "-" ? p.jenis_kelamin : "Laki-laki",
       tanggalLahir: tgl,
@@ -718,12 +724,50 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
       return;
     }
 
+    // 3. Validasi NIK jika peserta ilmiah non-mahasiswa atau jika NIK diisi
+    const cleanNik = editFormData.nik.replace(/\D/g, "");
+    const katName = (selectedParticipant["Kategori Peserta"] || "").toLowerCase();
+    const isIlmiahNonMhs =
+      !katName.includes("mahasiswa") &&
+      !katName.includes("persadia") &&
+      !katName.includes("umum") &&
+      !katName.includes("diabetes health forum");
+
+    if (isIlmiahNonMhs && !cleanNik) {
+      setEditError("NIK (16 digit) wajib diisi untuk peserta kegiatan ilmiah (SKP Kemenkes).");
+      return;
+    }
+    if (cleanNik && cleanNik.length !== 16) {
+      setEditError(`NIK harus terdiri dari tepat 16 digit angka (saat ini ${cleanNik.length} digit).`);
+      return;
+    }
+
+    // 4. Validasi Email jika peserta kegiatan ilmiah / seminar atau jika diisi
+    const isEditEmailRequired =
+      !katName.includes("persadia") &&
+      !katName.includes("umum");
+
+    if (isEditEmailRequired) {
+      if (!editFormData.email.trim()) {
+        setEditError("Alamat email wajib diisi untuk peserta kegiatan ilmiah / seminar (E-Ticket & materi).");
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editFormData.email.trim())) {
+        setEditError("Format email tidak valid (contoh: nama@domain.com).");
+        return;
+      }
+    } else if (editFormData.email.trim() && !editFormData.email.includes("@")) {
+      setEditError("Format email tidak valid.");
+      return;
+    }
+
     setIsSavingEdit(true);
     setEditError(null);
 
     try {
       const updatePayload: Record<string, any> = {
         nama_lengkap: cleanNama,
+        nik: cleanNik || "-",
         whatsapp: rawDigits,
         jenis_kelamin: editFormData.jenisKelamin,
         tanggal_lahir: editFormData.tanggalLahir || null,
@@ -737,7 +781,19 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
         .update(updatePayload)
         .eq('no_registrasi', regId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        if (updateError.message && updateError.message.includes("nik")) {
+          const fallbackPayload = { ...updatePayload };
+          delete fallbackPayload.nik;
+          const { error: retryError } = await supabase
+            .from('pendaftar')
+            .update(fallbackPayload)
+            .eq('no_registrasi', regId);
+          if (retryError) throw retryError;
+        } else {
+          throw updateError;
+        }
+      }
 
       // 3. Update data state lokal & search index
       setData(prev => prev.map(item => {
@@ -748,6 +804,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
           cleanNama,
           updatePayload.email,
           rawDigits,
+          cleanNik,
           updatePayload.institusi,
           updatePayload.cabang_persadia,
           item.NamaKetuaCabang,
@@ -764,6 +821,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
           ...item,
           "Nama Lengkap": cleanNama,
           "No. WhatsApp": rawDigits,
+          nik: cleanNik || item.nik || "-",
           jenis_kelamin: editFormData.jenisKelamin,
           tanggal_lahir: editFormData.tanggalLahir || "-",
           Institusi: updatePayload.institusi,
@@ -780,6 +838,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
           ...prev,
           "Nama Lengkap": cleanNama,
           "No. WhatsApp": rawDigits,
+          nik: cleanNik || prev.nik || "-",
           jenis_kelamin: editFormData.jenisKelamin,
           tanggal_lahir: editFormData.tanggalLahir || "-",
           Institusi: updatePayload.institusi,
@@ -860,6 +919,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
     setAddFormData({
       kategoriId: targetCat,
       namaLengkap: "",
+      nik: "",
       whatsapp: "",
       email: "",
       jenisKelamin: "Laki-laki",
@@ -913,6 +973,33 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
     }
 
     const selectedCat = KATEGORI_PESERTA.find(k => k.id === addFormData.kategoriId) || KATEGORI_PESERTA[0];
+
+    // Validasi NIK untuk kategori ilmiah selain mahasiswa
+    const cleanNik = addFormData.nik.replace(/\D/g, "");
+    if (selectedCat.akses === "ilmiah" && selectedCat.id !== "mahasiswa") {
+      if (!cleanNik) {
+        setAddError("NIK (16 digit) wajib diisi untuk kategori ilmiah (SKP Kemenkes).");
+        return;
+      }
+      if (cleanNik.length !== 16) {
+        setAddError(`NIK harus terdiri dari tepat 16 digit angka (saat ini ${cleanNik.length} digit).`);
+        return;
+      }
+    }
+
+    if (selectedCat.akses === "ilmiah" || selectedCat.id === "diabetes_health_forum") {
+      if (!addFormData.email.trim()) {
+        setAddError("Alamat email wajib diisi untuk kategori ilmiah / forum.");
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addFormData.email.trim())) {
+        setAddError("Format alamat email tidak valid (contoh: nama@domain.com).");
+        return;
+      }
+    } else if (addFormData.email.trim() && !addFormData.email.includes("@")) {
+      setAddError("Format alamat email tidak valid.");
+      return;
+    }
 
     if (selectedCat.akses === "ilmiah" && selectedCat.id !== "dokter_fktp" && !addFormData.institusi.trim()) {
       setAddError("Institusi / Rumah Sakit / Instansi wajib diisi untuk kategori ilmiah.");
@@ -972,6 +1059,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
         no_registrasi: regId,
         status_pembayaran: addFormData.statusPembayaran,
         nama_lengkap: cleanNama,
+        nik: cleanNik || "-",
         email: addFormData.email.trim() || "-",
         whatsapp: rawDigits,
         kategori_peserta: selectedCat.label,
@@ -1007,13 +1095,31 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
         .select();
 
       if (errWithMode) {
-        if (errWithMode.message && errWithMode.message.includes("mode_kehadiran")) {
+        if (errWithMode.message && (errWithMode.message.includes("mode_kehadiran") || errWithMode.message.includes("nik"))) {
+          const fallbackPayload = { ...payloadWithMode };
+          if (errWithMode.message.includes("mode_kehadiran")) delete fallbackPayload.mode_kehadiran;
+          if (errWithMode.message.includes("nik")) delete fallbackPayload.nik;
+
           const { data: fallbackRows, error: fallbackErr } = await supabase
             .from('pendaftar')
-            .insert([basePayload])
+            .insert([fallbackPayload])
             .select();
-          if (fallbackErr) insertError = fallbackErr;
-          else insertedResult = fallbackRows;
+          if (fallbackErr) {
+            if (fallbackErr.message && (fallbackErr.message.includes("mode_kehadiran") || fallbackErr.message.includes("nik"))) {
+              delete fallbackPayload.mode_kehadiran;
+              delete fallbackPayload.nik;
+              const { data: finalRows, error: finalErr } = await supabase
+                .from('pendaftar')
+                .insert([fallbackPayload])
+                .select();
+              if (finalErr) insertError = finalErr;
+              else insertedResult = finalRows;
+            } else {
+              insertError = fallbackErr;
+            }
+          } else {
+            insertedResult = fallbackRows;
+          }
         } else {
           insertError = errWithMode;
         }
@@ -1034,6 +1140,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
         cleanNama,
         basePayload.email,
         rawDigits,
+        basePayload.nik,
         basePayload.institusi,
         basePayload.cabang_persadia,
         basePayload.nama_ketua_cabang,
@@ -1068,6 +1175,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
         KotaKabupaten: basePayload.kota_kabupaten,
         Provinsi: basePayload.provinsi,
         nim: basePayload.nim,
+        nik: basePayload.nik,
         tanggal_lahir: basePayload.tanggal_lahir,
         jenis_kelamin: basePayload.jenis_kelamin,
         mode_kehadiran: payloadWithMode.mode_kehadiran,
@@ -1449,6 +1557,7 @@ _Panitia KONAS PERSADIA 2026_`;
       "No. Registrasi",
       "Tanggal",
       "Nama Lengkap",
+      "NIK (Kemenkes)",
       "Email",
       "No. WhatsApp",
       "Kategori Peserta",
@@ -1470,6 +1579,7 @@ _Panitia KONAS PERSADIA 2026_`;
       `"${d["No. Registrasi"]}"`,
       `"${d.Timestamp}"`,
       `"${(d["Nama Lengkap"] || "").replace(/"/g, '""')}"`,
+      `"'${d.nik || ""}"`,
       `"${d.Email || ""}"`,
       `"'${d["No. WhatsApp"] || ""}"`,
       `"${(d["Kategori Peserta"] || "").replace(/"/g, '""')}"`,
@@ -3245,7 +3355,10 @@ _Panitia KONAS PERSADIA 2026_`;
                     {/* Email */}
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Alamat Email
+                        Alamat Email {selectedParticipant && (() => {
+                          const k = (selectedParticipant["Kategori Peserta"] || "").toLowerCase();
+                          return !k.includes("persadia") && !k.includes("umum");
+                        })() ? <span className="text-red-500">*</span> : <span className="text-slate-400 font-normal">(Opsional)</span>}
                       </label>
                       <input
                         type="email"
@@ -3254,6 +3367,28 @@ _Panitia KONAS PERSADIA 2026_`;
                         placeholder="Contoh: nama@domain.com"
                         className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                       />
+                    </div>
+
+                    {/* NIK (SKP Kemenkes) */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        NIK (16 Digit - SKP Kemenkes)
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={16}
+                          value={editFormData.nik}
+                          onChange={(e) => setEditFormData(prev => ({ ...prev, nik: e.target.value.replace(/\D/g, '') }))}
+                          placeholder="16 digit NIK KTP"
+                          className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono"
+                        />
+                        <span className="absolute right-3 top-2 text-[10px] text-slate-400 font-mono">
+                          {editFormData.nik.length}/16
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-slate-500 block mt-0.5">Syarat pelaporan SKP Kemenkes RI</span>
                     </div>
 
                     {/* Institusi / RS */}
@@ -3327,6 +3462,12 @@ _Panitia KONAS PERSADIA 2026_`;
                     <span className="text-slate-400 text-xs block">Email</span>
                     <strong className="text-slate-800">{selectedParticipant.Email}</strong>
                   </div>
+                  {selectedParticipant.nik && selectedParticipant.nik !== '-' && (
+                    <div>
+                      <span className="text-slate-400 text-xs block">NIK (SKP Kemenkes)</span>
+                      <strong className="text-slate-800 font-mono tracking-wider">{selectedParticipant.nik}</strong>
+                    </div>
+                  )}
                   {selectedParticipant.nim && selectedParticipant.nim !== '-' && (
                     <div>
                       <span className="text-slate-400 text-xs block">NIM Mahasiswa</span>
@@ -3710,6 +3851,31 @@ _Panitia KONAS PERSADIA 2026_`;
                     />
                   </div>
 
+                  {/* NIK jika kategori ilmiah non-mahasiswa */}
+                  {["dokter_spesialis", "dokter_umum", "dokter_fktp", "residen", "perawat"].includes(addFormData.kategoriId) && (
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        NIK (Nomor Induk Kependudukan - 16 Digit) <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={16}
+                          required
+                          value={addFormData.nik}
+                          onChange={(e) => setAddFormData(prev => ({ ...prev, nik: e.target.value.replace(/\D/g, '') }))}
+                          placeholder="16 digit NIK KTP (SKP Kemenkes)"
+                          className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 outline-none font-mono bg-white"
+                        />
+                        <span className="absolute right-3 top-2 text-[10px] text-slate-400 font-mono">
+                          {addFormData.nik.length}/16
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-slate-500 block mt-0.5">Syarat wajib pelaporan SKP Kemenkes RI (Plataran Sehat)</span>
+                    </div>
+                  )}
+
                   {/* Nomor WhatsApp */}
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -3757,10 +3923,11 @@ _Panitia KONAS PERSADIA 2026_`;
                   {/* Email */}
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Alamat Email (Opsional)
+                      Alamat Email {["dokter_spesialis", "dokter_umum", "dokter_fktp", "residen", "perawat", "mahasiswa", "diabetes_health_forum"].includes(addFormData.kategoriId) ? <span className="text-red-500">*</span> : <span className="text-slate-400 font-normal">(Opsional)</span>}
                     </label>
                     <input
                       type="email"
+                      required={["dokter_spesialis", "dokter_umum", "dokter_fktp", "residen", "perawat", "mahasiswa", "diabetes_health_forum"].includes(addFormData.kategoriId)}
                       value={addFormData.email}
                       onChange={(e) => setAddFormData(prev => ({ ...prev, email: e.target.value }))}
                       placeholder="email@domain.com"

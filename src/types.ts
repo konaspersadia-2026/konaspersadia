@@ -24,7 +24,7 @@ export interface KategoriPeserta {
   hargaOnline?: number;
   hargaEarlyBird?: number; // untuk pesta_rakyat
   hargaReguler?: number; // untuk pesta_rakyat
-  fieldTambahan: Array<"noSTR" | "institusi" | "noKTP" | "cabangPersadia" | "namaKetuaCabang" | "slotWaktuCekGula" | "nim" | "tanggalLahir" | "jenisKelamin">;
+  fieldTambahan: Array<"noSTR" | "institusi" | "noKTP" | "cabangPersadia" | "namaKetuaCabang" | "slotWaktuCekGula" | "nim" | "tanggalLahir" | "jenisKelamin" | "nik">;
   topikMateri?: string[];
 }
 
@@ -62,6 +62,7 @@ export interface RegistrationData {
   kategoriId: string;
   pilihanKegiatan?: "Symposium" | "Symposium + Workshop" | "Workshop";
   namaLengkap: string;
+  nik?: string;
   email: string;
   whatsapp: string;
   akses?: string;

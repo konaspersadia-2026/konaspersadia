@@ -63,6 +63,7 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
   const [modeFktp, setModeFktp] = useState<"onsite" | "online">("onsite");
   const [pilihanKegiatan, setPilihanKegiatan] = useState<"Symposium" | "Symposium + Workshop" | "Workshop">("Symposium + Workshop");
   const [namaLengkap, setNamaLengkap] = useState("");
+  const [nik, setNik] = useState("");
   const [email, setEmail] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [institusi, setInstitusi] = useState("");
@@ -110,6 +111,7 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
   const [registrationId, setRegistrationId] = useState("");
 
   const kat = KATEGORI_PESERTA.find((k) => k.id === kategoriId) || KATEGORI_PESERTA[0];
+  const isNikRequired = kat.akses === "ilmiah" && kat.id !== "mahasiswa";
 
   useEffect(() => {
     window.scrollTo({ top: 0 });
@@ -178,6 +180,7 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
 
   // Reset pilihan ketika kategori berganti
   useEffect(() => {
+    setNik("");
     setAppliedVoucher(null);
     setVoucherInput("");
     setVoucherError("");
@@ -269,7 +272,13 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
       return setError(`Mohon maaf, pendaftaran untuk kategori "${kat.label}" saat ini telah ditutup karena kuota kapasitas telah terpenuhi.`);
     }
     if (!namaLengkap.trim()) return setError("Nama lengkap wajib diisi.");
-    if (email.trim() && !email.includes("@")) return setError("Format email tidak valid.");
+    if (isNikRequired) {
+      const cleanNik = nik.replace(/\D/g, "");
+      if (!cleanNik) return setError("NIK (Nomor Induk Kependudukan) 16 digit wajib diisi untuk pelaporan SKP Kemenkes RI.");
+      if (cleanNik.length !== 16) return setError(`NIK harus terdiri dari tepat 16 digit angka (saat ini ${cleanNik.length} digit).`);
+    }
+    if (!email.trim()) return setError("Alamat email aktif wajib diisi.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return setError("Format alamat email tidak valid (contoh: nama@domain.com).");
     if (!whatsapp.trim() || whatsapp.length < 9) return setError("Nomor WhatsApp yang valid wajib diisi.");
     const f = kat.fieldTambahan;
     if (f.includes("institusi") && kat.id !== "diabetes_health_forum" && !institusi.trim()) return setError("Institusi wajib diisi.");
@@ -335,12 +344,14 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
       }
       const anggota = kat.id !== "persadia" && bersediaAnggotaPersadia;
       const f = kat.fieldTambahan;
+      const cleanNik = isNikRequired ? nik.replace(/\D/g, "") : "-";
 
       const basePayload: any = {
         timestamp: new Date().toISOString(),
         no_registrasi: id,
         status_pembayaran: total === 0 ? "Lunas" : "Menunggu Verifikasi",
         nama_lengkap: namaLengkap,
+        nik: cleanNik,
         email: email.trim() || "-",
         whatsapp,
         kategori_peserta: kat.label,
@@ -370,10 +381,23 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
         };
         const { error: err } = await supabase.from("pendaftar").insert([payloadWithMode]);
         if (err) {
-          // Fallback tanpa kolom mode_kehadiran jika kolom belum dibuat di tabel
-          if (err.message && err.message.includes("mode_kehadiran")) {
-            const { error: fallbackErr } = await supabase.from("pendaftar").insert([basePayload]);
-            if (fallbackErr) throw new Error(`Gagal menyimpan pendaftaran: ${fallbackErr.message}`);
+          // Fallback tanpa kolom nik atau mode_kehadiran jika kolom belum dibuat di tabel Supabase
+          if (err.message && (err.message.includes("nik") || err.message.includes("mode_kehadiran"))) {
+            const fallbackPayload = { ...payloadWithMode };
+            if (err.message.includes("nik")) delete fallbackPayload.nik;
+            if (err.message.includes("mode_kehadiran")) delete fallbackPayload.mode_kehadiran;
+
+            const { error: retryErr } = await supabase.from("pendaftar").insert([fallbackPayload]);
+            if (retryErr) {
+              if (retryErr.message && (retryErr.message.includes("nik") || retryErr.message.includes("mode_kehadiran"))) {
+                delete fallbackPayload.nik;
+                delete fallbackPayload.mode_kehadiran;
+                const { error: finalErr } = await supabase.from("pendaftar").insert([fallbackPayload]);
+                if (finalErr) throw new Error(`Gagal menyimpan pendaftaran: ${finalErr.message}`);
+              } else {
+                throw new Error(`Gagal menyimpan pendaftaran: ${retryErr.message}`);
+              }
+            }
           } else {
             throw new Error(`Gagal menyimpan pendaftaran: ${err.message}`);
           }
@@ -419,7 +443,7 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
   const daftarLagi = () => {
     setSuccessData(null);
     setRegistrationId("");
-    setNamaLengkap(""); setEmail(""); setWhatsapp("");
+    setNamaLengkap(""); setNik(""); setEmail(""); setWhatsapp("");
     setInstitusi(""); setNim(""); setCabangPersadia(""); setNamaKetuaCabang("");
     setTanggalLahir(""); setJenisKelamin("Laki-laki");
     setBersediaAnggotaPersadia(false);
@@ -634,8 +658,38 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
               <Field label="Nama lengkap (beserta gelar)" required>
                 <input className={inputCls} value={namaLengkap} onChange={(e) => setNamaLengkap(e.target.value)} />
               </Field>
-              <Field label="Email" optional>
-                <input type="email" className={inputCls} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="nama@email.com" />
+
+              {isNikRequired && (
+                <Field label="Nomor Induk Kependudukan (NIK)" required>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={16}
+                      className={inputCls}
+                      value={nik}
+                      onChange={(e) => setNik(e.target.value.replace(/\D/g, ""))}
+                      placeholder="16 digit NIK KTP Anda"
+                    />
+                    <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-mono">
+                      {nik.length}/16
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Wajib diisi untuk pelaporan dan sinkronisasi perolehan SKP Kementerian Kesehatan RI (Plataran Sehat / SatuSehat SDMK).
+                  </p>
+                </Field>
+              )}
+
+              <Field label="Alamat Email" required>
+                <input
+                  type="email"
+                  required
+                  className={inputCls}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="nama@email.com"
+                />
               </Field>
               <Field label="Nomor WhatsApp" required>
                 <input type="tel" className={inputCls} value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="08xxxxxxxxxx" />
