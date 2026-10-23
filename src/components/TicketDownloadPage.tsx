@@ -22,6 +22,8 @@ interface ParticipantData {
   status_pembayaran: string;
   total_tagihan?: number | string;
   timestamp?: string;
+  hak_gala_dinner?: boolean | string | null;
+  akses_gala_dinner?: boolean | string | null;
 }
 
 export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPageProps) {
@@ -92,6 +94,40 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
     const keg = (row?.pilihan_kegiatan || "").toLowerCase();
     return kat.includes("health forum") || keg.includes("health forum") || keg.includes("health talk");
   };
+
+  const hasGalaDinnerAccess = (row: any): boolean => {
+    if (!row) return false;
+    return Boolean(
+      row.hak_gala_dinner === true ||
+      row.hak_gala_dinner === "true" ||
+      row["Hak_Gala_Dinner"] === true ||
+      row["Hak_Gala_Dinner"] === "true" ||
+      row.akses_gala_dinner === true ||
+      row.akses_gala_dinner === "true" ||
+      row.akses_gala_dinner === "Ya"
+    );
+  };
+
+  // Pastikan hak_gala_dinner tersinkronisasi jika data berasal dari RPC versi lama
+  useEffect(() => {
+    if (selectedParticipant && typeof selectedParticipant.hak_gala_dinner === "undefined" && isSupabaseConfigured) {
+      const regId = selectedParticipant.no_registrasi;
+      (async () => {
+        try {
+          const { data } = await supabase
+            .from("pendaftar")
+            .select("hak_gala_dinner")
+            .eq("no_registrasi", regId)
+            .maybeSingle();
+          if (data && typeof data.hak_gala_dinner !== "undefined") {
+            setSelectedParticipant(prev => (prev && prev.no_registrasi === regId ? { ...prev, hak_gala_dinner: data.hak_gala_dinner } : prev));
+          }
+        } catch {
+          // Abaikan jika tabel/jaringan belum siap
+        }
+      })();
+    }
+  }, [selectedParticipant?.no_registrasi]);
 
   // Cek parameter dari URL dan hash saat inisialisasi
   useEffect(() => {
@@ -164,7 +200,7 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
       const cleanWa = normalizePhone(cleanReg);
       const { data, error } = await supabase
         .from("pendaftar")
-        .select("id, no_registrasi, nama_lengkap, whatsapp, kategori_peserta, pilihan_kegiatan, institusi, cabang_persadia, status_pembayaran")
+        .select("id, no_registrasi, nama_lengkap, whatsapp, kategori_peserta, pilihan_kegiatan, institusi, cabang_persadia, status_pembayaran, hak_gala_dinner")
         .or(`no_registrasi.ilike.%${cleanReg}%,whatsapp.ilike.%${cleanWa}%,nama_lengkap.ilike.%${cleanReg}%`)
         .limit(20);
 
@@ -231,7 +267,7 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
       const coreWa = cleanWa.length > 8 ? cleanWa.slice(-8) : cleanWa;
       const { data, error } = await supabase
         .from("pendaftar")
-        .select("id, no_registrasi, nama_lengkap, whatsapp, kategori_peserta, pilihan_kegiatan, institusi, cabang_persadia, status_pembayaran")
+        .select("id, no_registrasi, nama_lengkap, whatsapp, kategori_peserta, pilihan_kegiatan, institusi, cabang_persadia, status_pembayaran, hak_gala_dinner")
         .or(`whatsapp.ilike.%${cleanWa}%,whatsapp.ilike.%${coreWa}%,no_registrasi.ilike.%${rawInput}%`)
         .limit(25);
 
@@ -699,6 +735,8 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
                         ? "linear-gradient(135deg, #991b1b 0%, #dc2626 100%)"
                         : isDhfParticipant(selectedParticipant)
                         ? "linear-gradient(135deg, #7c3aed 0%, #00B4AC 100%)"
+                        : hasGalaDinnerAccess(selectedParticipant)
+                        ? "linear-gradient(135deg, #0B3D5E 0%, #6d28d9 55%, #7c3aed 100%)"
                         : isIlmiahParticipant(selectedParticipant)
                         ? "linear-gradient(135deg, #0B3D5E 0%, #00B4AC 100%)"
                         : "linear-gradient(135deg, #ea580c 0%, #f97316 100%)",
@@ -720,7 +758,9 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
                             {isDhfParticipant(selectedParticipant)
                               ? "Diabetes Health Forum • Novotel Bogor"
                               : isIlmiahParticipant(selectedParticipant)
-                              ? "Simposium & Workshop • Novotel Bogor"
+                              ? hasGalaDinnerAccess(selectedParticipant)
+                                ? "Simposium, Workshop & Gala Dinner • Novotel"
+                                : "Simposium & Workshop • Novotel Bogor"
                               : "Pesta Rakyat • Stadion Pakansari Bogor"}
                           </p>
                         </div>
@@ -730,6 +770,8 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
                           ? "E-TICKET DIBATALKAN"
                           : isDhfParticipant(selectedParticipant)
                           ? "E-TICKET HEALTH FORUM"
+                          : hasGalaDinnerAccess(selectedParticipant)
+                          ? "E-TICKET ILMIAH • GALA DINNER"
                           : isIlmiahParticipant(selectedParticipant)
                           ? "E-TICKET ILMIAH"
                           : "E-TICKET PESTA RAKYAT"}
@@ -769,6 +811,11 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
                           ? "Sesi Ilmiah (Novotel)"
                           : "Pesta Rakyat (Pakansari)"}
                       </div>
+                      {hasGalaDinnerAccess(selectedParticipant) && (
+                        <div className="px-3 py-1 rounded-full bg-purple-100 border border-purple-300 text-purple-900 text-[11px] font-black uppercase tracking-wider flex items-center gap-1 shadow-xs">
+                          <span>🍽️ Akses Gala Dinner</span>
+                        </div>
+                      )}
                       {isCancelledParticipant(selectedParticipant) ? (
                         <div className="px-3 py-1 rounded-full bg-rose-100 border border-rose-300 text-rose-800 text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5">
                           <XCircle className="w-3.5 h-3.5 text-rose-600" />
@@ -850,7 +897,11 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
                           📅 <strong>Sabtu, 7 November 2026</strong> (07.30 WIB - Selesai)
                           <br />
                           📍 <strong>Novotel Bogor Golf Resort &amp; Convention Center</strong>
-                          <br />
+                          {hasGalaDinnerAccess(selectedParticipant) && (
+                            <span className="text-[11px] text-purple-700 font-bold block mt-1">
+                              🍽️ Termasuk Undangan Gala Dinner (18.30 WIB • Grand Ballroom)
+                            </span>
+                          )}
                           <span className="text-[11px] text-emerald-600 font-semibold block mt-1">
                             *Termasuk Akses Bebas ke Hari Ke-2 (Pesta Rakyat Stadion Pakansari • 8 Nov 2026)
                           </span>
@@ -956,7 +1007,13 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
             <div
               className="px-6 py-5 text-white"
               style={{
-                backgroundColor: isDhfParticipant(selectedParticipant) ? "#7c3aed" : isIlmiahParticipant(selectedParticipant) ? "#0B3D5E" : "#ea580c",
+                background: isDhfParticipant(selectedParticipant)
+                  ? "linear-gradient(135deg, #7c3aed 0%, #00B4AC 100%)"
+                  : hasGalaDinnerAccess(selectedParticipant)
+                  ? "linear-gradient(135deg, #0B3D5E 0%, #6d28d9 55%, #7c3aed 100%)"
+                  : isIlmiahParticipant(selectedParticipant)
+                  ? "#0B3D5E"
+                  : "#ea580c",
               }}
             >
               <div className="flex justify-between items-center">
@@ -975,7 +1032,9 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
                       {isDhfParticipant(selectedParticipant)
                         ? "Diabetes Health Forum • Novotel Bogor"
                         : isIlmiahParticipant(selectedParticipant)
-                        ? "Simposium & Workshop • Novotel Bogor"
+                        ? hasGalaDinnerAccess(selectedParticipant)
+                          ? "Simposium, Workshop & Gala Dinner • Novotel"
+                          : "Simposium & Workshop • Novotel Bogor"
                         : "Pesta Rakyat • Stadion Pakansari Bogor"}
                     </p>
                   </div>
@@ -983,6 +1042,8 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
                 <div className="bg-white/20 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase border border-white/30">
                   {isDhfParticipant(selectedParticipant)
                     ? "E-TICKET HEALTH FORUM"
+                    : hasGalaDinnerAccess(selectedParticipant)
+                    ? "E-TICKET ILMIAH • GALA DINNER"
                     : isIlmiahParticipant(selectedParticipant)
                     ? "E-TICKET ILMIAH"
                     : "E-TICKET PESTA RAKYAT"}
@@ -1020,6 +1081,11 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
                     ? "Sesi Ilmiah (Novotel)"
                     : "Pesta Rakyat (Pakansari)"}
                 </div>
+                {hasGalaDinnerAccess(selectedParticipant) && (
+                  <div className="px-3.5 py-1 rounded-full bg-purple-100 border border-purple-300 text-purple-900 text-[11px] font-black uppercase tracking-wider">
+                    🍽️ Akses Gala Dinner
+                  </div>
+                )}
               </div>
 
               <div className="p-4 bg-white rounded-2xl border-2 border-slate-900 flex flex-col items-center w-full max-w-[270px]">
@@ -1043,7 +1109,9 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
                 {isDhfParticipant(selectedParticipant)
                   ? "Sabtu, 7 November 2026 • Novotel Bogor Golf Resort"
                   : isIlmiahParticipant(selectedParticipant)
-                  ? "Sabtu, 7 November 2026 • Novotel Bogor Golf Resort"
+                  ? hasGalaDinnerAccess(selectedParticipant)
+                    ? "Sabtu, 7 Nov 2026 • Novotel Bogor (Simposium, Workshop & Gala Dinner)"
+                    : "Sabtu, 7 November 2026 • Novotel Bogor Golf Resort"
                   : "Minggu, 8 November 2026 • Stadion Pakansari Cibinong"}
               </div>
             </div>

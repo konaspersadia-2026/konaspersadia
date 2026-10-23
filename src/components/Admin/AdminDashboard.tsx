@@ -1502,6 +1502,59 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
     }
   };
 
+  const getDaftarKegiatanWa = (p: Pendaftar, hasGalaDinner: boolean): string => {
+    const keg = (p["Akses Kegiatan"] || (p as any).pilihan_kegiatan || "").toLowerCase();
+    const kat = (p["Kategori Peserta"] || (p as any).kategori_peserta || "").toLowerCase();
+    const mode = (p.mode_kehadiran || "").toLowerCase();
+    const isOnline = mode === "online" || keg.includes("online");
+    const isDHF = kat.includes("health forum") || keg.includes("health forum") || keg.includes("health talk") || p.ikut_health_talk === true;
+    const isPestaRakyat = kat.includes("persadia") || kat.includes("umum") || keg.includes("pesta rakyat");
+
+    if (isOnline) {
+      return `1. 💻 *Sesi Ilmiah FKTP Daring (Online)*
+   📅 Sabtu, 7 November 2026 (08.00 WIB - Selesai)
+   📍 Live Zoom Webinar (Tautan siaran daring resmi akan dikirimkan panitia)`;
+    }
+
+    if (isDHF) {
+      return `1. 💬 *Diabetes Health Forum (DHF)*
+   📅 Sabtu, 7 November 2026 (08.00 WIB - Selesai)
+   📍 Ballroom 2, Novotel Bogor Golf Resort & Convention Center
+   ✨ *Talkshow Interaktif Eksklusif bersama dr. Boyke Dian Nugraha, SpOG*
+2. 🏃‍♂️ *Pesta Rakyat WDD & HKN 2026* (Akses Bebas Hari Ke-2)
+   📅 Minggu, 8 November 2026 (06.00 WIB - Selesai)
+   📍 Stadion Pakansari, Cibinong, Kab. Bogor`;
+    }
+
+    if (isPestaRakyat) {
+      return `1. 🏃‍♂️ *Pesta Rakyat World Diabetes Day & Hari Kesehatan Nasional 2026*
+   📅 Minggu, 8 November 2026 (06.00 WIB - Selesai)
+   📍 Stadion Pakansari, Cibinong, Kab. Bogor
+   ✨ *Agenda:* Senam Massal Diabetes, Edukasi Medis Pola Hidup, Skrining Kesehatan & Cek Gula Darah Gratis, Bazar UMKM, serta Panggung Hiburan Musik`;
+    }
+
+    // Sesi Ilmiah Onsite (Dokter Spesialis, Dokter Umum, FKTP Onsite, Residen, Perawat, Mahasiswa)
+    const isWorkshop = keg.includes("workshop") || kat.includes("perawat") || kat.includes("edukator");
+    const namaSesiIlmiah = isWorkshop ? "Simposium & Workshop Ilmiah" : "Simposium Ilmiah";
+
+    let list = `1. 🩺 *${namaSesiIlmiah}*
+   📅 Sabtu, 7 November 2026 (07.30 - 17.00 WIB)
+   📍 Novotel Bogor Golf Resort & Convention Center`;
+
+    if (hasGalaDinner) {
+      list += `\n2. 🍽️ *Malam Keakraban / Gala Dinner*
+   📅 Sabtu, 7 November 2026 (18.30 - 21.00 WIB)
+   📍 Grand Ballroom Novotel Bogor Golf Resort`;
+    }
+
+    const nextNum = hasGalaDinner ? 3 : 2;
+    list += `\n${nextNum}. 🏃‍♂️ *Pesta Rakyat WDD & HKN 2026* (Akses Bebas Hari Ke-2)
+   📅 Minggu, 8 November 2026 (06.00 WIB - Selesai)
+   📍 Stadion Pakansari, Cibinong, Kab. Bogor`;
+
+    return list;
+  };
+
   const handleSendWhatsapp = (participant: Pendaftar) => {
     const rawWa = participant["No. WhatsApp"] || "";
     const waNum = rawWa.replace(/\D/g, '').replace(/^0/, '62');
@@ -1511,6 +1564,13 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
     if (participant["Status Pembayaran"] === "Lunas") {
       const scannerUrl = `${window.location.origin}/scanner.html?id=${encodeURIComponent(participant["No. Registrasi"])}`;
       const qrImageUrl = `https://quickchart.io/qr?text=${encodeURIComponent(scannerUrl)}&size=400&ecLevel=H`;
+
+      const hasGala = Boolean(
+        participant.hak_gala_dinner === true ||
+        (participant as any).hak_gala_dinner === 'true' ||
+        (participant as any).Hak_Gala_Dinner === true ||
+        (participant as any).akses_gala_dinner === true
+      );
 
       const isIlmiah = Boolean(
         (participant["Kategori Peserta"] || "").toLowerCase().includes("dokter") ||
@@ -1527,6 +1587,12 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
         ? `${window.location.origin}/#tiket-simposium?id=${encodeURIComponent(participant["No. Registrasi"])}`
         : `${window.location.origin}/#tiket-pesta-rakyat?wa=${encodeURIComponent(rawWa || "")}`;
 
+      const aksesKegiatanLabel = hasGala
+        ? `${participant["Akses Kegiatan"]} (+ Akses Gala Dinner)`
+        : participant["Akses Kegiatan"];
+
+      const keteranganKegiatan = getDaftarKegiatanWa(participant, hasGala);
+
       message = `Yth. *${participant["Nama Lengkap"]}*,
 
 Berikut adalah E-Ticket digital/QR Code resmi untuk *${EVENT_INFO.namaAcara}*:
@@ -1535,8 +1601,11 @@ Berikut adalah E-Ticket digital/QR Code resmi untuk *${EVENT_INFO.namaAcara}*:
 👤 *Nama:* ${participant["Nama Lengkap"]}
 🏷️ *Kategori:* ${participant["Kategori Peserta"]}
 🏛️ *Institusi:* ${participant.Institusi || '-'}
-🎟️ *Akses Kegiatan:* ${participant["Akses Kegiatan"]}
+🎟️ *Akses Kegiatan:* ${aksesKegiatanLabel}
 ✅ *Status Pembayaran:* ${participant["Status Pembayaran"]}
+
+📋 *Keterangan Kegiatan yang Dapat Diikuti:*
+${keteranganKegiatan}
 
 🌐 *Link Unduh E-Ticket Mandiri:*
 ${ticketWebUrl}

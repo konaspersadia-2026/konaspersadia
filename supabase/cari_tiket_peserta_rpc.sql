@@ -23,7 +23,8 @@ RETURNS TABLE (
   pilihan_kegiatan text,
   institusi text,
   cabang_persadia text,
-  status_pembayaran text
+  status_pembayaran text,
+  hak_gala_dinner boolean
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -67,7 +68,8 @@ BEGIN
     coalesce(p.pilihan_kegiatan, '')::text AS pilihan_kegiatan,
     coalesce(p.institusi, '')::text AS institusi,
     coalesce(p.cabang_persadia, '')::text AS cabang_persadia,
-    coalesce(p.status_pembayaran, 'Menunggu Verifikasi')::text AS status_pembayaran
+    coalesce(p.status_pembayaran, 'Menunggu Verifikasi')::text AS status_pembayaran,
+    coalesce(p.hak_gala_dinner, false)::boolean AS hak_gala_dinner
   FROM public.pendaftar p
   WHERE 
     (
