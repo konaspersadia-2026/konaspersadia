@@ -845,9 +845,6 @@ export default function VotingAdminDashboard({
                 onChange={(e) => setPasscode(e.target.value)}
                 className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border-2 border-slate-200 focus:border-emerald-600 focus:bg-white text-slate-900 text-center font-mono font-bold tracking-widest text-lg outline-none transition shadow-inner placeholder:text-slate-400 placeholder:text-xs placeholder:font-sans placeholder:tracking-normal"
               />
-              <p className="text-[11px] text-slate-400 mt-2 text-center">
-                Default passcode panitia: <code className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-bold font-mono">panlih2026</code>
-              </p>
             </div>
 
             <button

@@ -298,36 +298,36 @@ function App() {
     setAuthLoading(true);
 
     try {
-      const cleanInput = passcode.trim().toLowerCase();
+      const cleanInput = passcode.trim();
       if (!cleanInput) {
         throw new Error("Silakan masukkan passcode akses.");
       }
 
-      // Daftar passcode default darurat
-      const DEFAULT_VALID_PASSCODES = ["persadia2026", "scanner2026", "konas2026", "panitia2026"];
-      let validPasscodes = [...DEFAULT_VALID_PASSCODES];
-
-      // Ambil passcode dinamis dari tabel konfigurasi Supabase (voting_config) jika tersedia
-      if (isSupabaseConfigured) {
-        try {
-          const { data } = await supabase
-            .from('voting_config')
-            .select('value')
-            .eq('key', 'scanner_passcode')
-            .maybeSingle();
-
-          if (data && data.value && data.value.trim()) {
-            validPasscodes.push(data.value.trim().toLowerCase());
-          }
-        } catch (fetchErr) {
-          console.warn("Gagal mengambil scanner_passcode dari voting_config, memakai fallback default", fetchErr);
-        }
+      if (!isSupabaseConfigured) {
+        throw new Error("Koneksi Supabase belum terkonfigurasi. Tidak dapat memverifikasi passcode.");
       }
 
-      const isValid = validPasscodes.includes(cleanInput);
+      // Ambil passcode dinamis resmi langsung dari tabel app_settings di Supabase
+      const { data, error } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'scanner_passcode')
+        .maybeSingle();
 
-      if (!isValid) {
-        throw new Error("Passcode salah. Silakan tanyakan passcode resmi ke panitia IT / sekretariat.");
+      if (error) {
+        console.error("Gagal mengambil scanner_passcode dari app_settings:", error);
+        throw new Error("Gagal memverifikasi ke database: " + error.message);
+      }
+
+      if (!data || !data.value || !data.value.trim()) {
+        throw new Error("Passcode belum diset di Supabase (tabel app_settings, key 'scanner_passcode'). Silakan hubungi Administrator.");
+      }
+
+      const validPasscode = data.value.trim();
+
+      // Cocokkan passcode (case-insensitive)
+      if (cleanInput.toLowerCase() !== validPasscode.toLowerCase()) {
+        throw new Error("Passcode salah. Silakan tanyakan passcode resmi ke panitia / sekretariat.");
       }
 
       // Simpan nomor meja jika diisi oleh petugas saat login
@@ -1369,9 +1369,6 @@ function App() {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              <p className="text-[11px] text-slate-400 mt-1.5">
-                Default passcode panitia: <code className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono font-bold">persadia2026</code>
-              </p>
             </div>
 
             <div>

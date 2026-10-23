@@ -11,7 +11,7 @@ import {
   Ticket, Copy, Check, Plus, RefreshCw, Share2, Sparkles, Trash2, Filter,
   Download, Eye, ExternalLink, Calendar, MapPin, Building, CreditCard,
   UserCheck, RotateCcw, AlertTriangle, SlidersHorizontal, Power, AlertCircle, Video,
-  Pencil, Save, UserPlus, UtensilsCrossed
+  Pencil, Save, UserPlus, UtensilsCrossed, KeyRound
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -218,6 +218,10 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
   const [closedCategories, setClosedCategories] = useState<string[]>([]);
   const [isUpdatingCategoryStatus, setIsUpdatingCategoryStatus] = useState<string | null>(null);
   const [showCategorySettings, setShowCategorySettings] = useState(false);
+  const [scannerPasscode, setScannerPasscode] = useState("persadia2026");
+  const [isEditingPasscode, setIsEditingPasscode] = useState(false);
+  const [passcodeInput, setPasscodeInput] = useState("");
+  const [isSavingPasscode, setIsSavingPasscode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -479,6 +483,16 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
           }
         }
 
+        // Ambil konfigurasi scanner_passcode dari app_settings
+        const { data: passSetting } = await supabase
+          .from('app_settings')
+          .select('value')
+          .eq('key', 'scanner_passcode')
+          .maybeSingle();
+        if (passSetting && passSetting.value) {
+          setScannerPasscode(passSetting.value);
+        }
+
         // Map to existing Pendaftar interface format with precomputed search index
         const mappedData: Pendaftar[] = allData.map((row: any) => {
           const searchTerms = [
@@ -641,6 +655,33 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
       alert("Gagal mengubah status pendaftaran kategori: " + err.message);
     } finally {
       setIsUpdatingCategoryStatus(null);
+    }
+  };
+
+  const handleSaveScannerPasscode = async () => {
+    if (!passcodeInput.trim()) {
+      alert("Passcode tidak boleh kosong.");
+      return;
+    }
+    if (!isSupabaseConfigured) {
+      alert("Supabase belum terkonfigurasi.");
+      return;
+    }
+    setIsSavingPasscode(true);
+    try {
+      const cleanVal = passcodeInput.trim();
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({ key: 'scanner_passcode', value: cleanVal }, { onConflict: 'key' });
+
+      if (error) throw error;
+      setScannerPasscode(cleanVal);
+      setIsEditingPasscode(false);
+      showToast("Passcode scanner berhasil diperbarui!");
+    } catch (err: any) {
+      alert("Gagal menyimpan passcode: " + err.message);
+    } finally {
+      setIsSavingPasscode(false);
     }
   };
 
@@ -3650,6 +3691,67 @@ _Panitia KONAS PERSADIA 2026_`;
                         }`}
                       />
                     </button>
+                  </div>
+                </div>
+
+                {/* Control Panel: Passcode Akses Scanner Petugas (app_settings) */}
+                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl shrink-0">
+                      <KeyRound className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-800 text-sm sm:text-base">Passcode Akses Scanner Petugas</h3>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Tersimpan di tabel <code className="bg-slate-100 text-slate-700 px-1 py-0.5 rounded font-mono font-bold">app_settings</code> (key: <code className="bg-slate-100 text-slate-700 px-1 py-0.5 rounded font-mono font-bold">scanner_passcode</code>). Digunakan untuk login relawan di <code className="text-emerald-700 font-mono font-bold">/scanner.html</code>.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 self-end sm:self-center">
+                    {isEditingPasscode ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={passcodeInput}
+                          onChange={(e) => setPasscodeInput(e.target.value)}
+                          placeholder="Passcode baru..."
+                          className="px-3 py-1.5 border border-slate-300 rounded-xl text-xs font-mono font-bold focus:border-emerald-500 outline-none w-36"
+                          autoFocus
+                        />
+                        <button
+                          onClick={handleSaveScannerPasscode}
+                          disabled={isSavingPasscode || !passcodeInput.trim()}
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                        >
+                          {isSavingPasscode ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                          <span>Simpan</span>
+                        </button>
+                        <button
+                          onClick={() => setIsEditingPasscode(false)}
+                          disabled={isSavingPasscode}
+                          className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs transition cursor-pointer"
+                        >
+                          Batal
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="px-3 py-1.5 bg-slate-100 border border-slate-200 text-slate-800 rounded-xl text-xs font-mono font-black tracking-wider">
+                          {scannerPasscode || "Belum diset"}
+                        </span>
+                        <button
+                          onClick={() => {
+                            setPasscodeInput(scannerPasscode || "persadia2026");
+                            setIsEditingPasscode(true);
+                          }}
+                          className="p-1.5 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-600 rounded-xl transition cursor-pointer"
+                          title="Ubah Passcode Scanner"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
