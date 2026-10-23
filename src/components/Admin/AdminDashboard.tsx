@@ -150,7 +150,7 @@ const matchesCategory = (rowCategory: string, targetCategory: string): boolean =
   return false;
 };
 
-// Helper: Memastikan HANYA peserta Simposium + Workshop Onsite yang berhak mendapat akses Gala Dinner
+// Helper: Memastikan HANYA peserta kegiatan Ilmiah Onsite (Dokter Spesialis, Dokter Umum, Dokter FKTP Onsite, Residen, Perawat/Workshop) yang berhak mendapat akses Gala Dinner
 export const isEligibleForGalaDinner = (participant: Pendaftar | null | undefined): boolean => {
   if (!participant) return false;
 
@@ -164,10 +164,11 @@ export const isEligibleForGalaDinner = (participant: Pendaftar | null | undefine
   }
 
   // 2. Bukan Pesta Rakyat / Masyarakat Umum / Anggota Persadia / DHF
+  // CATATAN: Hindari pengecekan kat.includes("umum") secara polos karena "Dokter Umum" mengandung kata "umum"
+  const isMasyarakatUmum = kat.includes("masyarakat") || (kat.includes("umum") && !kat.includes("dokter"));
   if (
     kat.includes("persadia") ||
-    kat.includes("masyarakat") ||
-    kat.includes("umum") ||
+    isMasyarakatUmum ||
     kat.includes("diabetes health forum") ||
     keg.includes("pesta rakyat") ||
     keg.includes("health forum")
@@ -192,11 +193,11 @@ export const isEligibleForGalaDinner = (participant: Pendaftar | null | undefine
 
   if (!isIlmiah) return false;
 
-  // 4. Khusus paket Simposium + Workshop (Workshop Medis Terapan)
-  // Peserta yang HANYA mengambil Simposium saja (tanpa workshop) TIDAK berhak
+  // 4. Tenaga medis Onsite (Dokter Spesialis, Dokter Umum, Dokter FKTP Onsite, Residen, Perawat/Edukator) atau peserta ilmiah dengan workshop
+  const isDokter = kat.includes("dokter") || kat.includes("spesialis") || kat.includes("residen") || kat.includes("ppds");
   const hasWorkshop = keg.includes("workshop") || kat.includes("perawat") || kat.includes("edukator");
 
-  return hasWorkshop;
+  return isDokter || hasWorkshop;
 };
 
 export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) {
@@ -995,10 +996,11 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
     // 3. Validasi NIK jika peserta ilmiah non-mahasiswa atau jika NIK diisi
     const cleanNik = editFormData.nik.replace(/\D/g, "");
     const katName = (selectedParticipant["Kategori Peserta"] || "").toLowerCase();
+    const isMasyarakat = katName.includes("masyarakat") || (katName.includes("umum") && !katName.includes("dokter"));
     const isIlmiahNonMhs =
       !katName.includes("mahasiswa") &&
       !katName.includes("persadia") &&
-      !katName.includes("umum") &&
+      !isMasyarakat &&
       !katName.includes("diabetes health forum");
 
     if (isIlmiahNonMhs && !cleanNik) {
@@ -1013,7 +1015,7 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
     // 4. Validasi Email jika peserta kegiatan ilmiah / seminar atau jika diisi
     const isEditEmailRequired =
       !katName.includes("persadia") &&
-      !katName.includes("umum");
+      !isMasyarakat;
 
     if (isEditEmailRequired) {
       if (!editFormData.email.trim()) {
@@ -1508,7 +1510,8 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
     const mode = (p.mode_kehadiran || "").toLowerCase();
     const isOnline = mode === "online" || keg.includes("online");
     const isDHF = kat.includes("health forum") || keg.includes("health forum") || keg.includes("health talk") || p.ikut_health_talk === true;
-    const isPestaRakyat = kat.includes("persadia") || kat.includes("umum") || keg.includes("pesta rakyat");
+    const isMasyarakatUmum = kat.includes("masyarakat") || (kat.includes("umum") && !kat.includes("dokter"));
+    const isPestaRakyat = kat.includes("persadia") || isMasyarakatUmum || keg.includes("pesta rakyat");
 
     if (isOnline) {
       return `1. 💻 *Sesi Ilmiah FKTP Daring (Online)*
@@ -3846,7 +3849,8 @@ _Panitia KONAS PERSADIA 2026_`;
                       <label className="block text-xs font-semibold text-slate-700 mb-1">
                         Alamat Email {selectedParticipant && (() => {
                           const k = (selectedParticipant["Kategori Peserta"] || "").toLowerCase();
-                          return !k.includes("persadia") && !k.includes("umum");
+                          const isMasyarakat = k.includes("masyarakat") || (k.includes("umum") && !k.includes("dokter"));
+                          return !k.includes("persadia") && !isMasyarakat;
                         })() ? <span className="text-red-500">*</span> : <span className="text-slate-400 font-normal">(Opsional)</span>}
                       </label>
                       <input

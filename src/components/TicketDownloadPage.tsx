@@ -75,10 +75,11 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
   const isPestaRakyatParticipant = (row: any): boolean => {
     const kat = (row.kategori_peserta || "").toLowerCase();
     const keg = (row.pilihan_kegiatan || "").toLowerCase();
+    const isMasyarakatUmum = kat.includes("masyarakat") || (kat.includes("umum") && !kat.includes("dokter"));
     return (
       kat.includes("pesta rakyat") ||
       kat.includes("persadia") ||
-      kat.includes("umum") ||
+      isMasyarakatUmum ||
       keg.includes("pesta rakyat")
     );
   };

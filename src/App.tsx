@@ -16,6 +16,9 @@ import AdminDashboard from "./components/Admin/AdminDashboard";
 import SponsorshipPage from "./components/SponsorshipPage";
 import AccommodationPage from "./components/AccommodationPage";
 import TicketDownloadPage from "./components/TicketDownloadPage";
+import VotingAdminDashboard from "./components/Voting/VotingAdminDashboard";
+import VotingPage from "./components/Voting/VotingPage";
+import VotingLiveResults from "./components/Voting/VotingLiveResults";
 
 export default function App() {
   const [activeSection, setActiveSection] = useState("beranda");
@@ -26,6 +29,17 @@ export default function App() {
   useEffect(() => {
     if (
       currentHash === "#admin" || 
+      currentHash === "#voting-admin" ||
+      currentHash === "#admin-voting" ||
+      currentHash === "#panlih" ||
+      currentHash === "#voting-live" ||
+      currentHash === "#proyektor" ||
+      currentHash.startsWith("#vote") ||
+      currentHash.startsWith("#voting") ||
+      currentPath === "/vote" ||
+      currentPath === "/voting" ||
+      currentPath === "/voting-admin" ||
+      currentPath === "/voting-live" ||
       currentHash === "#sponsorship" || 
       currentHash === "#akomodasi" || 
       currentHash === "#hotel" ||
@@ -134,11 +148,87 @@ export default function App() {
     currentPath === "/pendaftaran" ||
     currentPath === "/register";
 
+  const isVotingAdminPage =
+    currentHash === "#voting-admin" ||
+    currentHash === "#admin-voting" ||
+    currentHash === "#panlih" ||
+    currentPath === "/voting-admin";
+
+  const isVotingLivePage =
+    currentHash === "#voting-live" ||
+    currentHash === "#proyektor" ||
+    currentPath === "/voting-live";
+
+  const isVotePage =
+    currentHash.startsWith("#vote") ||
+    currentHash.startsWith("#voting") ||
+    currentPath === "/vote" ||
+    currentPath === "/voting";
+
   const handleOpenRegister = () => {
     window.location.hash = "#pendaftaran";
     setCurrentHash("#pendaftaran");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  const handleOpenVotingAdmin = () => {
+    window.location.hash = "#voting-admin";
+    setCurrentHash("#voting-admin");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleOpenVotingPage = (token?: string) => {
+    const hash = token ? `#vote?token=${encodeURIComponent(token)}` : "#vote";
+    window.location.hash = hash;
+    setCurrentHash(hash);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleOpenLiveProjector = () => {
+    window.location.hash = "#voting-live";
+    setCurrentHash("#voting-live");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const getInitialVoteToken = () => {
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get("token")) {
+      return searchParams.get("token") || "";
+    }
+    if (currentHash.includes("?")) {
+      const hashQuery = currentHash.split("?")[1];
+      const hashParams = new URLSearchParams(hashQuery);
+      return hashParams.get("token") || "";
+    }
+    return "";
+  };
+
+  if (isVotingAdminPage) {
+    return (
+      <VotingAdminDashboard
+        onNavigateHome={handleBackToHome}
+        onOpenVotingPage={handleOpenVotingPage}
+        onOpenLiveProjector={handleOpenLiveProjector}
+      />
+    );
+  }
+
+  if (isVotingLivePage) {
+    return (
+      <VotingLiveResults
+        onBackToAdmin={handleOpenVotingAdmin}
+      />
+    );
+  }
+
+  if (isVotePage) {
+    return (
+      <VotingPage
+        initialToken={getInitialVoteToken()}
+        onNavigateHome={handleBackToHome}
+      />
+    );
+  }
 
   if (currentHash === "#admin") {
     return <AdminDashboard onNavigateHome={handleBackToHome} />;

@@ -6,7 +6,8 @@ import {
   CheckCircle2, XCircle, Search, RefreshCw, QrCode, ShieldAlert, 
   ArrowLeft, CheckSquare, Square, LogOut, Flashlight, Volume2, 
   VolumeX, Camera, AlertTriangle, Clock, Calendar, Check, Stethoscope,
-  Sparkles, UserCheck, ChevronRight, Edit3, User, Hash, Coffee, Shirt, Utensils
+  Sparkles, UserCheck, ChevronRight, Edit3, User, Hash, Coffee, Shirt, Utensils,
+  KeyRound, Eye, EyeOff
 } from 'lucide-react';
 
 interface Pendaftar {
@@ -259,17 +260,31 @@ function App() {
     }
   }, [selectedUser, scannerMode]);
 
-  // Auth state
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  // Auth state (Sistem Passcode Cepat Petugas)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return localStorage.getItem('persadia_scanner_auth') === 'true';
+  });
+  const [passcode, setPasscode] = useState("");
+  const [loginNomorMeja, setLoginNomorMeja] = useState<string>(() => {
+    return localStorage.getItem('scanner_nomor_meja') || '';
+  });
+  const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
 
   useEffect(() => {
+    // 1. Cek apakah sudah terautentikasi lewat passcode di localStorage
+    if (localStorage.getItem('persadia_scanner_auth') === 'true') {
+      setIsAuthenticated(true);
+      fetchData();
+      return;
+    }
+
+    // 2. Kompatibilitas transisi: jika masih ada session aktif dari Supabase Auth
     if (isSupabaseConfigured) {
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session) {
+          localStorage.setItem('persadia_scanner_auth', 'true');
           setIsAuthenticated(true);
           fetchData();
         }
@@ -283,46 +298,74 @@ function App() {
     setAuthLoading(true);
 
     try {
-      if (!isSupabaseConfigured) {
-        throw new Error("Supabase tidak dikonfigurasi.");
-      }
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        throw error;
+      const cleanInput = passcode.trim().toLowerCase();
+      if (!cleanInput) {
+        throw new Error("Silakan masukkan passcode akses.");
       }
 
-      if (data.session) {
-        setIsAuthenticated(true);
-        setHasConfirmedDate(false); // Meminta pilihan tanggal saat pertama berhasil login
-        fetchData();
+      // Daftar passcode default darurat
+      const DEFAULT_VALID_PASSCODES = ["persadia2026", "scanner2026", "konas2026", "panitia2026"];
+      let validPasscodes = [...DEFAULT_VALID_PASSCODES];
+
+      // Ambil passcode dinamis dari tabel konfigurasi Supabase (voting_config) jika tersedia
+      if (isSupabaseConfigured) {
+        try {
+          const { data } = await supabase
+            .from('voting_config')
+            .select('value')
+            .eq('key', 'scanner_passcode')
+            .maybeSingle();
+
+          if (data && data.value && data.value.trim()) {
+            validPasscodes.push(data.value.trim().toLowerCase());
+          }
+        } catch (fetchErr) {
+          console.warn("Gagal mengambil scanner_passcode dari voting_config, memakai fallback default", fetchErr);
+        }
       }
+
+      const isValid = validPasscodes.includes(cleanInput);
+
+      if (!isValid) {
+        throw new Error("Passcode salah. Silakan tanyakan passcode resmi ke panitia IT / sekretariat.");
+      }
+
+      // Simpan nomor meja jika diisi oleh petugas saat login
+      if (loginNomorMeja.trim()) {
+        const cleanMeja = loginNomorMeja.trim();
+        setNomorMeja(cleanMeja);
+        localStorage.setItem('scanner_nomor_meja', cleanMeja);
+      }
+
+      // Simpan status otentikasi di localStorage agar tidak logout saat layar HP mati/refresh
+      localStorage.setItem('persadia_scanner_auth', 'true');
+      localStorage.setItem('persadia_scanner_auth_time', new Date().toISOString());
+      setIsAuthenticated(true);
+      setHasConfirmedDate(false); // Meminta pilihan tanggal saat pertama berhasil login
+      fetchData();
     } catch (err: any) {
       console.error(err);
-      setLoginError("Login gagal: " + (err.message || "Email atau password salah."));
+      setLoginError(err.message || "Gagal memverifikasi passcode.");
     } finally {
       setAuthLoading(false);
     }
   };
 
   const handleLogout = async () => {
+    localStorage.removeItem('persadia_scanner_auth');
+    localStorage.removeItem('persadia_scanner_auth_time');
+    localStorage.removeItem('scanner_date_confirmed');
     if (isSupabaseConfigured) {
-      await supabase.auth.signOut();
+      await supabase.auth.signOut().catch(() => {});
     }
     setIsAuthenticated(false);
-    setEmail("");
-    setPassword("");
+    setPasscode("");
     setData([]);
     setScanResult(null);
     setSelectedUser(null);
     setScannerMode(null);
     setIsScanning(false);
     setHasConfirmedDate(false);
-    localStorage.removeItem('scanner_date_confirmed');
   };
 
   const fetchData = async () => {
@@ -1281,57 +1324,92 @@ function App() {
     }
   }
 
-  // Tampilan Login Petugas
+  // Tampilan Login Petugas dengan Passcode Cepat
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-slate-100">
-          <div className="flex justify-center mb-6">
-            <div className="h-16 w-16 bg-emerald-50 rounded-full flex items-center justify-center">
-              <ShieldAlert className="h-8 w-8 text-emerald-600" />
+        <div className="bg-white p-7 sm:p-8 rounded-3xl shadow-xl max-w-md w-full border border-slate-200/90 relative overflow-hidden">
+          {/* Aksen Hiasan Atas */}
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600" />
+
+          <div className="flex justify-center mb-5">
+            <div className="h-16 w-16 bg-emerald-50 border-2 border-emerald-100 rounded-2xl flex items-center justify-center shadow-xs">
+              <KeyRound className="h-8 w-8 text-emerald-600" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-slate-800 text-center mb-2">Scanner Panitia</h1>
-          <p className="text-slate-500 text-center mb-6 text-sm">Masuk menggunakan akun admin/panitia untuk mengakses scanner.</p>
+
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 text-center mb-1.5 tracking-tight">
+            Scanner Petugas Panitia
+          </h1>
+          <p className="text-slate-500 text-center mb-6 text-xs sm:text-sm leading-relaxed">
+            Masukkan passcode akses untuk membuka pemindai tiket QR &amp; verifikasi presensi.
+          </p>
           
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-              <input
-                type="email"
-                placeholder="admin@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all text-sm"
-                autoFocus
-                required
-              />
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Passcode Akses Petugas
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Masukkan passcode..."
+                  value={passcode}
+                  onChange={(e) => setPasscode(e.target.value)}
+                  className="w-full pl-4 pr-11 py-3 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all text-sm font-medium"
+                  autoFocus
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                  title={showPassword ? "Sembunyikan" : "Tampilkan"}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1.5">
+                Default passcode panitia: <code className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono font-bold">persadia2026</code>
+              </p>
             </div>
+
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all text-sm"
-                required
-              />
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                <span>Nomor Meja / Nama Petugas</span>
+                <span className="text-[10px] text-slate-400 font-normal normal-case">(Opsional)</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Contoh: Meja 03 / dr. Rina"
+                  value={loginNomorMeja}
+                  onChange={(e) => setLoginNomorMeja(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all text-sm"
+                />
+              </div>
             </div>
-            {loginError && <p className="text-red-500 text-sm text-center bg-red-50 p-2.5 rounded-lg border border-red-200">{loginError}</p>}
+
+            {loginError && (
+              <div className="p-3 bg-red-50 rounded-xl border border-red-200 text-xs text-red-700 flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                <span>{loginError}</span>
+              </div>
+            )}
+
             <button
               type="submit"
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center shadow-md cursor-pointer"
-              disabled={authLoading}
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl transition-all flex items-center justify-center shadow-md shadow-emerald-600/20 cursor-pointer disabled:opacity-50"
+              disabled={authLoading || !passcode.trim()}
             >
-              {authLoading ? <RefreshCw className="w-5 h-5 animate-spin mr-2" /> : null}
+              {authLoading ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : <KeyRound className="w-4 h-4 mr-2" />}
               {authLoading ? "Memverifikasi..." : "Akses Scanner"}
             </button>
           </form>
           
-          <div className="mt-6 text-center">
-            <a href="/" className="text-sm text-slate-500 hover:text-slate-800 flex items-center justify-center mx-auto transition-colors">
-              <ArrowLeft className="h-4 w-4 mr-1" />
+          <div className="mt-6 text-center border-t border-slate-100 pt-4">
+            <a href="/" className="text-xs text-slate-500 hover:text-slate-800 inline-flex items-center gap-1 transition-colors font-medium">
+              <ArrowLeft className="h-3.5 w-3.5" />
               Kembali ke Beranda
             </a>
           </div>
@@ -1440,12 +1518,12 @@ function App() {
           </div>
 
           <div className="mt-6 flex items-center justify-between text-xs text-slate-500 pt-4 border-t border-slate-100">
-            <span>Petugas: <strong>{email || 'Panitia'}</strong></span>
+            <span>Petugas: <strong>{nomorMeja ? nomorMeja : 'Panitia Lapangan'}</strong></span>
             <button
               onClick={handleLogout}
               className="text-red-500 hover:text-red-700 font-semibold cursor-pointer"
             >
-              Keluar Akun
+              Keluar Akses
             </button>
           </div>
         </div>
@@ -1569,8 +1647,8 @@ function App() {
             {/* Logout */}
             <button 
               onClick={handleLogout}
-              className="p-2 bg-emerald-800 hover:bg-red-600 rounded-full transition-colors"
-              title="Keluar Akun"
+              className="p-2 bg-emerald-800 hover:bg-red-600 rounded-full transition-colors cursor-pointer"
+              title="Keluar Akses Scanner"
             >
               <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
