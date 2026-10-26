@@ -1138,6 +1138,12 @@ function App() {
       return;
     }
 
+    if (!kesediaanData) {
+      playScannerChime('error', soundEnabled);
+      alert("Tidak dapat mengirim data! Persetujuan rekam medis / pemantauan kesehatan wajib dicentang.");
+      return;
+    }
+
     setActionLoading('pemeriksaan');
     try {
       const cleanNik = editNik ? editNik.replace(/\D/g, "") : "";
@@ -1327,9 +1333,10 @@ function App() {
 
   const isIdentityIncomplete = isTanggalLahirMissing || isJenisKelaminMissing || isNamaMissing;
   const isGulaDarahEmpty = !gulaDarah || !gulaDarah.trim();
+  const isKesediaanDataMissing = !kesediaanData;
 
-  // Tombol simpan terkunci jika di pos pemeriksaan gula darah dan data belum lengkap
-  const isPemeriksaanDisabled = actionLoading === 'pemeriksaan' || isIdentityIncomplete || isGulaDarahEmpty;
+  // Tombol simpan terkunci jika di pos pemeriksaan gula darah dan data belum lengkap atau belum menyetujui rekam medis
+  const isPemeriksaanDisabled = actionLoading === 'pemeriksaan' || isIdentityIncomplete || isGulaDarahEmpty || isKesediaanDataMissing;
 
   let hasAccess = false;
   let rejectionReason = "";
@@ -2852,21 +2859,29 @@ function App() {
                       </div>
                     </div>
 
-                    <div className="pt-2 border-t border-slate-100 space-y-2">
-                      <label htmlFor="kesediaan-data-cb" className="flex items-start gap-2.5 cursor-pointer">
-                        <input
-                          id="kesediaan-data-cb"
-                          type="checkbox"
-                          checked={kesediaanData}
-                          onChange={e => setKesediaanData(e.target.checked)}
-                          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0"
-                        />
-                        <span className="text-xs text-slate-700 font-medium leading-tight">
-                          Peserta bersedia datanya dicatat untuk rekam medis / pemantauan kesehatan.
-                        </span>
-                      </label>
+                    <div className="pt-2 border-t border-slate-100 space-y-2.5">
+                      <div className={`p-2.5 rounded-lg border transition-all ${
+                        !kesediaanData 
+                          ? 'bg-amber-50/70 border-amber-200' 
+                          : 'bg-emerald-50/50 border-emerald-200'
+                      }`}>
+                        <label htmlFor="kesediaan-data-cb" className="flex items-start gap-2.5 cursor-pointer">
+                          <input
+                            id="kesediaan-data-cb"
+                            type="checkbox"
+                            checked={kesediaanData}
+                            onChange={e => setKesediaanData(e.target.checked)}
+                            required
+                            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0"
+                          />
+                          <span className="text-xs text-slate-800 font-medium leading-tight">
+                            Peserta bersedia datanya dicatat untuk rekam medis / pemantauan kesehatan.
+                            <span className="text-rose-600 font-bold ml-1" title="Wajib disetujui">* (Wajib)</span>
+                          </span>
+                        </label>
+                      </div>
 
-                      <label htmlFor="gejala-neuropati-cb" className="flex items-start gap-2.5 cursor-pointer">
+                      <label htmlFor="gejala-neuropati-cb" className="flex items-start gap-2.5 cursor-pointer px-1">
                         <input
                           id="gejala-neuropati-cb"
                           type="checkbox"
@@ -2895,6 +2910,8 @@ function App() {
                         <ShieldAlert className="w-4 h-4 mr-2 text-rose-500" />
                       ) : isGulaDarahEmpty ? (
                         <AlertTriangle className="w-4 h-4 mr-2 text-amber-500" />
+                      ) : isKesediaanDataMissing ? (
+                        <AlertTriangle className="w-4 h-4 mr-2 text-amber-500" />
                       ) : (
                         <CheckCircle2 className="w-4 h-4 mr-2" />
                       )}
@@ -2907,6 +2924,8 @@ function App() {
                         'Tombol Terkunci: Lengkapi Jenis Kelamin'
                       ) : isGulaDarahEmpty ? (
                         'Masukkan Nilai Gula Darah'
+                      ) : isKesediaanDataMissing ? (
+                        'Wajib: Centang Persetujuan Rekam Medis'
                       ) : (!hasSavedDob || !hasSavedJk) ? (
                         'Simpan Identitas & Data Pemeriksaan'
                       ) : (selectedUser['Cek_Gula_Darah'] === 'Ya' || selectedUser['cek_gula_darah'] === 'Ya') ? (
