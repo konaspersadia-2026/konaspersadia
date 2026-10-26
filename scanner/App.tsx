@@ -884,9 +884,11 @@ function App() {
   const updatePendaftarRow = async (noRegistrasi: string, updatePayload: Record<string, any>) => {
     // 1. Coba lewat RPC update_pendaftar_scanner (SECURITY DEFINER)
     try {
+      const activePasscode = localStorage.getItem('persadia_scanner_passcode') || passcode.trim() || 'persadia2026';
       const { data: rpcData, error: rpcErr } = await supabase.rpc('update_pendaftar_scanner', {
         p_no_registrasi: noRegistrasi,
-        p_updates: updatePayload
+        p_updates: updatePayload,
+        p_passcode: activePasscode
       });
       if (!rpcErr && rpcData && rpcData.success) {
         return { success: true };
