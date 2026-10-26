@@ -34,8 +34,12 @@ export default function App() {
       currentHash === "#panlih" ||
       currentHash === "#voting-live" ||
       currentHash === "#proyektor" ||
+      currentHash.startsWith("#voting-bilik") ||
+      currentHash.startsWith("#bilik-suara") ||
       currentHash.startsWith("#vote") ||
       currentHash.startsWith("#voting") ||
+      currentPath === "/voting-bilik" ||
+      currentPath === "/bilik-suara" ||
       currentPath === "/vote" ||
       currentPath === "/voting" ||
       currentPath === "/voting-admin" ||
@@ -149,19 +153,23 @@ export default function App() {
     currentPath === "/register";
 
   const isVotingAdminPage =
-    currentHash === "#voting-admin" ||
-    currentHash === "#admin-voting" ||
-    currentHash === "#panlih" ||
-    currentPath === "/voting-admin";
+    currentHash.startsWith("#voting-admin") ||
+    currentHash.startsWith("#admin-voting") ||
+    currentHash.startsWith("#panlih") ||
+    currentPath.startsWith("/voting-admin");
 
   const isVotingLivePage =
-    currentHash === "#voting-live" ||
-    currentHash === "#proyektor" ||
-    currentPath === "/voting-live";
+    currentHash.startsWith("#voting-live") ||
+    currentHash.startsWith("#proyektor") ||
+    currentPath.startsWith("/voting-live");
 
   const isVotePage =
+    currentHash.startsWith("#voting-bilik") ||
+    currentHash.startsWith("#bilik-suara") ||
     currentHash.startsWith("#vote") ||
     currentHash.startsWith("#voting") ||
+    currentPath.startsWith("/voting-bilik") ||
+    currentPath.startsWith("/bilik-suara") ||
     currentPath === "/vote" ||
     currentPath === "/voting";
 
@@ -178,7 +186,7 @@ export default function App() {
   };
 
   const handleOpenVotingPage = (token?: string) => {
-    const hash = token ? `#vote?token=${encodeURIComponent(token)}` : "#vote";
+    const hash = token ? `#voting-bilik?token=${encodeURIComponent(token)}` : "#voting-bilik";
     window.location.hash = hash;
     setCurrentHash(hash);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -217,6 +225,7 @@ export default function App() {
     return (
       <VotingLiveResults
         onBackToAdmin={handleOpenVotingAdmin}
+        onNavigateHome={handleBackToHome}
       />
     );
   }

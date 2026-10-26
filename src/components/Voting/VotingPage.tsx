@@ -52,7 +52,7 @@ export default function VotingPage({ initialToken, onNavigateHome }: VotingPageP
   // Modal Detail Profil, Visi, Misi, CV
   const [viewingCandidate, setViewingCandidate] = useState<Candidate | null>(null);
 
-  // Parse Token dari URL jika ada (?token=... atau #vote?token=...)
+  // Parse Token dari URL jika ada (?token=... atau #voting-bilik?token=... atau #vote?token=...)
   useEffect(() => {
     let tokenFromUrl = "";
     const searchParams = new URLSearchParams(window.location.search);
@@ -66,12 +66,52 @@ export default function VotingPage({ initialToken, onNavigateHome }: VotingPageP
       }
     }
 
-    if (tokenFromUrl) {
-      const clean = tokenFromUrl.trim().toUpperCase();
-      setInputToken(clean);
-      validateToken(clean);
+    const tokenToTest = (tokenFromUrl || initialToken || "").trim().toUpperCase();
+    if (tokenToTest) {
+      setInputToken(tokenToTest);
+      validateToken(tokenToTest);
     }
-  }, []);
+  }, [initialToken]);
+
+  // Real-time synchronization untuk status sesi sidang & putaran pemilihan (auto-sync 3.5s)
+  useEffect(() => {
+    if (!voterInfo || voteSuccess || !isSupabaseConfigured) return;
+
+    const syncSession = async () => {
+      try {
+        const { data: configData } = await supabase
+          .from('voting_config')
+          .select('*');
+
+        if (configData) {
+          const statusObj = configData.find(c => c.key === 'status_pemilihan');
+          const roundObj = configData.find(c => c.key === 'putaran_voting');
+          const k2Obj = configData.find(c => c.key === 'kandidat_putaran_2');
+
+          if (statusObj && statusObj.value !== voterInfo.status_pemilihan) {
+            setVoterInfo(prev => prev ? { ...prev, status_pemilihan: statusObj.value as any } : null);
+          }
+
+          const newRound = roundObj ? roundObj.value : '1';
+          let newK2: number[] = [];
+          if (k2Obj) {
+            try { newK2 = JSON.parse(k2Obj.value); } catch { newK2 = []; }
+          }
+
+          if (newRound !== putaranVoting || JSON.stringify(newK2) !== JSON.stringify(kandidatPutaran2)) {
+            setPutaranVoting(newRound);
+            setKandidatPutaran2(newK2);
+            fetchCandidates();
+          }
+        }
+      } catch {
+        // Abaikan kegagalan jaringan saat background sync
+      }
+    };
+
+    const interval = setInterval(syncSession, 3500);
+    return () => clearInterval(interval);
+  }, [voterInfo, voteSuccess, putaranVoting, kandidatPutaran2]);
 
   // Fetch daftar kandidat calon presiden (dan filter jika putaran ke-2)
   const fetchCandidates = async () => {
@@ -225,6 +265,17 @@ export default function VotingPage({ initialToken, onNavigateHome }: VotingPageP
     }
   };
 
+  const handleResetForNextVoter = () => {
+    if (window.location.search.includes("token=") || window.location.hash.includes("token=")) {
+      window.history.replaceState(null, "", window.location.pathname + "#voting-bilik");
+    }
+    setInputToken("");
+    setVoterInfo(null);
+    setSelectedCandidate(null);
+    setVoteSuccess(false);
+    setTokenError(null);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans flex flex-col justify-between selection:bg-emerald-500 selection:text-white relative">
       {/* Background Decorative Mesh Pattern */}
@@ -249,7 +300,7 @@ export default function VotingPage({ initialToken, onNavigateHome }: VotingPageP
                 </span>
               </div>
               <p className="text-xs text-slate-500 font-medium">
-                Kongres Nasional PERSADIA 2026 &bull; Pemilihan Ketua PB 2029–2032
+                Kongres Nasional PERSADIA 2026 &bull; Pemilihan Presiden PB 2029–2032
               </p>
             </div>
           </div>
@@ -410,8 +461,8 @@ export default function VotingPage({ initialToken, onNavigateHome }: VotingPageP
               )}
               <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                 {putaranVoting === '2'
-                  ? 'Surat Suara Putaran Kedua Calon Ketua PB PERSADIA'
-                  : 'Surat Suara Calon Ketua PB PERSADIA'}
+                  ? 'Surat Suara Putaran Kedua Calon Presiden PB PERSADIA'
+                  : 'Surat Suara Calon Presiden PB PERSADIA'}
               </h2>
               <p className="text-xs sm:text-sm text-slate-500">
                 {putaranVoting === '2'
@@ -424,35 +475,35 @@ export default function VotingPage({ initialToken, onNavigateHome }: VotingPageP
             {loadingCandidates ? (
               <div className="text-center py-16 space-y-3">
                 <Loader2 className="w-8 h-8 text-emerald-600 animate-spin mx-auto" />
-                <p className="text-xs text-slate-500 font-medium">Memuat data calon ketua umum...</p>
+                <p className="text-xs text-slate-500 font-medium">Memuat data calon presiden...</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {candidates.map((cand) => (
                   <div
                     key={cand.id}
-                    className="bg-white border-2 border-slate-200/90 hover:border-emerald-500 rounded-3xl p-6 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between group"
+                    className="bg-white border-2 border-slate-200/90 hover:border-emerald-500 rounded-3xl p-4 sm:p-6 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between group"
                   >
-                    <div className="space-y-4">
+                    <div className="space-y-3.5 sm:space-y-4">
                       {/* Header Kartu: Foto & Nomor Urut */}
-                      <div className="flex items-start gap-4">
+                      <div className="flex items-center sm:items-start gap-3 sm:gap-4">
                         {cand.foto_url ? (
                           <img
                             src={cand.foto_url}
                             alt={cand.nama_kandidat}
-                            className="w-20 h-24 rounded-2xl object-cover border-2 border-slate-100 shadow-sm shrink-0 bg-slate-100"
+                            className="w-16 h-20 sm:w-20 sm:h-24 rounded-2xl object-cover border-2 border-slate-100 shadow-sm shrink-0 bg-slate-100"
                           />
                         ) : (
-                          <div className="w-20 h-24 rounded-2xl bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center shrink-0">
-                            <Vote className="w-8 h-8 text-emerald-600" />
+                          <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-2xl bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center shrink-0">
+                            <Vote className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-600" />
                           </div>
                         )}
 
-                        <div className="space-y-1">
+                        <div className="space-y-1 min-w-0 flex-1">
                           <span className="inline-block px-2.5 py-0.5 rounded-lg bg-emerald-600 text-white font-mono font-bold text-xs tracking-wider shadow-xs">
                             NOMOR {cand.nomor_urut}
                           </span>
-                          <h3 className="text-base font-extrabold text-slate-900 group-hover:text-emerald-700 transition leading-snug">
+                          <h3 className="text-sm sm:text-base font-extrabold text-slate-900 group-hover:text-emerald-700 transition leading-snug">
                             {cand.nama_kandidat}
                           </h3>
                           {cand.gelar && (
@@ -466,7 +517,7 @@ export default function VotingPage({ initialToken, onNavigateHome }: VotingPageP
 
                       {/* Ringkasan Visi */}
                       {cand.visi && (
-                        <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs text-slate-600 space-y-1">
+                        <div className="p-3 sm:p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs text-slate-600 space-y-1">
                           <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">
                             Visi Utama:
                           </span>
@@ -478,7 +529,7 @@ export default function VotingPage({ initialToken, onNavigateHome }: VotingPageP
                     </div>
 
                     {/* Tombol Aksi */}
-                    <div className="space-y-2 pt-4 border-t border-slate-100 mt-4">
+                    <div className="space-y-2 pt-3.5 sm:pt-4 border-t border-slate-100 mt-3.5 sm:mt-4">
                       <button
                         type="button"
                         onClick={() => setViewingCandidate(cand)}
@@ -533,7 +584,7 @@ export default function VotingPage({ initialToken, onNavigateHome }: VotingPageP
                   Terima Kasih Atas Partisipasi Anda
                 </h2>
                 <p className="text-xs text-slate-500 leading-relaxed">
-                  Hak suara Anda dalam Pemilihan Ketua PB PERSADIA Periode 2029–2032 telah berhasil dimasukkan ke dalam kotak suara secara sah, langsung, dan rahasia.
+                  Hak suara Anda dalam Pemilihan Presiden PB PERSADIA Periode 2029–2032 telah berhasil dimasukkan ke dalam kotak suara secara sah, langsung, dan rahasia.
                 </p>
               </div>
 
@@ -557,13 +608,24 @@ export default function VotingPage({ initialToken, onNavigateHome }: VotingPageP
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={onNavigateHome}
-                className="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm rounded-2xl transition shadow-md cursor-pointer"
-              >
-                Kembali ke Beranda Kongres
-              </button>
+              <div className="space-y-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleResetForNextVoter}
+                  className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-[0.99] text-white font-bold text-sm rounded-2xl transition shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <KeyRound className="w-4 h-4" />
+                  <span>Selesai &amp; Masukkan Token Baru (Bilik Suara)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={onNavigateHome}
+                  className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-2xl transition cursor-pointer"
+                >
+                  Kembali ke Beranda Kongres
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -573,8 +635,8 @@ export default function VotingPage({ initialToken, onNavigateHome }: VotingPageP
       {/* MODAL KONFIRMASI PEMILIHAN (DOUBLE CONFIRMATION) */}
       {/* ==================================================================== */}
       {isConfirmModalOpen && selectedCandidate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl space-y-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3.5 sm:p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-7 max-w-md w-full shadow-2xl space-y-4 sm:space-y-5">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 border border-amber-200">
                 <AlertCircle className="w-5 h-5" />
@@ -641,8 +703,8 @@ export default function VotingPage({ initialToken, onNavigateHome }: VotingPageP
       {/* MODAL DETAIL PROFIL, VISI, MISI & CV KANDIDAT */}
       {/* ==================================================================== */}
       {viewingCandidate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3.5 sm:p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-7 max-w-lg w-full shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-start justify-between pb-3 border-b border-slate-100">
               <div>
                 <span className="px-2.5 py-0.5 rounded-lg bg-emerald-600 text-white font-mono font-bold text-xs inline-block shadow-xs">

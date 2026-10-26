@@ -3,11 +3,12 @@ import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import {
   Vote, Award, Users, CheckCircle, Clock, ShieldCheck,
   Maximize2, Minimize2, RefreshCw, ArrowLeft, Sparkles, Loader2,
-  Scale
+  Scale, Home
 } from 'lucide-react';
 
 interface VotingLiveResultsProps {
   onBackToAdmin: () => void;
+  onNavigateHome?: () => void;
 }
 
 interface CandidateResult {
@@ -35,7 +36,7 @@ interface RekapData {
   kandidat: CandidateResult[];
 }
 
-export default function VotingLiveResults({ onBackToAdmin }: VotingLiveResultsProps) {
+export default function VotingLiveResults({ onBackToAdmin, onNavigateHome }: VotingLiveResultsProps) {
   const [rekap, setRekap] = useState<RekapData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -174,54 +175,75 @@ export default function VotingLiveResults({ onBackToAdmin }: VotingLiveResultsPr
     };
   };
 
+  if (loading && !rekap) {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-slate-50 text-slate-800 p-4">
+        <Loader2 className="w-10 h-10 text-emerald-600 animate-spin mb-3" />
+        <p className="text-sm font-bold text-slate-800">Menghubungkan ke Layar Proyektor Sidang...</p>
+        <p className="text-xs text-slate-500 mt-1">Mengambil data rekapitulasi terkini dari bilik suara</p>
+      </div>
+    );
+  }
+
   const sz = getResponsiveStyles();
 
   return (
-    <div className="h-screen max-h-screen w-screen overflow-hidden bg-slate-50 text-slate-800 flex flex-col font-sans relative select-none">
+    <div className="min-h-screen md:h-screen md:max-h-screen w-full md:w-screen overflow-y-auto md:overflow-hidden bg-slate-50 text-slate-800 flex flex-col font-sans relative select-none">
       {/* Background Subtle Gradient & Mesh */}
       <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px] opacity-40 z-0" />
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-100/40 rounded-full blur-[140px] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-teal-100/40 rounded-full blur-[140px] pointer-events-none" />
 
       {/* Top Bar Proyektor Kompak (Light Theme) */}
-      <header className="px-4 sm:px-6 py-2.5 sm:py-3 border-b border-slate-200/90 bg-white/95 backdrop-blur-md relative z-10 shadow-xs shrink-0">
-        <div className="w-full flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onBackToAdmin}
-              className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition cursor-pointer shadow-2xs"
-              title="Kembali ke Dashboard Admin"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </button>
+      <header className="px-3 sm:px-6 py-2.5 sm:py-3 border-b border-slate-200/90 bg-white/95 backdrop-blur-md relative z-10 shadow-xs shrink-0">
+        <div className="w-full flex items-center justify-between gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                onClick={onBackToAdmin}
+                className="p-1.5 sm:p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition cursor-pointer shadow-2xs"
+                title="Kembali ke Dashboard Admin Panlih"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+              {onNavigateHome && (
+                <button
+                  onClick={onNavigateHome}
+                  className="p-1.5 sm:p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition cursor-pointer shadow-2xs"
+                  title="Kembali ke Beranda Kongres"
+                >
+                  <Home className="w-4 h-4" />
+                </button>
+              )}
+            </div>
 
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold uppercase tracking-wider">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">
                   Sidang Pleno KONAS PERSADIA 2026
                 </span>
                 {isRound2 && (
-                  <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-black uppercase tracking-wider shadow-2xs animate-pulse inline-flex items-center gap-1">
+                  <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-[9px] sm:text-[10px] font-black uppercase tracking-wider shadow-2xs animate-pulse inline-flex items-center gap-1">
                     <Scale className="w-3 h-3 text-amber-700" />
-                    <span>PUTARAN KEDUA (RUN-OFF)</span>
+                    <span>PUTARAN KEDUA</span>
                   </span>
                 )}
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
+                <span className={`px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase border ${
                   rekap?.status_pemilihan === 'open' ? 'bg-emerald-100 text-emerald-800 border-emerald-300 animate-pulse' :
                   rekap?.status_pemilihan === 'closed' ? 'bg-red-100 text-red-800 border-red-300' :
                   'bg-slate-100 text-slate-700 border-slate-300'
                 }`}>
-                  {rekap?.status_pemilihan === 'open' ? '🟢 SESI LIVE (DIBUKA)' :
-                   rekap?.status_pemilihan === 'closed' ? '🔴 PEMILIHAN DITUTUP' : '⚪ PERSIAPAN'}
+                  {rekap?.status_pemilihan === 'open' ? '🟢 SESI LIVE' :
+                   rekap?.status_pemilihan === 'closed' ? '🔴 DITUTUP' : '⚪ PERSIAPAN'}
                 </span>
               </div>
-              <h1 className="text-sm sm:text-base font-black text-slate-900 tracking-tight leading-snug mt-0.5">
-                {isRound2 ? "Hasil Pemilihan Putaran Kedua (Run-Off) Ketua PB PERSADIA" : "Hasil Rekapitulasi Pemilihan Ketua PB PERSADIA Periode 2029–2032"}
+              <h1 className="text-xs sm:text-base font-black text-slate-900 tracking-tight leading-snug mt-0.5 truncate sm:whitespace-normal">
+                {isRound2 ? "Hasil Pemilihan Putaran Kedua (Run-Off) Presiden PB PERSADIA" : "Hasil Rekapitulasi Pemilihan Presiden PB PERSADIA Periode 2029–2032"}
               </h1>
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             <div className="hidden sm:block text-right text-xs font-mono leading-tight">
               <span className="block text-slate-900 font-bold">{lastRefreshed.toLocaleTimeString('id-ID')} WIB</span>
               <span className="text-[10px] text-emerald-700 font-semibold">Auto-Sync 4s</span>
@@ -229,7 +251,7 @@ export default function VotingLiveResults({ onBackToAdmin }: VotingLiveResultsPr
 
             <button
               onClick={fetchLiveResults}
-              className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition cursor-pointer shadow-2xs"
+              className="p-1.5 sm:p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition cursor-pointer shadow-2xs"
               title="Segarkan data proyektor"
             >
               <RefreshCw className="w-4 h-4 text-emerald-600" />
@@ -237,7 +259,7 @@ export default function VotingLiveResults({ onBackToAdmin }: VotingLiveResultsPr
 
             <button
               onClick={toggleFullscreen}
-              className="p-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition cursor-pointer shadow-sm shadow-emerald-600/30"
+              className="p-1.5 sm:p-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition cursor-pointer shadow-sm shadow-emerald-600/30"
               title={isFullscreen ? "Keluar Layar Penuh" : "Layar Penuh Proyektor"}
             >
               {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
@@ -246,13 +268,13 @@ export default function VotingLiveResults({ onBackToAdmin }: VotingLiveResultsPr
         </div>
       </header>
 
-      {/* Main Viewport Container (Zero Scroll, Two Columns) */}
-      <main className="flex-1 w-full p-3 sm:p-5 flex flex-col md:flex-row gap-4 sm:gap-6 overflow-hidden min-h-0 relative z-10">
+      {/* Main Viewport Container (Responsive Scroll on Mobile, Zero Scroll on Desktop/Projector) */}
+      <main className="flex-1 w-full p-3 sm:p-5 flex flex-col md:flex-row gap-4 sm:gap-6 overflow-y-auto md:overflow-hidden min-h-0 relative z-10">
 
         {/* ============================================================== */}
         {/* KOLOM KIRI: STATISTIK PARTISIPASI & KUORUM SIDANG */}
         {/* ============================================================== */}
-        <aside className="w-full md:w-72 lg:w-80 shrink-0 bg-white border border-slate-200/90 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col justify-between overflow-hidden">
+        <aside className="w-full md:w-72 lg:w-80 shrink-0 bg-white border border-slate-200/90 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col justify-between">
           <div className="space-y-4">
             {/* Judul Panel */}
             <div className="pb-3 border-b border-slate-100 flex items-center justify-between">
@@ -353,9 +375,9 @@ export default function VotingLiveResults({ onBackToAdmin }: VotingLiveResultsPr
         </aside>
 
         {/* ============================================================== */}
-        {/* KOLOM KANAN: PANGGUNG UTAMA KANDIDAT KETUA UMUM */}
+        {/* KOLOM KANAN: PANGGUNG UTAMA KANDIDAT PRESIDEN PB PERSADIA */}
         {/* ============================================================== */}
-        <section className="flex-1 flex flex-col justify-center items-center overflow-hidden min-h-0 relative">
+        <section className="flex-1 flex flex-col justify-center items-center overflow-y-auto md:overflow-hidden min-h-0 relative pb-6 md:pb-0">
           {!rekap?.tampilkan_quick_count && rekap?.status_pemilihan === 'open' ? (
             // Jika Quick Count disembunyikan saat pemilihan berlangsung
             <div className="p-8 sm:p-12 rounded-3xl bg-white border-2 border-slate-200 text-center space-y-4 shadow-lg max-w-lg mx-auto">
@@ -375,7 +397,7 @@ export default function VotingLiveResults({ onBackToAdmin }: VotingLiveResultsPr
             </div>
           ) : (
             // Tampilkan Hasil Suara Kandidat (Quick Count Aktif atau Sesi Ditutup)
-            <div className="w-full h-full flex flex-col justify-center items-center space-y-3 sm:space-y-4 overflow-hidden">
+            <div className="w-full h-full flex flex-col justify-center items-center space-y-3 sm:space-y-4 overflow-visible md:overflow-hidden">
               {isClosed && isTie && (
                 <div className="px-4 py-2.5 rounded-2xl bg-amber-50 border-2 border-amber-300 shadow-xs flex items-center gap-3 max-w-2xl text-left shrink-0">
                   <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
@@ -392,7 +414,7 @@ export default function VotingLiveResults({ onBackToAdmin }: VotingLiveResultsPr
                 </div>
               )}
 
-              <div className={`${sz.gridContainer} overflow-hidden`}>
+              <div className={`${sz.gridContainer} overflow-visible md:overflow-hidden`}>
                 {rekap?.kandidat.map((cand) => {
                   const isWinner = isWinnerDecided && winnerCandidate?.id === cand.id;
                   const isTopTied = isClosed && isTie && topTiedCandidates.some(t => t.id === cand.id);
@@ -400,7 +422,7 @@ export default function VotingLiveResults({ onBackToAdmin }: VotingLiveResultsPr
                   return (
                     <div
                       key={cand.id}
-                      className={`rounded-3xl transition-all relative overflow-hidden flex flex-col justify-between items-center text-center border-2 max-h-[82vh] ${sz.card} ${
+                      className={`rounded-3xl transition-all relative overflow-hidden flex flex-col justify-between items-center text-center border-2 max-h-none md:max-h-[82vh] ${sz.card} ${
                         isWinner
                           ? "bg-gradient-to-b from-amber-50/70 via-white to-white border-amber-400 ring-4 ring-amber-300/30 shadow-2xl"
                           : isTopTied
@@ -411,7 +433,7 @@ export default function VotingLiveResults({ onBackToAdmin }: VotingLiveResultsPr
                       {isWinner && (
                         <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-400 text-slate-950 font-black text-[10px] uppercase tracking-wider shadow-md animate-bounce z-10">
                           <Award className="w-3.5 h-3.5 text-amber-950" />
-                          <span>Ketua Terpilih</span>
+                          <span>Presiden Terpilih</span>
                         </div>
                       )}
 

@@ -1,8 +1,8 @@
 -- ==============================================================================
--- KONAS PERSADIA 2026: DATA DUMMY SISTEM E-VOTING KETUA PB PERSADIA (2026–2030)
+-- KONAS PERSADIA 2026: DATA DUMMY SISTEM E-VOTING PRESIDEN PB PERSADIA (2029–2032)
 -- ==============================================================================
 -- Skrip ini memasukkan:
--- 1. 3 Calon Kandidat Ketua PB PERSADIA lengkap dengan Gelar, Visi, Misi, & CV
+-- 1. 3 Calon Kandidat Presiden PB PERSADIA lengkap dengan Gelar, Visi, Misi, & CV
 -- 2. 10 Data Pemilih Tetap (DPT) Delegasi Cabang + Nomor WA + Token Unik
 --
 -- CARA MENJALANKAN DI SUPABASE:

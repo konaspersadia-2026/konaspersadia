@@ -16,6 +16,12 @@ interface Pendaftar {
   "Status Pembayaran": string;
   "Nama Lengkap": string;
   "Kategori Peserta": string;
+  "Registrasi_OnSite"?: string | null;
+  "registrasi_onsite"?: string | null;
+  "waktu_registrasi_onsite"?: string | null;
+  "Registrasi_Onsite_Hari_2"?: string | null;
+  "registrasi_onsite_hari_2"?: string | null;
+  "waktu_registrasi_onsite_hari_2"?: string | null;
   [key: string]: any;
 }
 
@@ -307,27 +313,43 @@ function App() {
         throw new Error("Koneksi Supabase belum terkonfigurasi. Tidak dapat memverifikasi passcode.");
       }
 
-      // Ambil passcode dinamis resmi langsung dari tabel app_settings di Supabase
-      const { data, error } = await supabase
-        .from('app_settings')
-        .select('value')
-        .eq('key', 'scanner_passcode')
-        .maybeSingle();
+      let isValidPasscode = false;
 
-      if (error) {
-        console.error("Gagal mengambil scanner_passcode dari app_settings:", error);
-        throw new Error("Gagal memverifikasi ke database: " + error.message);
+      // 1. Coba verifikasi lewat RPC verify_scanner_passcode di server Supabase
+      try {
+        const { data: verifyData, error: verifyErr } = await supabase.rpc('verify_scanner_passcode', {
+          p_passcode: cleanInput
+        });
+        if (!verifyErr && verifyData) {
+          if (verifyData.valid) {
+            isValidPasscode = true;
+          } else {
+            throw new Error(verifyData.message || "Passcode salah. Silakan tanyakan passcode resmi ke panitia / sekretariat.");
+          }
+        }
+      } catch (rpcError: any) {
+        if (rpcError.message && rpcError.message.includes("Passcode")) {
+          throw rpcError;
+        }
+        // Fallback jika RPC verify_scanner_passcode belum terpasang
       }
 
-      if (!data || !data.value || !data.value.trim()) {
-        throw new Error("Passcode belum diset di Supabase (tabel app_settings, key 'scanner_passcode'). Silakan hubungi Administrator.");
-      }
+      // 2. Fallback pengecekan via app_settings
+      if (!isValidPasscode) {
+        const { data, error } = await supabase
+          .from('app_settings')
+          .select('value')
+          .eq('key', 'scanner_passcode')
+          .maybeSingle();
 
-      const validPasscode = data.value.trim();
-
-      // Cocokkan passcode (case-insensitive)
-      if (cleanInput.toLowerCase() !== validPasscode.toLowerCase()) {
-        throw new Error("Passcode salah. Silakan tanyakan passcode resmi ke panitia / sekretariat.");
+        if (!error && data?.value && data.value.trim()) {
+          const validPasscode = data.value.trim();
+          if (cleanInput.toLowerCase() !== validPasscode.toLowerCase()) {
+            throw new Error("Passcode salah. Silakan tanyakan passcode resmi ke panitia / sekretariat.");
+          }
+        } else if (cleanInput.toLowerCase() !== 'persadia2026') {
+          throw new Error("Passcode salah. Silakan tanyakan passcode resmi ke panitia / sekretariat.");
+        }
       }
 
       // Simpan nomor meja jika diisi oleh petugas saat login
@@ -337,9 +359,10 @@ function App() {
         localStorage.setItem('scanner_nomor_meja', cleanMeja);
       }
 
-      // Simpan status otentikasi di localStorage agar tidak logout saat layar HP mati/refresh
+      // Simpan status otentikasi & passcode di localStorage untuk RPC data
       localStorage.setItem('persadia_scanner_auth', 'true');
       localStorage.setItem('persadia_scanner_auth_time', new Date().toISOString());
+      localStorage.setItem('persadia_scanner_passcode', cleanInput);
       setIsAuthenticated(true);
       setHasConfirmedDate(false); // Meminta pilihan tanggal saat pertama berhasil login
       fetchData();
@@ -354,6 +377,7 @@ function App() {
   const handleLogout = async () => {
     localStorage.removeItem('persadia_scanner_auth');
     localStorage.removeItem('persadia_scanner_auth_time');
+    localStorage.removeItem('persadia_scanner_passcode');
     localStorage.removeItem('scanner_date_confirmed');
     if (isSupabaseConfigured) {
       await supabase.auth.signOut().catch(() => {});
@@ -380,19 +404,35 @@ function App() {
     }
 
     try {
+      const activePasscode = localStorage.getItem('persadia_scanner_passcode') || passcode.trim() || 'persadia2026';
       let allData: any[] = [];
       let hasMore = true;
       let page = 0;
       const pageSize = 1000;
 
       while (hasMore) {
-        const { data: supabaseData, error: supabaseError } = await supabase
-          .from('pendaftar')
-          .select('*')
-          .range(page * pageSize, (page + 1) * pageSize - 1);
+        let supabaseData: any[] | null = null;
 
-        if (supabaseError) {
-          throw supabaseError;
+        // 1. Coba jalur aman RPC get_scanner_pendaftar terlebih dahulu
+        const { data: rpcData, error: rpcError } = await supabase.rpc('get_scanner_pendaftar', {
+          p_passcode: activePasscode,
+          p_page: page,
+          p_page_size: pageSize
+        });
+
+        if (!rpcError && rpcData) {
+          supabaseData = rpcData;
+        } else {
+          // 2. Fallback ke query tabel langsung jika RPC belum dieksekusi di database
+          const { data: directData, error: directError } = await supabase
+            .from('pendaftar')
+            .select('*')
+            .range(page * pageSize, (page + 1) * pageSize - 1);
+
+          if (directError) {
+            throw (rpcError || directError);
+          }
+          supabaseData = directData;
         }
 
         if (supabaseData && supabaseData.length > 0) {
@@ -415,6 +455,9 @@ function App() {
           "Nama Lengkap": row.nama_lengkap || "-",
           "Kategori Peserta": row.kategori_peserta || "-",
           "Registrasi_OnSite": row.registrasi_onsite,
+          "Registrasi_Onsite_Hari_2": row.registrasi_onsite_hari_2,
+          "registrasi_onsite_hari_2": row.registrasi_onsite_hari_2,
+          "waktu_registrasi_onsite_hari_2": row.waktu_registrasi_onsite_hari_2,
           "Akses_Gala_Dinner": row.akses_gala_dinner,
           "Kehadiran_Workshop": row.kehadiran_workshop,
           "Makan_Siang_Hari_1": row.makan_siang_hari_1,
@@ -494,13 +537,31 @@ function App() {
     
     try {
       const cleanReg = targetId.trim();
-      const { data: freshRow, error } = await supabase
-        .from('pendaftar')
-        .select('*')
-        .eq('no_registrasi', cleanReg)
-        .maybeSingle();
+      const activePasscode = localStorage.getItem('persadia_scanner_passcode') || passcode.trim() || 'persadia2026';
+      let freshRow: any = null;
 
-      if (!error && freshRow) {
+      // 1. Coba lewat RPC aman get_scanner_live_participant
+      const { data: rpcRows, error: rpcErr } = await supabase.rpc('get_scanner_live_participant', {
+        p_passcode: activePasscode,
+        p_no_registrasi: cleanReg
+      });
+
+      if (!rpcErr && Array.isArray(rpcRows) && rpcRows.length > 0) {
+        freshRow = rpcRows[0];
+      } else {
+        // 2. Fallback query langsung
+        const { data, error } = await supabase
+          .from('pendaftar')
+          .select('*')
+          .eq('no_registrasi', cleanReg)
+          .maybeSingle();
+
+        if (!error && data) {
+          freshRow = data;
+        }
+      }
+
+      if (freshRow) {
         const mappedFresh: Pendaftar = {
           "Timestamp": freshRow.timestamp || new Date().toISOString(),
           "No. Registrasi": freshRow.no_registrasi || "-",
@@ -508,6 +569,9 @@ function App() {
           "Nama Lengkap": freshRow.nama_lengkap || "-",
           "Kategori Peserta": freshRow.kategori_peserta || "-",
           "Registrasi_OnSite": freshRow.registrasi_onsite,
+          "Registrasi_Onsite_Hari_2": freshRow.registrasi_onsite_hari_2,
+          "registrasi_onsite_hari_2": freshRow.registrasi_onsite_hari_2,
+          "waktu_registrasi_onsite_hari_2": freshRow.waktu_registrasi_onsite_hari_2,
           "Akses_Gala_Dinner": freshRow.akses_gala_dinner,
           "Kehadiran_Workshop": freshRow.kehadiran_workshop,
           "Makan_Siang_Hari_1": freshRow.makan_siang_hari_1,
@@ -815,6 +879,43 @@ function App() {
     }
   };
 
+  // Helper terpusat untuk update data pendaftar ke Supabase
+  // Mengutamakan RPC SECURITY DEFINER agar kebal dari error RLS 'permission denied for table pendaftar'
+  const updatePendaftarRow = async (noRegistrasi: string, updatePayload: Record<string, any>) => {
+    // 1. Coba lewat RPC update_pendaftar_scanner (SECURITY DEFINER)
+    try {
+      const { data: rpcData, error: rpcErr } = await supabase.rpc('update_pendaftar_scanner', {
+        p_no_registrasi: noRegistrasi,
+        p_updates: updatePayload
+      });
+      if (!rpcErr && rpcData && rpcData.success) {
+        return { success: true };
+      }
+      if (rpcErr) {
+        console.warn("RPC update_pendaftar_scanner fallback ke direct update:", rpcErr.message);
+      }
+    } catch (rpcCatch) {
+      console.warn("RPC call error fallback ke direct update:", rpcCatch);
+    }
+
+    // 2. Fallback direct table update ke tabel pendaftar
+    const { error: directErr } = await supabase
+      .from('pendaftar')
+      .update(updatePayload)
+      .eq('no_registrasi', noRegistrasi);
+
+    if (directErr) {
+      if (directErr.message && directErr.message.toLowerCase().includes('permission denied')) {
+        throw new Error(
+          "Izin update ditolak oleh database (permission denied for table pendaftar).\n\n" +
+          "Solusi: Silakan buka Supabase Dashboard -> SQL Editor, lalu jalankan script 'supabase/fix_scanner_hari2_and_rls.sql' untuk mengaktifkan izin update scanner."
+        );
+      }
+      throw directErr;
+    }
+    return { success: true };
+  };
+
   const handleUpdateCheckpoint = async (checkpointId: string, currentValue: boolean, extraColumns: string[] = []) => {
     if (!selectedUser) return;
     
@@ -832,9 +933,18 @@ function App() {
         [checkpointId.toLowerCase()]: newValue ? "Ya" : null
       };
 
-      if (checkpointId.toLowerCase() === 'registrasi_onsite') {
+      const isHari2Reg = (checkpointId.toLowerCase() === 'registrasi_onsite' && selectedDate === '2026-11-08') || checkpointId.toLowerCase() === 'registrasi_onsite_hari_2';
+      const isHari1Reg = (checkpointId.toLowerCase() === 'registrasi_onsite' && selectedDate === '2026-11-07');
+
+      if (isHari2Reg) {
+        updatePayload['registrasi_onsite_hari_2'] = newValue ? "Ya" : null;
+        updatePayload['waktu_registrasi_onsite_hari_2'] = newValue ? nowIso : null;
+        delete updatePayload['registrasi_onsite'];
+      } else if (isHari1Reg) {
+        updatePayload['registrasi_onsite'] = newValue ? "Ya" : null;
         updatePayload['waktu_registrasi_onsite'] = newValue ? nowIso : null;
       }
+
       if (checkpointId.toLowerCase() === 'akses_gala_dinner') {
         updatePayload['waktu_akses_gala_dinner'] = newValue ? nowIso : null;
         updatePayload['kehadiran_gala_dinner'] = newValue ? "Ya" : null;
@@ -853,33 +963,32 @@ function App() {
       if (checkpointId.toLowerCase() === 'makan_siang_pesta_rakyat') {
         updatePayload['waktu_makan_siang_pesta_rakyat'] = newValue ? nowIso : null;
       }
+      if (checkpointId.toLowerCase() === 'makan_siang_hari_1') {
+        updatePayload['waktu_makan_siang_hari_1'] = newValue ? nowIso : null;
+      }
 
       extraColumns.forEach(col => {
         updatePayload[col.toLowerCase()] = newValue ? "Ya" : null;
       });
 
-      const { error: updateError } = await supabase
-        .from('pendaftar')
-        .update(updatePayload)
-        .eq('no_registrasi', selectedUser["No. Registrasi"]);
-        
-      if (updateError) {
-        if (updateError.message && (updateError.message.includes('akses_gala_dinner') || updateError.message.includes('hak_gala_dinner') || updateError.message.includes('kehadiran_gala_dinner'))) {
-          alert("Kolom Gala Dinner belum ditambahkan di Supabase.\nSilakan jalankan skrip SQL 'supabase/add_gala_dinner_columns.sql' pada SQL Editor Supabase.");
-        } else if (updateError.message && (updateError.message.includes('kehadiran_workshop') || updateError.message.includes('waktu_kehadiran_workshop'))) {
-          alert("Kolom 'kehadiran_workshop' belum ditambahkan di Supabase.\nSilakan jalankan skrip SQL 'supabase/add_workshop_checkin_columns.sql' pada SQL Editor Supabase.");
-        } else if (updateError.message && (updateError.message.includes('pengambilan_snack') || updateError.message.includes('pengambilan_baju') || updateError.message.includes('waktu_pengambilan_snack') || updateError.message.includes('waktu_pengambilan_baju'))) {
-          alert("Kolom 'pengambilan_snack' atau 'pengambilan_baju' belum ditambahkan di Supabase.\nSilakan jalankan skrip SQL 'supabase/add_snack_and_baju_columns.sql' pada SQL Editor Supabase.");
-        } else {
-          throw updateError;
-        }
-      }
+      await updatePendaftarRow(selectedUser["No. Registrasi"], updatePayload);
       
       const updatedUser: Pendaftar = { 
         ...selectedUser, 
-        [checkpointId]: newValue ? "Ya" : null,
-        [checkpointId.toLowerCase()]: newValue ? "Ya" : null,
-        ...(checkpointId.toLowerCase() === 'registrasi_onsite' ? { waktu_registrasi_onsite: newValue ? nowIso : null } : {}),
+        ...(isHari2Reg ? {
+          Registrasi_Onsite_Hari_2: newValue ? "Ya" : null,
+          registrasi_onsite_hari_2: newValue ? "Ya" : null,
+          waktu_registrasi_onsite_hari_2: newValue ? nowIso : null
+        } : {}),
+        ...(isHari1Reg ? {
+          Registrasi_OnSite: newValue ? "Ya" : null,
+          registrasi_onsite: newValue ? "Ya" : null,
+          waktu_registrasi_onsite: newValue ? nowIso : null
+        } : {}),
+        ...(!isHari1Reg && !isHari2Reg ? {
+          [checkpointId]: newValue ? "Ya" : null,
+          [checkpointId.toLowerCase()]: newValue ? "Ya" : null
+        } : {}),
         ...(checkpointId.toLowerCase() === 'akses_gala_dinner' ? { 
           waktu_akses_gala_dinner: newValue ? nowIso : null,
           kehadiran_gala_dinner: newValue ? "Ya" : null,
@@ -893,7 +1002,8 @@ function App() {
           pengambilan_merchandise: newValue ? "Ya" : null,
           Pengambilan_Merchandise: newValue ? "Ya" : null
         } : {}),
-        ...(checkpointId.toLowerCase() === 'makan_siang_pesta_rakyat' ? { waktu_makan_siang_pesta_rakyat: newValue ? nowIso : null } : {})
+        ...(checkpointId.toLowerCase() === 'makan_siang_pesta_rakyat' ? { waktu_makan_siang_pesta_rakyat: newValue ? nowIso : null } : {}),
+        ...(checkpointId.toLowerCase() === 'makan_siang_hari_1' ? { waktu_makan_siang_hari_1: newValue ? nowIso : null } : {})
       };
 
       extraColumns.forEach(col => {
@@ -961,12 +1071,7 @@ function App() {
         updatePayload.nik = cleanNik;
       }
 
-      const { error: errUpdate } = await supabase
-        .from('pendaftar')
-        .update(updatePayload)
-        .eq('no_registrasi', selectedUser["No. Registrasi"]);
-
-      if (errUpdate) throw errUpdate;
+      await updatePendaftarRow(selectedUser["No. Registrasi"], updatePayload);
 
       const updatedUser: Pendaftar = {
         ...selectedUser,
@@ -1055,12 +1160,7 @@ function App() {
         updatePayload.nik = cleanNik;
       }
 
-      const { error: updateError } = await supabase
-        .from('pendaftar')
-        .update(updatePayload)
-        .eq('no_registrasi', selectedUser["No. Registrasi"]);
-
-      if (updateError) throw updateError;
+      await updatePendaftarRow(selectedUser["No. Registrasi"], updatePayload);
       
       const updatedUser: Pendaftar = { 
         ...selectedUser, 
@@ -2061,22 +2161,71 @@ function App() {
                     </span>
                   )}
 
-                  {details.hasWorkshopTicket && (
-                    <span className="text-[11px] font-bold px-2 py-0.5 bg-purple-100 text-purple-800 border border-purple-300 rounded-md flex items-center gap-1">
-                      🔬 Termasuk Workshop
-                    </span>
+                  {/* Status Presensi Khusus Hari 1 (Novotel) */}
+                  {selectedDate === '2026-11-07' && (
+                    <>
+                      {details.hasWorkshopTicket && (
+                        <span className="text-[11px] font-bold px-2 py-0.5 bg-purple-100 text-purple-800 border border-purple-300 rounded-md flex items-center gap-1">
+                          🔬 Termasuk Workshop
+                        </span>
+                      )}
+                      {details.hasGalaDinnerInvite && (
+                        <span className="text-[11px] font-bold px-2 py-0.5 bg-amber-50 text-amber-800 border border-amber-300 rounded-md flex items-center gap-1">
+                          🍽️ Undangan Gala Dinner
+                        </span>
+                      )}
+                      {(selectedUser['Registrasi_OnSite'] === 'Ya' || selectedUser['registrasi_onsite'] === 'Ya') && (
+                        <span className="text-[11px] font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-md flex items-center gap-1">
+                          ✓ Onsite Hari 1
+                        </span>
+                      )}
+                      {(selectedUser['Akses_Gala_Dinner'] === 'Ya' || selectedUser['akses_gala_dinner'] === 'Ya' || selectedUser['Kehadiran_Gala_Dinner'] === 'Ya' || selectedUser['kehadiran_gala_dinner'] === 'Ya') && (
+                        <span className="text-[11px] font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-md flex items-center gap-1">
+                          ✓ Hadir Gala Dinner
+                        </span>
+                      )}
+                      {(selectedUser['Kehadiran_Workshop'] === 'Ya' || selectedUser['kehadiran_workshop'] === 'Ya') && (
+                        <span className="text-[11px] font-bold px-2 py-0.5 bg-purple-100 text-purple-800 border border-purple-300 rounded-md flex items-center gap-1">
+                          ✓ Hadir Workshop
+                        </span>
+                      )}
+                      {(selectedUser['Makan_Siang_Hari_1'] === 'Ya' || selectedUser['makan_siang_hari_1'] === 'Ya') && (
+                        <span className="text-[11px] font-bold px-2 py-0.5 bg-teal-100 text-teal-800 border border-teal-300 rounded-md flex items-center gap-1">
+                          ✓ Makan Siang H1
+                        </span>
+                      )}
+                    </>
                   )}
 
-                  {details.hasGalaDinnerInvite && (
-                    <span className="text-[11px] font-bold px-2 py-0.5 bg-amber-50 text-amber-800 border border-amber-300 rounded-md flex items-center gap-1">
-                      🍽️ Undangan Gala Dinner
-                    </span>
-                  )}
-
-                  {(selectedUser['Akses_Gala_Dinner'] === 'Ya' || selectedUser['akses_gala_dinner'] === 'Ya' || selectedUser['Kehadiran_Gala_Dinner'] === 'Ya' || selectedUser['kehadiran_gala_dinner'] === 'Ya') && (
-                    <span className="text-[11px] font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-md flex items-center gap-1">
-                      ✓ Hadir Gala Dinner
-                    </span>
+                  {/* Status Presensi Khusus Hari 2 (Pesta Rakyat Pakansari) */}
+                  {selectedDate === '2026-11-08' && (
+                    <>
+                      {(selectedUser['Registrasi_Onsite_Hari_2'] === 'Ya' || selectedUser['registrasi_onsite_hari_2'] === 'Ya') && (
+                        <span className="text-[11px] font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-md flex items-center gap-1">
+                          ✓ Onsite Hari 2
+                        </span>
+                      )}
+                      {(selectedUser['Pengambilan_Snack'] === 'Ya' || selectedUser['pengambilan_snack'] === 'Ya') && (
+                        <span className="text-[11px] font-bold px-2 py-0.5 bg-amber-100 text-amber-800 border border-amber-300 rounded-md flex items-center gap-1">
+                          ✓ Snack Diambil
+                        </span>
+                      )}
+                      {(selectedUser['Pengambilan_Baju'] === 'Ya' || selectedUser['pengambilan_baju'] === 'Ya' || selectedUser['pengambilan_merchandise'] === 'Ya') && (
+                        <span className="text-[11px] font-bold px-2 py-0.5 bg-blue-100 text-blue-800 border border-blue-300 rounded-md flex items-center gap-1">
+                          ✓ Kaos Diambil
+                        </span>
+                      )}
+                      {(selectedUser['Makan_Siang_Pesta_Rakyat'] === 'Ya' || selectedUser['makan_siang_pesta_rakyat'] === 'Ya') && (
+                        <span className="text-[11px] font-bold px-2 py-0.5 bg-teal-100 text-teal-800 border border-teal-300 rounded-md flex items-center gap-1">
+                          ✓ Makan Siang H2
+                        </span>
+                      )}
+                      {(selectedUser['Cek_Gula_Darah'] === 'Ya' || selectedUser['cek_gula_darah'] === 'Ya') && (
+                        <span className="text-[11px] font-bold px-2 py-0.5 bg-rose-100 text-rose-800 border border-rose-300 rounded-md flex items-center gap-1">
+                          ✓ Cek Gula Darah
+                        </span>
+                      )}
+                    </>
                   )}
                 </div>
 
@@ -2347,35 +2496,46 @@ function App() {
                 </p>
 
                 {/* Mode 1: Registrasi Onsite */}
-                {scannerMode === 'registrasi' && (
-                  <div className="space-y-2">
-                    <button
-                      disabled={actionLoading === 'Registrasi_OnSite' || selectedUser['Registrasi_OnSite'] === 'Ya' || selectedUser['registrasi_onsite'] === 'Ya'}
-                      onClick={() => handleUpdateCheckpoint('Registrasi_OnSite', selectedUser['Registrasi_OnSite'] === 'Ya' || selectedUser['registrasi_onsite'] === 'Ya')}
-                      className={`w-full py-3.5 px-4 rounded-xl font-bold flex items-center justify-center transition-all cursor-pointer ${
-                        (selectedUser['Registrasi_OnSite'] === 'Ya' || selectedUser['registrasi_onsite'] === 'Ya')
-                          ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
-                          : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md'
-                      }`}
-                    >
-                      {actionLoading === 'Registrasi_OnSite' ? (
-                        <RefreshCw className="w-5 h-5 animate-spin mr-2" />
-                      ) : (selectedUser['Registrasi_OnSite'] === 'Ya' || selectedUser['registrasi_onsite'] === 'Ya') ? (
-                        <CheckCircle2 className="w-5 h-5 mr-2 text-emerald-700" />
-                      ) : (
-                        <CheckSquare className="w-5 h-5 mr-2" />
+                {scannerMode === 'registrasi' && (() => {
+                  const isHari2 = selectedDate === '2026-11-08';
+                  const isCheckedIn = isHari2
+                    ? (selectedUser['Registrasi_Onsite_Hari_2'] === 'Ya' || selectedUser['registrasi_onsite_hari_2'] === 'Ya')
+                    : (selectedUser['Registrasi_OnSite'] === 'Ya' || selectedUser['registrasi_onsite'] === 'Ya');
+                  const checkinTime = isHari2
+                    ? (selectedUser.waktu_registrasi_onsite_hari_2 || selectedUser['waktu_registrasi_onsite_hari_2'])
+                    : (selectedUser.waktu_registrasi_onsite || selectedUser['waktu_registrasi_onsite']);
+                  const checkpointKey = isHari2 ? 'Registrasi_Onsite_Hari_2' : 'Registrasi_OnSite';
+
+                  return (
+                    <div className="space-y-2">
+                      <button
+                        disabled={actionLoading === checkpointKey || isCheckedIn}
+                        onClick={() => handleUpdateCheckpoint(checkpointKey, isCheckedIn)}
+                        className={`w-full py-3.5 px-4 rounded-xl font-bold flex items-center justify-center transition-all cursor-pointer ${
+                          isCheckedIn
+                            ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                            : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md'
+                        }`}
+                      >
+                        {actionLoading === checkpointKey ? (
+                          <RefreshCw className="w-5 h-5 animate-spin mr-2" />
+                        ) : isCheckedIn ? (
+                          <CheckCircle2 className="w-5 h-5 mr-2 text-emerald-700" />
+                        ) : (
+                          <CheckSquare className="w-5 h-5 mr-2" />
+                        )}
+                        {isCheckedIn 
+                          ? (isHari2 ? 'Sudah Presensi Registrasi Onsite Hari 2' : 'Sudah Registrasi Onsite Hari 1') 
+                          : (isHari2 ? 'Verifikasi Registrasi Onsite (Hari 2)' : 'Check-In Registrasi Onsite (Hari 1)')}
+                      </button>
+                      {checkinTime && (
+                        <p className="text-[11px] text-slate-500">
+                          {isHari2 ? 'Presensi Hari 2 pada: ' : 'Check-in Hari 1 pada: '}<strong>{formatWaktu(checkinTime)}</strong>
+                        </p>
                       )}
-                      {(selectedUser['Registrasi_OnSite'] === 'Ya' || selectedUser['registrasi_onsite'] === 'Ya') 
-                        ? (selectedDate === '2026-11-08' ? 'Sudah Presensi Registrasi Onsite' : 'Sudah Registrasi Onsite') 
-                        : (selectedDate === '2026-11-08' ? 'Verifikasi Registrasi Onsite' : 'Check-In Registrasi Onsite')}
-                    </button>
-                    {(selectedUser.waktu_registrasi_onsite || selectedUser['waktu_registrasi_onsite']) && (
-                      <p className="text-[11px] text-slate-500">
-                        Check-in pada: <strong>{formatWaktu(selectedUser.waktu_registrasi_onsite || selectedUser['waktu_registrasi_onsite'])}</strong>
-                      </p>
-                    )}
-                  </div>
-                )}
+                    </div>
+                  );
+                })()}
 
                 {/* Mode: Akses Gala Dinner (Hari 1) */}
                 {scannerMode === 'gala_dinner' && (

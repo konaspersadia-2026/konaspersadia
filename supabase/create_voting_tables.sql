@@ -1,5 +1,5 @@
 -- ==============================================================================
--- KONAS PERSADIA 2026 - SISTEM E-VOTING PEMILIHAN PRESIDEN PERSADIA 2026–2030
+-- KONAS PERSADIA 2026 - SISTEM E-VOTING PEMILIHAN PRESIDEN PERSADIA 2029–2032
 -- ==============================================================================
 -- Skrip ini membuat seluruh struktur tabel, indeks, RPC atomik, dan izin (RLS)
 -- untuk sistem pemilihan yang 100% terisolasi dari tabel pendaftar utama.
@@ -11,7 +11,7 @@
 -- ==============================================================================
 
 -- ------------------------------------------------------------------------------
--- 1. TABEL voting_kandidat (Data Calon Presiden PERSADIA)
+-- 1. TABEL voting_kandidat (Data Calon Presiden PB PERSADIA)
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.voting_kandidat (
     id SERIAL PRIMARY KEY,
@@ -80,7 +80,7 @@ INSERT INTO public.voting_config (key, value, description)
 VALUES 
     ('status_pemilihan', 'draft', 'Status sesi sidang: draft (belum dibuka), open (sedang berlangsung), closed (ditutup)'),
     ('tampilkan_quick_count', 'false', 'Tampilkan hasil suara real-time: true / false'),
-    ('judul_pemilihan', 'Pemilihan Presiden Pengurus Besar PERSADIA Periode 2026–2030', 'Judul resmi sesi sidang pemilihan'),
+    ('judul_pemilihan', 'Pemilihan Presiden Pengurus Besar PERSADIA Periode 2029–2032', 'Judul resmi sesi sidang pemilihan'),
     ('voting_admin_passcode', 'panlih2026', 'Passcode login darurat panitia pemilihan presidium'),
     ('scanner_passcode', 'persadia2026', 'Passcode login panitia petugas scanner QR tiket & presensi'),
     ('putaran_voting', '1', 'Putaran pemilihan: 1 (Putaran Pertama) atau 2 (Putaran Kedua / Run-off)'),
@@ -437,7 +437,7 @@ END $$;
 INSERT INTO public.voting_kandidat (nomor_urut, nama_kandidat, gelar, institusi, foto_url, visi, misi)
 SELECT 
     1, 
-    'Calon Presiden PERSADIA No. 1', 
+    'Calon Presiden PB PERSADIA No. 1', 
     'Dr. dr. Sp.PD-KEMD, FINASIM', 
     'Pengurus Besar PERSADIA', 
     'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=600&auto=format&fit=crop&q=80',
@@ -448,7 +448,7 @@ WHERE NOT EXISTS (SELECT 1 FROM public.voting_kandidat WHERE nomor_urut = 1);
 INSERT INTO public.voting_kandidat (nomor_urut, nama_kandidat, gelar, institusi, foto_url, visi, misi)
 SELECT 
     2, 
-    'Calon Presiden PERSADIA No. 2', 
+    'Calon Presiden PB PERSADIA No. 2', 
     'Prof. Dr. dr. Sp.PD-KEMD, FINASIM', 
     'Pengurus Besar PERSADIA', 
     'https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=600&auto=format&fit=crop&q=80',

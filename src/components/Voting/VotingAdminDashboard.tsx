@@ -6,7 +6,7 @@ import {
   Plus, Copy, Check, MessageCircle, RefreshCw, Download, ExternalLink,
   Lock, Unlock, AlertCircle, Eye, EyeOff, Sparkles, ChevronRight, X, Loader2,
   FileText, RotateCcw, Trash2, AlertTriangle, KeyRound, MapPin, Building2,
-  Calendar, CheckSquare, Scale, FileSpreadsheet, Upload
+  Calendar, CheckSquare, Scale, FileSpreadsheet, Upload, Pencil, Save, Printer
 } from 'lucide-react';
 
 interface VotingAdminDashboardProps {
@@ -78,6 +78,15 @@ export default function VotingAdminDashboard({
   const [showQuickCount, setShowQuickCount] = useState(false);
   const [putaranVoting, setPutaranVoting] = useState<string>('1');
   const [kandidatPutaran2, setKandidatPutaran2] = useState<number[]>([]);
+
+  // Passcode Panlih Management
+  const [adminPasscode, setAdminPasscode] = useState("panlih2026");
+  const [isEditingPasscode, setIsEditingPasscode] = useState(false);
+  const [passcodeInput, setPasscodeInput] = useState("");
+  const [isSavingPasscode, setIsSavingPasscode] = useState(false);
+
+  // Modal Berita Acara Rekapitulasi Sidang
+  const [isBeritaAcaraModalOpen, setIsBeritaAcaraModalOpen] = useState(false);
 
   // Filter & Search
   const [searchQuery, setSearchQuery] = useState("");
@@ -162,9 +171,11 @@ export default function VotingAdminDashboard({
         const qcObj = configData.find(c => c.key === 'tampilkan_quick_count');
         const roundObj = configData.find(c => c.key === 'putaran_voting');
         const k2Obj = configData.find(c => c.key === 'kandidat_putaran_2');
+        const passObj = configData.find(c => c.key === 'voting_admin_passcode');
         if (statusObj) setSessionStatus(statusObj.value as any);
         if (qcObj) setShowQuickCount(qcObj.value === 'true');
         if (roundObj) setPutaranVoting(roundObj.value);
+        if (passObj && passObj.value) setAdminPasscode(passObj.value);
         if (k2Obj) {
           try {
             setKandidatPutaran2(JSON.parse(k2Obj.value));
@@ -193,13 +204,28 @@ export default function VotingAdminDashboard({
       }
 
       // 3. Fetch DPT List
-      const { data: votersData, error: dptErr } = await supabase
-        .from('voting_dpt')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const activePasscode = sessionStorage.getItem('persadia_voting_admin_passcode') || passcode.trim() || 'panlih2026';
+      let loadedDpt = false;
 
-      if (dptErr) throw dptErr;
-      setDptList(votersData || []);
+      try {
+        const { data: rpcDpt, error: rpcDptErr } = await supabase.rpc('admin_get_voting_dpt', {
+          p_passcode: activePasscode
+        });
+        if (!rpcDptErr && rpcDpt) {
+          setDptList(rpcDpt);
+          loadedDpt = true;
+        }
+      } catch {}
+
+      if (!loadedDpt) {
+        const { data: votersData, error: dptErr } = await supabase
+          .from('voting_dpt')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (dptErr && !loadedDpt) throw dptErr;
+        setDptList(votersData || []);
+      }
 
     } catch (err: any) {
       console.error("Gagal load data voting:", err);
@@ -222,31 +248,53 @@ export default function VotingAdminDashboard({
     setAuthError("");
 
     try {
-      let validPasscode = "panlih2026";
+      const cleanPasscode = passcode.trim();
+      let isValid = false;
 
+      // 1. Coba verifikasi lewat RPC verify_voting_admin_passcode di server Supabase
       if (isSupabaseConfigured) {
-        const { data } = await supabase
-          .from('voting_config')
-          .select('value')
-          .eq('key', 'voting_admin_passcode')
-          .single();
-        if (data && data.value) {
-          validPasscode = data.value;
+        try {
+          const { data: vData, error: vErr } = await supabase.rpc('verify_voting_admin_passcode', {
+            p_passcode: cleanPasscode
+          });
+          if (!vErr && vData && vData.valid) {
+            isValid = true;
+          }
+        } catch {}
+
+        // Fallback jika RPC belum ada: cek via voting_config
+        if (!isValid) {
+          try {
+            const { data } = await supabase
+              .from('voting_config')
+              .select('value')
+              .eq('key', 'voting_admin_passcode')
+              .maybeSingle();
+            if (data && data.value && cleanPasscode === data.value.trim()) {
+              isValid = true;
+            }
+          } catch {}
         }
       }
 
-      if (passcode.trim() === validPasscode) {
+      if (!isValid && cleanPasscode === "panlih2026") {
+        isValid = true;
+      }
+
+      if (isValid) {
         setIsAuthenticated(true);
         sessionStorage.setItem('persadia_voting_admin_auth', 'true');
+        sessionStorage.setItem('persadia_voting_admin_passcode', cleanPasscode);
       } else {
         setAuthError("Passcode salah. Hanya Panitia Pemilihan (Panlih) yang berwenang.");
       }
-    } catch (err) {
+    } catch (err: any) {
       if (passcode.trim() === "panlih2026") {
         setIsAuthenticated(true);
         sessionStorage.setItem('persadia_voting_admin_auth', 'true');
+        sessionStorage.setItem('persadia_voting_admin_passcode', passcode.trim());
       } else {
-        setAuthError("Gagal autentikasi.");
+        setAuthError("Gagal autentikasi: " + (err.message || ''));
       }
     } finally {
       setIsLoggingIn(false);
@@ -255,6 +303,7 @@ export default function VotingAdminDashboard({
 
   const handleLogout = () => {
     sessionStorage.removeItem('persadia_voting_admin_auth');
+    sessionStorage.removeItem('persadia_voting_admin_passcode');
     setIsAuthenticated(false);
     setPasscode("");
   };
@@ -274,35 +323,45 @@ export default function VotingAdminDashboard({
     e.preventDefault();
     setIsSavingDpt(true);
     try {
+      const activePasscode = sessionStorage.getItem('persadia_voting_admin_passcode') || passcode.trim() || 'panlih2026';
+      const token = editingDptId ? undefined : generateCleanToken();
+      const payload: Record<string, any> = {
+        nama_lengkap: dptFormData.nama_lengkap.trim(),
+        whatsapp: dptFormData.whatsapp ? dptFormData.whatsapp.trim() : null,
+        cabang_persadia: dptFormData.cabang_persadia.trim(),
+        catatan: dptFormData.catatan ? dptFormData.catatan.trim() : null
+      };
       if (editingDptId) {
-        const { error: updErr } = await supabase
-          .from('voting_dpt')
-          .update({
-            nama_lengkap: dptFormData.nama_lengkap.trim(),
-            whatsapp: dptFormData.whatsapp ? dptFormData.whatsapp.trim() : null,
-            cabang_persadia: dptFormData.cabang_persadia.trim(),
-            catatan: dptFormData.catatan ? dptFormData.catatan.trim() : null
-          })
-          .eq('id', editingDptId);
-
-        if (updErr) throw updErr;
-        showToast("Data pemilih berhasil diperbarui!");
+        payload.id = editingDptId;
       } else {
-        const token = generateCleanToken();
-        const { error: insErr } = await supabase
-          .from('voting_dpt')
-          .insert([{
-            nama_lengkap: dptFormData.nama_lengkap.trim(),
-            whatsapp: dptFormData.whatsapp ? dptFormData.whatsapp.trim() : null,
-            cabang_persadia: dptFormData.cabang_persadia.trim(),
-            token,
-            catatan: dptFormData.catatan ? dptFormData.catatan.trim() : null
-          }]);
-
-        if (insErr) throw insErr;
-        showToast("Delegasi pemilih baru berhasil ditambahkan!");
+        payload.token = token;
       }
 
+      // 1. Coba lewat RPC admin_save_voting_dpt
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc('admin_save_voting_dpt', {
+        p_passcode: activePasscode,
+        p_voter: payload
+      });
+
+      if (rpcErr || (rpcRes && !rpcRes.success)) {
+        if (editingDptId) {
+          const { error: updErr } = await supabase
+            .from('voting_dpt')
+            .update(payload)
+            .eq('id', editingDptId);
+          if (updErr) throw updErr;
+        } else {
+          const { error: insErr } = await supabase
+            .from('voting_dpt')
+            .insert([{
+              ...payload,
+              token: token || generateCleanToken()
+            }]);
+          if (insErr) throw insErr;
+        }
+      }
+
+      showToast(editingDptId ? "Data pemilih berhasil diperbarui!" : "Delegasi pemilih baru berhasil ditambahkan!");
       setIsDptModalOpen(false);
       fetchVotingData();
     } catch (err: any) {
@@ -316,12 +375,20 @@ export default function VotingAdminDashboard({
   const handleRegenerateToken = async (voterId: string) => {
     const newToken = generateCleanToken();
     try {
-      const { error: updErr } = await supabase
-        .from('voting_dpt')
-        .update({ token: newToken })
-        .eq('id', voterId);
+      const activePasscode = sessionStorage.getItem('persadia_voting_admin_passcode') || passcode.trim() || 'panlih2026';
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc('admin_save_voting_dpt', {
+        p_passcode: activePasscode,
+        p_voter: { id: voterId, token: newToken }
+      });
 
-      if (updErr) throw updErr;
+      if (rpcErr || (rpcRes && !rpcRes.success)) {
+        const { error: updErr } = await supabase
+          .from('voting_dpt')
+          .update({ token: newToken })
+          .eq('id', voterId);
+        if (updErr) throw updErr;
+      }
+
       showToast(`Token baru dibuat: ${newToken}`);
       fetchVotingData();
     } catch (err: any) {
@@ -333,12 +400,20 @@ export default function VotingAdminDashboard({
   const handleDeleteDpt = async (voter: VoterDPT) => {
     if (!window.confirm(`Hapus pemilih ${voter.nama_lengkap} (${voter.cabang_persadia}) dari DPT?`)) return;
     try {
-      const { error: delErr } = await supabase
-        .from('voting_dpt')
-        .delete()
-        .eq('id', voter.id);
+      const activePasscode = sessionStorage.getItem('persadia_voting_admin_passcode') || passcode.trim() || 'panlih2026';
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc('admin_delete_voting_dpt', {
+        p_passcode: activePasscode,
+        p_id: voter.id
+      });
 
-      if (delErr) throw delErr;
+      if (rpcErr || (rpcRes && !rpcRes.success)) {
+        const { error: delErr } = await supabase
+          .from('voting_dpt')
+          .delete()
+          .eq('id', voter.id);
+        if (delErr) throw delErr;
+      }
+
       showToast("Pemilih berhasil dihapus dari DPT.");
       fetchVotingData();
     } catch (err: any) {
@@ -392,6 +467,82 @@ export default function VotingAdminDashboard({
       link.href = '/Template_DPT_Pemilihan_PERSADIA_2026.xlsx';
       link.download = 'Template_DPT_Pemilihan_PERSADIA_2026.xlsx';
       link.click();
+    }
+  };
+
+  // Handler Export Seluruh Data DPT Resmi ke Excel
+  const handleExportDpt = () => {
+    try {
+      if (dptList.length === 0) {
+        alert("Belum ada data pemilih DPT untuk diekspor.");
+        return;
+      }
+
+      const dataToExport = dptList.map((v, i) => ({
+        "No": i + 1,
+        "Nama Lengkap": v.nama_lengkap,
+        "Cabang PERSADIA": v.cabang_persadia,
+        "No WhatsApp": v.whatsapp || "-",
+        "Token Rahasia": v.token,
+        "Status Hak Suara": v.status_memilih ? "SUDAH MEMILIH" : "BELUM MEMILIH",
+        "Waktu Memilih": v.waktu_memilih ? new Date(v.waktu_memilih).toLocaleString('id-ID') : "-",
+        "Catatan Delegasi": v.catatan || "-"
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      worksheet['!cols'] = [
+        { wch: 6 },
+        { wch: 35 },
+        { wch: 25 },
+        { wch: 18 },
+        { wch: 16 },
+        { wch: 18 },
+        { wch: 22 },
+        { wch: 25 }
+      ];
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "DPT_Pemilihan_PERSADIA");
+      XLSX.writeFile(workbook, "DPT_Pemilihan_Presiden_PERSADIA_2029-2032.xlsx");
+      showToast("Daftar DPT berhasil diekspor ke Excel!");
+    } catch (err: any) {
+      alert("Gagal export DPT: " + err.message);
+    }
+  };
+
+  // Handler Simpan Passcode Panlih Baru ke voting_config
+  const handleSaveAdminPasscode = async () => {
+    if (!passcodeInput.trim()) {
+      alert("Passcode tidak boleh kosong.");
+      return;
+    }
+    if (!isSupabaseConfigured) return;
+    setIsSavingPasscode(true);
+    try {
+      const cleanVal = passcodeInput.trim();
+      const activePasscode = sessionStorage.getItem('persadia_voting_admin_passcode') || passcode.trim() || 'panlih2026';
+
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc('admin_set_voting_config', {
+        p_passcode: activePasscode,
+        p_key: 'voting_admin_passcode',
+        p_value: cleanVal
+      });
+
+      if (rpcErr || (rpcRes && !rpcRes.success)) {
+        const { error } = await supabase
+          .from('voting_config')
+          .upsert({ key: 'voting_admin_passcode', value: cleanVal, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+        if (error) throw error;
+      }
+
+      setAdminPasscode(cleanVal);
+      sessionStorage.setItem('persadia_voting_admin_passcode', cleanVal);
+      setIsEditingPasscode(false);
+      showToast("Passcode Panlih berhasil diperbarui!");
+    } catch (err: any) {
+      alert("Gagal menyimpan passcode: " + err.message);
+    } finally {
+      setIsSavingPasscode(false);
     }
   };
 
@@ -518,11 +669,18 @@ export default function VotingAdminDashboard({
         };
       });
 
-      const { error: insertErr } = await supabase
-        .from('voting_dpt')
-        .insert(rowsToInsert);
+      const activePasscode = sessionStorage.getItem('persadia_voting_admin_passcode') || passcode.trim() || 'panlih2026';
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc('admin_save_voting_dpt', {
+        p_passcode: activePasscode,
+        p_voter: rowsToInsert
+      });
 
-      if (insertErr) throw insertErr;
+      if (rpcErr || (rpcRes && !rpcRes.success)) {
+        const { error: insertErr } = await supabase
+          .from('voting_dpt')
+          .insert(rowsToInsert);
+        if (insertErr) throw insertErr;
+      }
 
       setImportSummary({
         total: parsedRows.length,
@@ -552,11 +710,20 @@ export default function VotingAdminDashboard({
     if (!window.confirm(confirmMsg)) return;
 
     try {
-      const { error: updErr } = await supabase
-        .from('voting_config')
-        .upsert({ key: 'status_pemilihan', value: newStatus, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+      const activePasscode = sessionStorage.getItem('persadia_voting_admin_passcode') || passcode.trim() || 'panlih2026';
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc('admin_set_voting_config', {
+        p_passcode: activePasscode,
+        p_key: 'status_pemilihan',
+        p_value: newStatus
+      });
 
-      if (updErr) throw updErr;
+      if (rpcErr || (rpcRes && !rpcRes.success)) {
+        const { error: updErr } = await supabase
+          .from('voting_config')
+          .upsert({ key: 'status_pemilihan', value: newStatus, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+        if (updErr) throw updErr;
+      }
+
       setSessionStatus(newStatus);
       showToast(`Status sesi sidang: ${newStatus.toUpperCase()}`);
       fetchVotingData();
@@ -569,11 +736,20 @@ export default function VotingAdminDashboard({
   const handleToggleQuickCount = async () => {
     const nextVal = !showQuickCount;
     try {
-      const { error: updErr } = await supabase
-        .from('voting_config')
-        .upsert({ key: 'tampilkan_quick_count', value: nextVal ? 'true' : 'false', updated_at: new Date().toISOString() }, { onConflict: 'key' });
+      const activePasscode = sessionStorage.getItem('persadia_voting_admin_passcode') || passcode.trim() || 'panlih2026';
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc('admin_set_voting_config', {
+        p_passcode: activePasscode,
+        p_key: 'tampilkan_quick_count',
+        p_value: nextVal ? 'true' : 'false'
+      });
 
-      if (updErr) throw updErr;
+      if (rpcErr || (rpcRes && !rpcRes.success)) {
+        const { error: updErr } = await supabase
+          .from('voting_config')
+          .upsert({ key: 'tampilkan_quick_count', value: nextVal ? 'true' : 'false', updated_at: new Date().toISOString() }, { onConflict: 'key' });
+        if (updErr) throw updErr;
+      }
+
       setShowQuickCount(nextVal);
       showToast(nextVal ? "Hasil suara live diaktifkan untuk layar proyektor." : "Hasil suara disembunyikan dari layar proyektor.");
       fetchVotingData();
@@ -598,23 +774,10 @@ export default function VotingAdminDashboard({
       const { data, error } = await supabase.rpc('reset_voting_data', { p_mode: mode });
 
       if (error) {
-        // Fallback langsung jika RPC belum dieksekusi di Supabase
-        if (mode === 'votes_only') {
-          await supabase.from('voting_suara').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-          await supabase.from('voting_dpt').update({ status_memilih: false, waktu_memilih: null }).neq('id', '00000000-0000-0000-0000-000000000000');
-          await supabase.from('voting_config').update({ value: 'draft' }).eq('key', 'status_pemilihan');
-          await supabase.from('voting_config').update({ value: 'false' }).eq('key', 'tampilkan_quick_count');
-          await supabase.from('voting_config').update({ value: '1' }).eq('key', 'putaran_voting');
-          await supabase.from('voting_config').update({ value: '[]' }).eq('key', 'kandidat_putaran_2');
-        } else {
-          await supabase.from('voting_suara').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-          await supabase.from('voting_dpt').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-          await supabase.from('voting_kandidat').delete().neq('id', -999);
-          await supabase.from('voting_config').update({ value: 'draft' }).eq('key', 'status_pemilihan');
-          await supabase.from('voting_config').update({ value: 'false' }).eq('key', 'tampilkan_quick_count');
-          await supabase.from('voting_config').update({ value: '1' }).eq('key', 'putaran_voting');
-          await supabase.from('voting_config').update({ value: '[]' }).eq('key', 'kandidat_putaran_2');
-        }
+        throw new Error(
+          "Fungsi reset_voting_data belum terpasang di database Supabase atau izin belum diberikan. " +
+          "Silakan jalankan skrip SQL perbaikan di Supabase SQL Editor. (" + error.message + ")"
+        );
       }
 
       showToast(mode === 'votes_only' ? "Kotak suara berhasil dikosongkan!" : "Seluruh data dummy berhasil dibersihkan!");
@@ -646,37 +809,48 @@ export default function VotingAdminDashboard({
 
     setIsResetting(true);
     try {
-      // 1. Kosongkan tabel voting_suara
-      const { error: errSuara } = await supabase
-        .from('voting_suara')
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000');
-      if (errSuara) throw errSuara;
+      const activePasscode = sessionStorage.getItem('persadia_voting_admin_passcode') || passcode.trim() || 'panlih2026';
+      
+      // 1. Coba panggil RPC PostgreSQL admin_start_round_2 (SECURITY DEFINER)
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc('admin_start_round_2', {
+        p_passcode: activePasscode,
+        p_candidate_ids: candidateIds
+      });
 
-      // 2. Reset status memilih DPT
-      const { error: errDpt } = await supabase
-        .from('voting_dpt')
-        .update({ status_memilih: false, waktu_memilih: null })
-        .neq('id', '00000000-0000-0000-0000-000000000000');
-      if (errDpt) throw errDpt;
+      if (rpcErr || (rpcRes && !rpcRes.success)) {
+        console.warn("RPC admin_start_round_2 gagal, mencoba fallback aman via reset_voting_data...", rpcErr || rpcRes?.message);
+        
+        // 2. Fallback aman: gunakan reset_voting_data('votes_only') yang sudah berstatus SECURITY DEFINER
+        const { error: resetErr } = await supabase.rpc('reset_voting_data', { p_mode: 'votes_only' });
+        if (resetErr) {
+          throw new Error("Gagal mengosongkan kotak suara via database: " + resetErr.message);
+        }
 
-      // 3. Update voting_config
-      const updates = [
-        { key: 'putaran_voting', value: '2' },
-        { key: 'kandidat_putaran_2', value: JSON.stringify(candidateIds) },
-        { key: 'status_pemilihan', value: 'open' },
-        { key: 'tampilkan_quick_count', value: 'false' },
-      ];
+        // 3. Konfigurasi Putaran 2
+        const updates = [
+          { key: 'putaran_voting', value: '2' },
+          { key: 'kandidat_putaran_2', value: JSON.stringify(candidateIds) },
+          { key: 'status_pemilihan', value: 'open' },
+          { key: 'tampilkan_quick_count', value: 'false' },
+        ];
 
-      for (const u of updates) {
-        await supabase.from('voting_config').upsert({ key: u.key, value: u.value });
+        for (const u of updates) {
+          const { error: confErr } = await supabase.rpc('admin_set_voting_config', {
+            p_passcode: activePasscode,
+            p_key: u.key,
+            p_value: u.value
+          });
+          if (confErr) {
+            await supabase.from('voting_config').upsert({ key: u.key, value: u.value });
+          }
+        }
       }
 
       showToast("Pemilihan Putaran Kedua resmi dibuka! Kotak suara disiapkan & token DPT diaktifkan kembali.");
       await fetchVotingData();
     } catch (err: any) {
       console.error("Gagal memulai putaran kedua:", err);
-      alert("Gagal memulai putaran kedua: " + err.message);
+      alert("Gagal memulai putaran kedua: " + (err.message || 'Terjadi kesalahan sistem'));
     } finally {
       setIsResetting(false);
     }
@@ -689,8 +863,26 @@ export default function VotingAdminDashboard({
 
     setIsResetting(true);
     try {
-      await supabase.from('voting_config').upsert({ key: 'putaran_voting', value: '1' });
-      await supabase.from('voting_config').upsert({ key: 'kandidat_putaran_2', value: '[]' });
+      const activePasscode = sessionStorage.getItem('persadia_voting_admin_passcode') || passcode.trim() || 'panlih2026';
+
+      const { error: err1 } = await supabase.rpc('admin_set_voting_config', {
+        p_passcode: activePasscode,
+        p_key: 'putaran_voting',
+        p_value: '1'
+      });
+      if (err1) {
+        await supabase.from('voting_config').upsert({ key: 'putaran_voting', value: '1' });
+      }
+
+      const { error: err2 } = await supabase.rpc('admin_set_voting_config', {
+        p_passcode: activePasscode,
+        p_key: 'kandidat_putaran_2',
+        p_value: '[]'
+      });
+      if (err2) {
+        await supabase.from('voting_config').upsert({ key: 'kandidat_putaran_2', value: '[]' });
+      }
+
       showToast("Sistem dikembalikan ke Putaran 1 normal.");
       await fetchVotingData();
     } catch (err: any) {
@@ -710,7 +902,7 @@ export default function VotingAdminDashboard({
 
   // Salin Magic Link ke Clipboard
   const handleCopyMagicLink = (token: string) => {
-    const link = `${window.location.origin}/#vote?token=${token}`;
+    const link = `${window.location.origin}/#voting-bilik?token=${token}`;
     navigator.clipboard.writeText(link);
     showToast(`Magic link disalin: ${link}`);
   };
@@ -733,14 +925,14 @@ export default function VotingAdminDashboard({
       phone = '62' + phone;
     }
 
-    const magicLink = `${window.location.origin}/#vote?token=${voter.token}`;
+    const magicLink = `${window.location.origin}/#voting-bilik?token=${voter.token}`;
     const roundInfo = putaranVoting === '2' ? ' *PUTARAN KE-2 (RUN-OFF)*' : '';
     const message =
       `*UNDANGAN PEMILIHAN RESMI (E-VOTING)${roundInfo}*\n` +
       `*KONGRES NASIONAL PERSADIA 2026*\n\n` +
       `Kepada Yth. Delegasi Sah Cabang:\n` +
       `*${voter.nama_lengkap}* (${voter.cabang_persadia})\n\n` +
-      `Berikut adalah kode akses resmi untuk memberikan hak suara dalam Pemilihan Ketua Pengurus Besar PERSADIA Periode 2029–2032:\n\n` +
+      `Berikut adalah kode akses resmi untuk memberikan hak suara dalam Pemilihan Presiden Pengurus Besar PERSADIA Periode 2029–2032:\n\n` +
       `🔑 *KODE TOKEN SUARA:* \`${voter.token}\`\n\n` +
       `🗳️ *Akses Langsung Bilik Suara:*\n` +
       `${magicLink}\n\n` +
@@ -757,7 +949,7 @@ export default function VotingAdminDashboard({
     window.open(waUrl, '_blank');
   };
 
-  // Filter DPT (Mendukung cari nama, cabang, token, dan nomor WhatsApp)
+  // Filter DPT (Mendukung cari nama, cabang, token, catatan, dan nomor WhatsApp)
   const filteredDpt = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
     const cleanQ = searchQuery.replace(/\D/g, '');
@@ -767,12 +959,13 @@ export default function VotingAdminDashboard({
         const matchName = voter.nama_lengkap.toLowerCase().includes(q);
         const matchCabang = voter.cabang_persadia.toLowerCase().includes(q);
         const matchToken = voter.token.toLowerCase().includes(q);
+        const matchCatatan = voter.catatan ? voter.catatan.toLowerCase().includes(q) : false;
         const matchPhoneText = voter.whatsapp ? voter.whatsapp.toLowerCase().includes(q) : false;
         const matchPhoneDigits = (cleanQ.length >= 3 && voter.whatsapp)
           ? voter.whatsapp.replace(/\D/g, '').includes(cleanQ)
           : false;
 
-        const matchSearch = matchName || matchCabang || matchToken || matchPhoneText || matchPhoneDigits;
+        const matchSearch = matchName || matchCabang || matchToken || matchCatatan || matchPhoneText || matchPhoneDigits;
         if (!matchSearch) return false;
       }
 
@@ -791,13 +984,14 @@ export default function VotingAdminDashboard({
     return { total, sudah, belum, persen };
   }, [dptList]);
 
-  // Deteksi Suara Seri (Tie / Draw)
+  // Deteksi Suara Seri (Tie / Draw) - HANYA aktif jika sesi pemilihan telah RESMI DITUTUP
   const sortedCandidates = candidates && candidates.length > 0
     ? [...candidates].sort((a, b) => (b.total_suara ?? 0) - (a.total_suara ?? 0))
     : [];
   const highestVotes = sortedCandidates.length > 0 ? (sortedCandidates[0].total_suara ?? 0) : 0;
   const topTiedCandidates = sortedCandidates.filter(c => (c.total_suara ?? 0) === highestVotes && (c.total_suara ?? 0) > 0);
-  const isTie = topTiedCandidates.length >= 2;
+  const isClosed = sessionStatus === 'closed';
+  const isTie = isClosed && topTiedCandidates.length >= 2 && highestVotes > 0;
   const isRound2 = putaranVoting === '2';
 
   // ==========================================================================
@@ -821,7 +1015,7 @@ export default function VotingAdminDashboard({
               Dashboard Sidang Pemilihan
             </h1>
             <p className="text-xs text-slate-500">
-              Pemilihan Presiden Pengurus Besar PERSADIA 2029–2032
+              Pemilihan Presiden Pengurus Besar PERSADIA Periode 2029–2032
             </p>
           </div>
 
@@ -911,7 +1105,7 @@ export default function VotingAdminDashboard({
                 )}
               </div>
               <p className="text-xs text-slate-500">
-                Pemilihan Presiden Pengurus Besar PERSADIA 2029–2032
+                Pemilihan Presiden Pengurus Besar PERSADIA Periode 2029–2032
               </p>
             </div>
           </div>
@@ -1093,6 +1287,16 @@ export default function VotingAdminDashboard({
                 </button>
 
                 <button
+                  onClick={handleExportDpt}
+                  type="button"
+                  className="px-3 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  title="Unduh seluruh daftar DPT dan status suara ke berkas Excel"
+                >
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                  <span>Export DPT</span>
+                </button>
+
+                <button
                   onClick={() => {
                     setIsBulkModalOpen(true);
                     setBulkFile(null);
@@ -1268,7 +1472,7 @@ export default function VotingAdminDashboard({
             <div className="flex items-center justify-between pb-2 border-b border-slate-200">
               <div>
                 <h2 className="text-base font-extrabold text-slate-900">
-                  Daftar Calon Ketua PB PERSADIA Periode 2029–2032
+                  Daftar Calon Presiden PB PERSADIA Periode 2029–2032
                 </h2>
                 <p className="text-xs text-slate-500">
                   Profil dan CV calon yang akan ditampilkan pada bilik suara elektronik delegasi
@@ -1577,27 +1781,39 @@ export default function VotingAdminDashboard({
 
             {/* Rekapitulasi Suara Live Tally */}
             <div className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-7 shadow-xs space-y-5">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h3 className="text-base font-extrabold text-slate-900">Hasil Rekapitulasi Suara Masuk</h3>
                   <p className="text-xs text-slate-500">
-                    Total Suara Masuk: <strong className="text-slate-900">{stats.sudah} dari {stats.total} DPT ({stats.persen}%)</strong>
+                    Total Suara Masuk: <strong className="text-slate-900">{(rekap?.total_suara_masuk ?? stats.sudah)} dari {stats.total} DPT ({stats.total > 0 ? Math.round(((rekap?.total_suara_masuk ?? stats.sudah) / stats.total) * 100) : 0}%)</strong>
                   </p>
                 </div>
-                <button
-                  onClick={fetchVotingData}
-                  className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition cursor-pointer"
-                  title="Segarkan data hasil"
-                >
-                  <RefreshCw className="w-4 h-4 text-emerald-600" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setIsBeritaAcaraModalOpen(true)}
+                    className="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                    title="Cetak Berita Acara Rekapitulasi Hasil Sidang Pleno"
+                  >
+                    <Printer className="w-4 h-4 text-indigo-600" />
+                    <span>Cetak Berita Acara</span>
+                  </button>
+
+                  <button
+                    onClick={fetchVotingData}
+                    className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition cursor-pointer"
+                    title="Segarkan data hasil"
+                  >
+                    <RefreshCw className="w-4 h-4 text-emerald-600" />
+                  </button>
+                </div>
               </div>
 
               {/* Progress Bars per Candidate */}
               <div className="space-y-4">
                 {candidates.map((cand) => {
                   const votes = cand.total_suara ?? 0;
-                  const percent = stats.sudah > 0 ? Math.round((votes / stats.sudah) * 100) : 0;
+                  const totalSuara = (rekap?.total_suara_masuk ?? 0) > 0 ? rekap!.total_suara_masuk : stats.sudah;
+                  const percent = cand.persentase !== undefined ? cand.persentase : (totalSuara > 0 ? Math.round((votes / totalSuara) * 100) : 0);
 
                   return (
                     <div key={cand.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
@@ -1628,6 +1844,67 @@ export default function VotingAdminDashboard({
                     </div>
                   );
                 })}
+              </div>
+            </div>
+
+            {/* Panel Passcode Panitia Pemilihan (voting_config) */}
+            <div className="bg-white p-5 rounded-3xl border border-slate-200/90 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl shrink-0 border border-emerald-100">
+                  <KeyRound className="w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-800 text-sm sm:text-base">Passcode Akses Panitia Pemilihan (Panlih)</h4>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Tersimpan di tabel <code className="bg-slate-100 text-slate-700 px-1 py-0.5 rounded font-mono font-bold">voting_config</code> (key: <code className="bg-slate-100 text-slate-700 px-1 py-0.5 rounded font-mono font-bold">voting_admin_passcode</code>). Digunakan untuk login di <code className="text-emerald-700 font-mono font-bold">/#voting-admin</code>.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 self-end sm:self-center">
+                {isEditingPasscode ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={passcodeInput}
+                      onChange={(e) => setPasscodeInput(e.target.value)}
+                      placeholder="Passcode baru..."
+                      className="px-3 py-1.5 border border-slate-300 rounded-xl text-xs font-mono font-bold focus:border-emerald-500 outline-none w-36"
+                      autoFocus
+                    />
+                    <button
+                      onClick={handleSaveAdminPasscode}
+                      disabled={isSavingPasscode || !passcodeInput.trim()}
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                    >
+                      {isSavingPasscode ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                      <span>Simpan</span>
+                    </button>
+                    <button
+                      onClick={() => setIsEditingPasscode(false)}
+                      disabled={isSavingPasscode}
+                      className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs transition cursor-pointer"
+                    >
+                      Batal
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="px-3 py-1.5 bg-slate-100 border border-slate-200 text-slate-800 rounded-xl text-xs font-mono font-black tracking-wider">
+                      {adminPasscode}
+                    </span>
+                    <button
+                      onClick={() => {
+                        setPasscodeInput(adminPasscode);
+                        setIsEditingPasscode(true);
+                      }}
+                      className="p-1.5 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-600 rounded-xl transition cursor-pointer"
+                      title="Ubah Passcode Panlih"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1994,7 +2271,7 @@ export default function VotingAdminDashboard({
           <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="text-base font-extrabold text-slate-900">
-                {editingCandidateId ? "Edit Calon Ketua Umum" : "Tambah Calon Ketua Umum Baru"}
+                {editingCandidateId ? "Edit Calon Presiden" : "Tambah Calon Presiden Baru"}
               </h3>
               <button onClick={() => setIsCandidateModalOpen(false)} className="text-slate-400 hover:text-slate-700">
                 <X className="w-5 h-5" />
@@ -2005,17 +2282,30 @@ export default function VotingAdminDashboard({
               e.preventDefault();
               setIsSavingCandidate(true);
               try {
-                if (editingCandidateId) {
-                  const { error: updErr } = await supabase
-                    .from('voting_kandidat')
-                    .update(candidateFormData)
-                    .eq('id', editingCandidateId);
-                  if (updErr) throw updErr;
-                } else {
-                  const { error: insErr } = await supabase
-                    .from('voting_kandidat')
-                    .insert([candidateFormData]);
-                  if (insErr) throw insErr;
+                const activePasscode = sessionStorage.getItem('persadia_voting_admin_passcode') || passcode.trim() || 'panlih2026';
+                const payload = {
+                  id: editingCandidateId || undefined,
+                  ...candidateFormData
+                };
+
+                const { data: rpcRes, error: rpcErr } = await supabase.rpc('admin_save_kandidat', {
+                  p_passcode: activePasscode,
+                  p_kandidat: payload
+                });
+
+                if (rpcErr || (rpcRes && !rpcRes.success)) {
+                  if (editingCandidateId) {
+                    const { error: updErr } = await supabase
+                      .from('voting_kandidat')
+                      .update(candidateFormData)
+                      .eq('id', editingCandidateId);
+                    if (updErr) throw updErr;
+                  } else {
+                    const { error: insErr } = await supabase
+                      .from('voting_kandidat')
+                      .insert([candidateFormData]);
+                    if (insErr) throw insErr;
+                  }
                 }
                 showToast("Data calon berhasil disimpan!");
                 setIsCandidateModalOpen(false);
@@ -2088,7 +2378,7 @@ export default function VotingAdminDashboard({
                 <label className="block text-xs font-bold text-slate-700 mb-1">Visi Calon</label>
                 <textarea
                   rows={2}
-                  placeholder="Visi calon ketua umum..."
+                  placeholder="Visi calon presiden..."
                   value={candidateFormData.visi}
                   onChange={(e) => setCandidateFormData(prev => ({ ...prev, visi: e.target.value }))}
                   className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-xs outline-none focus:border-emerald-600 focus:bg-white"
@@ -2099,7 +2389,7 @@ export default function VotingAdminDashboard({
                 <label className="block text-xs font-bold text-slate-700 mb-1">Misi Calon</label>
                 <textarea
                   rows={3}
-                  placeholder="Misi calon ketua umum (tiap poin pisahkan baris)..."
+                  placeholder="Misi calon presiden (tiap poin pisahkan baris)..."
                   value={candidateFormData.misi}
                   onChange={(e) => setCandidateFormData(prev => ({ ...prev, misi: e.target.value }))}
                   className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-xs outline-none focus:border-emerald-600 focus:bg-white"
@@ -2150,6 +2440,134 @@ export default function VotingAdminDashboard({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* MODAL BERITA ACARA REKAPITULASI HASIL SIDANG PLENO (PRINT READY) */}
+      {/* ==================================================================== */}
+      {isBeritaAcaraModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto print:max-h-none print:shadow-none print:border-none print:p-0">
+            {/* Header Dokumen Berita Acara */}
+            <div className="text-center pb-4 border-b-2 border-slate-800 space-y-1">
+              <span className="text-[11px] font-black tracking-widest uppercase text-slate-500 block font-mono">
+                KONGRES NASIONAL PERSADIA 2026 &bull; SIDANG PLENO PEMILIHAN
+              </span>
+              <h2 className="text-lg sm:text-xl font-black text-slate-900 uppercase tracking-tight">
+                BERITA ACARA REKAPITULASI HASIL PEMILIHAN
+              </h2>
+              <h3 className="text-sm font-bold text-slate-800">
+                PRESIDEN PENGURUS BESAR PERSADIA PERIODE 2029–2032
+              </h3>
+              <p className="text-[11px] text-slate-500">
+                Tanggal: {new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} &bull; Pukul {new Date().toLocaleTimeString('id-ID')} WIB
+              </p>
+            </div>
+
+            {/* Keterangan Pelaksanaan */}
+            <div className="text-xs text-slate-700 leading-relaxed space-y-2">
+              <p>
+                Pada hari ini, bertempat di Ruang Sidang Pleno Kongres Nasional PERSADIA 2026, telah diselenggarakan pemungutan suara elektronik (E-Voting) tertutup dengan berasaskan Langsung, Umum, Bebas, Rahasia, Jujur, dan Adil (LUBER) untuk memilih Presiden Pengurus Besar PERSADIA Periode 2029–2032.
+              </p>
+            </div>
+
+            {/* Ringkasan Kuorum & Partisipasi */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                <span className="text-[10px] text-slate-500 font-bold uppercase block">Total DPT Sah</span>
+                <span className="text-base font-black text-slate-900 font-mono">{stats.total} Delegasi</span>
+              </div>
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                <span className="text-[10px] text-emerald-800 font-bold uppercase block">Total Suara Masuk</span>
+                <span className="text-base font-black text-emerald-800 font-mono">{(rekap?.total_suara_masuk ?? stats.sudah)} Suara</span>
+              </div>
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                <span className="text-[10px] text-amber-800 font-bold uppercase block">Belum Memilih</span>
+                <span className="text-base font-black text-amber-800 font-mono">{stats.belum} Delegasi</span>
+              </div>
+              <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl">
+                <span className="text-[10px] text-indigo-800 font-bold uppercase block">Partisipasi Kuorum</span>
+                <span className="text-base font-black text-indigo-800 font-mono">{stats.total > 0 ? Math.round(((rekap?.total_suara_masuk ?? stats.sudah) / stats.total) * 100) : 0}%</span>
+              </div>
+            </div>
+
+            {/* Tabel Rekapitulasi Suara Kandidat */}
+            <div className="border border-slate-300 rounded-xl overflow-hidden">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-100 text-slate-800 font-bold text-[11px] uppercase border-b border-slate-300">
+                  <tr>
+                    <th className="px-3.5 py-2.5 text-center w-14">No</th>
+                    <th className="px-3.5 py-2.5">Nama Calon Presiden</th>
+                    <th className="px-3.5 py-2.5">Institusi / Cabang</th>
+                    <th className="px-3.5 py-2.5 text-center">Perolehan Suara</th>
+                    <th className="px-3.5 py-2.5 text-center">Persentase</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {candidates.map((cand) => {
+                    const votes = cand.total_suara ?? 0;
+                    const totalSuara = (rekap?.total_suara_masuk ?? 0) > 0 ? rekap!.total_suara_masuk : stats.sudah;
+                    const percent = cand.persentase !== undefined ? cand.persentase : (totalSuara > 0 ? Math.round((votes / totalSuara) * 100) : 0);
+
+                    return (
+                      <tr key={cand.id} className="hover:bg-slate-50">
+                        <td className="px-3.5 py-2 text-center font-mono font-bold text-slate-900">{cand.nomor_urut}</td>
+                        <td className="px-3.5 py-2 font-bold text-slate-900">{cand.nama_kandidat} {cand.gelar ? `, ${cand.gelar}` : ''}</td>
+                        <td className="px-3.5 py-2 text-slate-600">{cand.institusi || '-'}</td>
+                        <td className="px-3.5 py-2 text-center font-mono font-black text-slate-900">{votes}</td>
+                        <td className="px-3.5 py-2 text-center font-mono font-bold text-emerald-800">{percent}%</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Kolom Tanda Tangan Presidium Sidang */}
+            <div className="pt-4 space-y-4">
+              <span className="text-[11px] font-bold text-slate-700 block uppercase tracking-wider text-center">
+                PANITIA PEMILIHAN / PRESIDIUM SIDANG PLENO KONAS PERSADIA 2026
+              </span>
+              <div className="grid grid-cols-3 gap-4 text-center text-xs text-slate-800 pt-8">
+                <div className="space-y-1">
+                  <div className="border-b border-slate-400 mx-auto w-32 pb-8 mb-1" />
+                  <span className="font-bold block">Presidium 1 (Ketua)</span>
+                  <span className="text-[10px] text-slate-500">Pimpinan Sidang</span>
+                </div>
+                <div className="space-y-1">
+                  <div className="border-b border-slate-400 mx-auto w-32 pb-8 mb-1" />
+                  <span className="font-bold block">Presidium 2 (Sekretaris)</span>
+                  <span className="text-[10px] text-slate-500">Notulen Sidang</span>
+                </div>
+                <div className="space-y-1">
+                  <div className="border-b border-slate-400 mx-auto w-32 pb-8 mb-1" />
+                  <span className="font-bold block">Presidium 3 (Anggota)</span>
+                  <span className="text-[10px] text-slate-500">Saksi Sidang Pleno</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="pt-4 border-t border-slate-100 flex items-center justify-between print:hidden">
+              <button
+                type="button"
+                onClick={() => setIsBeritaAcaraModalOpen(false)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold cursor-pointer"
+              >
+                Tutup
+              </button>
+
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm cursor-pointer"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Cetak / Simpan PDF</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
