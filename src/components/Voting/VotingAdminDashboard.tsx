@@ -770,8 +770,13 @@ export default function VotingAdminDashboard({
 
     setIsResetting(true);
     try {
+      const activePasscode = sessionStorage.getItem('persadia_voting_admin_passcode') || passcode.trim() || 'panlih2026';
+
       // 1. Coba panggil RPC PostgreSQL atomik
-      const { data, error } = await supabase.rpc('reset_voting_data', { p_mode: mode });
+      const { data, error } = await supabase.rpc('reset_voting_data', { 
+        p_mode: mode,
+        p_passcode: activePasscode
+      });
 
       if (error) {
         throw new Error(
@@ -821,7 +826,10 @@ export default function VotingAdminDashboard({
         console.warn("RPC admin_start_round_2 gagal, mencoba fallback aman via reset_voting_data...", rpcErr || rpcRes?.message);
         
         // 2. Fallback aman: gunakan reset_voting_data('votes_only') yang sudah berstatus SECURITY DEFINER
-        const { error: resetErr } = await supabase.rpc('reset_voting_data', { p_mode: 'votes_only' });
+        const { error: resetErr } = await supabase.rpc('reset_voting_data', { 
+          p_mode: 'votes_only',
+          p_passcode: activePasscode
+        });
         if (resetErr) {
           throw new Error("Gagal mengosongkan kotak suara via database: " + resetErr.message);
         }
