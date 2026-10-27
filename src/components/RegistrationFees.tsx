@@ -57,7 +57,7 @@ export default function RegistrationFees({ onOpenRegister }: RegistrationFeesPro
       paket: "Onsite: Rp 600.000 · Online: Rp 300.000",
       biaya: 600000,
       fasilitas: [
-        "Pilihan Onsite (Rp 600.000): Hadir Novotel Bogor (Lunch Buffet, Coffee Break, Gala Dinner)",
+        "Pilihan Onsite (Rp 600.000): Hadir Novotel Bogor (Lunch Buffet, 2x Coffee Break, dan Akses Pesta Rakyat)",
         "Pilihan Online (Rp 300.000): Mengikuti Sesi Ilmiah Daring via Live Zoom Webinar",
         "Sesi Khusus: 'My Life in FKTP' & 'Diabetes Approach in FKTP'",
         "Fokus Tata Laksana & Deteksi Dini di Fasilitas Kesehatan Tingkat Pertama",
@@ -384,7 +384,7 @@ export default function RegistrationFees({ onOpenRegister }: RegistrationFeesPro
           </p>
           <ul className="list-disc pl-5 sm:pl-6 space-y-1.5 leading-relaxed">
             <li>Batas akhir pendaftaran dan konfirmasi transfer pembayaran: <strong className="text-slate-800">{formatDateString(EVENT_INFO.deadlinePembayaranPeserta)}</strong> *(pendaftaran tetap dibuka bila kuota masih ada)*.</li>
-            <li>Seluruh peserta Simposium &amp; Workshop berhak atas akses gratis menghadiri **Malam Keakraban (Gala Dinner)** pada Sabtu malam serta **Pesta Rakyat** (skrining gula darah 7.000 peserta &amp; senam sehat) pada Minggu pagi di Stadion Pakansari.</li>
+            <li>Peserta Simposium &amp; Workshop (Dokter Spesialis, Dokter Umum, Residen) berhak atas akses gratis menghadiri **Malam Keakraban (Gala Dinner)** pada Sabtu malam, serta seluruh peserta ilmiah berhak atas akses **Pesta Rakyat** (skrining gula darah 7.000 peserta &amp; senam sehat) pada Minggu pagi di Stadion Pakansari.</li>
             <li>Tersedia **Paket Voucher Instansi (Kode `FKTP-xxxxxx`)** senilai **Rp 600.000** bagi faskes tingkat pertama (klinik/puskesmas/RS) untuk pendaftaran delegasi dokter umum.</li>
             <li>Pendaftaran Pesta Rakyat (8 Nov 2026 di Stadion Pakansari) untuk <strong className="text-slate-800">Anggota PERSADIA adalah Gratis (Rp 0)</strong> dengan mencantumkan nama ketua cabang untuk verifikasi.</li>
             <li>Masyarakat Umum yang mengikuti Pesta Rakyat (8 Nov) dapat memilih <strong className="text-[#2D7A4F]">Akses Gratis (Rp 0)</strong> atau <strong className="text-slate-800">Paket Berbayar (Rp 100.000)</strong> dengan benefit tambahan Kaos Eksklusif Pesta Rakyat KONAS PERSADIA 2026, goodie bag, dan snack box.</li>

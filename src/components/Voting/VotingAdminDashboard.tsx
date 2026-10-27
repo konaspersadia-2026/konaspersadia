@@ -191,20 +191,62 @@ export default function VotingAdminDashboard({
         setRekap(rekapData);
         if (rekapData.putaran_voting) setPutaranVoting(rekapData.putaran_voting);
         if (rekapData.kandidat_putaran_2) setKandidatPutaran2(rekapData.kandidat_putaran_2);
-        if (rekapData.kandidat) {
-          setCandidates(rekapData.kandidat);
+      }
+
+      // 3. Fetch Master Data Kandidat (Tab Calon Kandidat & CV)
+      let loadedCandidates = false;
+      const activePasscode = sessionStorage.getItem('persadia_voting_admin_passcode') || passcode.trim() || 'panlih2026';
+
+      // 3a. Coba RPC khusus admin_get_voting_kandidat (SECURITY DEFINER)
+      try {
+        const { data: rpcCand, error: rpcCandErr } = await supabase.rpc('admin_get_voting_kandidat', {
+          p_passcode: activePasscode
+        });
+        if (!rpcCandErr && rpcCand && rpcCand.length > 0) {
+          const candWithVotes = rpcCand.map((c: any) => {
+            const match = rekapData?.kandidat?.find((rk: any) => rk.id === c.id);
+            return {
+              ...c,
+              total_suara: match?.total_suara ?? 0,
+              persentase: match?.persentase ?? 0
+            };
+          });
+          setCandidates(candWithVotes);
+          loadedCandidates = true;
         }
-      } else {
-        // Fallback fetch kandidat langsung jika RPC belum siap
+      } catch {}
+
+      // 3b. Coba direct select tabel public.voting_kandidat
+      if (!loadedCandidates) {
         const { data: candData } = await supabase
           .from('voting_kandidat')
           .select('*')
           .order('nomor_urut', { ascending: true });
-        if (candData) setCandidates(candData);
+        if (candData && candData.length > 0) {
+          const candWithVotes = candData.map((c: any) => {
+            const match = rekapData?.kandidat?.find((rk: any) => rk.id === c.id);
+            return {
+              ...c,
+              total_suara: match?.total_suara ?? 0,
+              persentase: match?.persentase ?? 0
+            };
+          });
+          setCandidates(candWithVotes);
+          loadedCandidates = true;
+        }
       }
 
-      // 3. Fetch DPT List
-      const activePasscode = sessionStorage.getItem('persadia_voting_admin_passcode') || passcode.trim() || 'panlih2026';
+      // 3c. Fallback jika ada di rekapData
+      if (!loadedCandidates && rekapData?.kandidat && rekapData.kandidat.length > 0) {
+        setCandidates(rekapData.kandidat);
+        loadedCandidates = true;
+      }
+
+      if (!loadedCandidates) {
+        setCandidates([]);
+      }
+
+      // 4. Fetch DPT List
       let loadedDpt = false;
 
       try {
@@ -1510,119 +1552,158 @@ export default function VotingAdminDashboard({
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-              {candidates.map((cand) => (
-                <div
-                  key={cand.id}
-                  className="bg-white border-2 border-slate-200/90 hover:border-emerald-500 rounded-3xl p-6 space-y-4 shadow-sm hover:shadow-md transition flex flex-col justify-between"
-                >
-                  <div className="space-y-3.5">
-                    <div className="flex items-start gap-4">
-                      {cand.foto_url ? (
-                        <img
-                          src={cand.foto_url}
-                          alt={cand.nama_kandidat}
-                          className="w-20 h-24 rounded-2xl object-cover border-2 border-slate-100 shadow-sm shrink-0 bg-slate-100"
-                        />
-                      ) : (
-                        <div className="w-20 h-24 rounded-2xl bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center shrink-0">
-                          <Vote className="w-8 h-8 text-emerald-600" />
+            {candidates.length === 0 ? (
+              <div className="bg-white border-2 border-dashed border-slate-200 rounded-3xl p-10 sm:p-12 text-center space-y-4 shadow-sm">
+                <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-100 shadow-inner">
+                  <Vote className="w-8 h-8" />
+                </div>
+                <div className="max-w-md mx-auto space-y-1.5">
+                  <h3 className="text-sm font-extrabold text-slate-800">
+                    Belum Ada Data Calon Kandidat di Database
+                  </h3>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    Tabel <code className="px-1.5 py-0.5 bg-slate-100 text-slate-700 font-mono rounded">voting_kandidat</code> masih kosong atau belum terisi. Anda dapat menambahkan calon langsung melalui tombol di bawah atau menjalankan skrip seed SQL di Supabase.
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <button
+                    onClick={() => {
+                      setEditingCandidateId(null);
+                      setCandidateFormData({
+                        nomor_urut: 1,
+                        nama_kandidat: "",
+                        gelar: "",
+                        institusi: "",
+                        foto_url: "",
+                        visi: "",
+                        misi: "",
+                        cv_url: "",
+                        ringkasan_cv: ""
+                      });
+                      setIsCandidateModalOpen(true);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white text-xs font-bold rounded-xl shadow-sm transition cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>+ Tambah Calon Pertama Sekarang</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+                {candidates.map((cand) => (
+                  <div
+                    key={cand.id}
+                    className="bg-white border-2 border-slate-200/90 hover:border-emerald-500 rounded-3xl p-6 space-y-4 shadow-sm hover:shadow-md transition flex flex-col justify-between"
+                  >
+                    <div className="space-y-3.5">
+                      <div className="flex items-start gap-4">
+                        {cand.foto_url ? (
+                          <img
+                            src={cand.foto_url}
+                            alt={cand.nama_kandidat}
+                            className="w-20 h-24 rounded-2xl object-cover border-2 border-slate-100 shadow-sm shrink-0 bg-slate-100"
+                          />
+                        ) : (
+                          <div className="w-20 h-24 rounded-2xl bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center shrink-0">
+                            <Vote className="w-8 h-8 text-emerald-600" />
+                          </div>
+                        )}
+
+                        <div className="space-y-1">
+                          <span className="px-2.5 py-0.5 rounded-lg bg-emerald-600 text-white font-mono font-bold text-xs inline-block shadow-2xs">
+                            NO. URUT {cand.nomor_urut}
+                          </span>
+                          <h3 className="text-base font-extrabold text-slate-900 leading-snug">
+                            {cand.nama_kandidat}
+                          </h3>
+                          {cand.gelar && (
+                            <p className="text-xs text-emerald-700 font-semibold">{cand.gelar}</p>
+                          )}
+                          {cand.institusi && (
+                            <p className="text-xs text-slate-500 line-clamp-2">{cand.institusi}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {cand.visi && (
+                        <div className="pt-3 border-t border-slate-100">
+                          <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block mb-1">
+                            Visi Utama:
+                          </span>
+                          <p className="text-xs text-slate-600 italic leading-relaxed bg-slate-50 p-2.5 rounded-xl border border-slate-200/70">
+                            "{cand.visi}"
+                          </p>
                         </div>
                       )}
 
-                      <div className="space-y-1">
-                        <span className="px-2.5 py-0.5 rounded-lg bg-emerald-600 text-white font-mono font-bold text-xs inline-block shadow-2xs">
-                          NO. URUT {cand.nomor_urut}
-                        </span>
-                        <h3 className="text-base font-extrabold text-slate-900 leading-snug">
-                          {cand.nama_kandidat}
-                        </h3>
-                        {cand.gelar && (
-                          <p className="text-xs text-emerald-700 font-semibold">{cand.gelar}</p>
-                        )}
-                        {cand.institusi && (
-                          <p className="text-xs text-slate-500 line-clamp-2">{cand.institusi}</p>
-                        )}
-                      </div>
+                      {cand.misi && (
+                        <div>
+                          <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block mb-1">
+                            Misi Utama:
+                          </span>
+                          <p className="text-xs text-slate-600 whitespace-pre-line leading-relaxed line-clamp-3 bg-slate-50 p-2.5 rounded-xl border border-slate-200/70">
+                            {cand.misi}
+                          </p>
+                        </div>
+                      )}
+
+                      {cand.cv_url && (
+                        <div className="pt-1">
+                          <a
+                            href={cand.cv_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold transition w-full justify-center"
+                          >
+                            <FileText className="w-3.5 h-3.5 text-emerald-700" />
+                            <span>Link Dokumen CV / Berkas</span>
+                            <ExternalLink className="w-3 h-3 text-emerald-700" />
+                          </a>
+                        </div>
+                      )}
+
+                      {cand.ringkasan_cv && (
+                        <div>
+                          <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block mb-1">
+                            Rekam Jejak &amp; CV Singkat:
+                          </span>
+                          <p className="text-xs text-slate-600 whitespace-pre-line leading-relaxed line-clamp-3 bg-slate-50 p-2.5 rounded-xl border border-slate-200/70">
+                            {cand.ringkasan_cv}
+                          </p>
+                        </div>
+                      )}
                     </div>
 
-                    {cand.visi && (
-                      <div className="pt-3 border-t border-slate-100">
-                        <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block mb-1">
-                          Visi Utama:
-                        </span>
-                        <p className="text-xs text-slate-600 italic leading-relaxed bg-slate-50 p-2.5 rounded-xl border border-slate-200/70">
-                          "{cand.visi}"
-                        </p>
-                      </div>
-                    )}
-
-                    {cand.misi && (
-                      <div>
-                        <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block mb-1">
-                          Misi Utama:
-                        </span>
-                        <p className="text-xs text-slate-600 whitespace-pre-line leading-relaxed line-clamp-3 bg-slate-50 p-2.5 rounded-xl border border-slate-200/70">
-                          {cand.misi}
-                        </p>
-                      </div>
-                    )}
-
-                    {cand.cv_url && (
-                      <div className="pt-1">
-                        <a
-                          href={cand.cv_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold transition w-full justify-center"
-                        >
-                          <FileText className="w-3.5 h-3.5 text-emerald-700" />
-                          <span>Link Dokumen CV / Berkas</span>
-                          <ExternalLink className="w-3 h-3 text-emerald-700" />
-                        </a>
-                      </div>
-                    )}
-
-                    {cand.ringkasan_cv && (
-                      <div>
-                        <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block mb-1">
-                          Rekam Jejak &amp; CV Singkat:
-                        </span>
-                        <p className="text-xs text-slate-600 whitespace-pre-line leading-relaxed line-clamp-3 bg-slate-50 p-2.5 rounded-xl border border-slate-200/70">
-                          {cand.ringkasan_cv}
-                        </p>
-                      </div>
-                    )}
+                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                      <span className="text-slate-500">
+                        Total Suara Masuk: <strong className="text-slate-900 font-bold">{cand.total_suara ?? 0} suara</strong>
+                      </span>
+                      <button
+                        onClick={() => {
+                          setEditingCandidateId(cand.id);
+                          setCandidateFormData({
+                            nomor_urut: cand.nomor_urut,
+                            nama_kandidat: cand.nama_kandidat,
+                            gelar: cand.gelar || "",
+                            institusi: cand.institusi || "",
+                            foto_url: cand.foto_url || "",
+                            visi: cand.visi || "",
+                            misi: cand.misi || "",
+                            cv_url: cand.cv_url || "",
+                            ringkasan_cv: cand.ringkasan_cv || ""
+                          });
+                          setIsCandidateModalOpen(true);
+                        }}
+                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition cursor-pointer"
+                      >
+                        Edit Profil
+                      </button>
+                    </div>
                   </div>
-
-                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                    <span className="text-slate-500">
-                      Total Suara Masuk: <strong className="text-slate-900 font-bold">{cand.total_suara ?? 0} suara</strong>
-                    </span>
-                    <button
-                      onClick={() => {
-                        setEditingCandidateId(cand.id);
-                        setCandidateFormData({
-                          nomor_urut: cand.nomor_urut,
-                          nama_kandidat: cand.nama_kandidat,
-                          gelar: cand.gelar || "",
-                          institusi: cand.institusi || "",
-                          foto_url: cand.foto_url || "",
-                          visi: cand.visi || "",
-                          misi: cand.misi || "",
-                          cv_url: cand.cv_url || "",
-                          ringkasan_cv: cand.ringkasan_cv || ""
-                        });
-                        setIsCandidateModalOpen(true);
-                      }}
-                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition cursor-pointer"
-                    >
-                      Edit Profil
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

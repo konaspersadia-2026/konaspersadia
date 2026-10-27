@@ -1278,8 +1278,9 @@ function App() {
       p["Bersedia_Anggota_Persadia"] === 'Ya'
     );
 
-    // Hak Akses Undangan Gala Dinner (Default false / ditolak, di-marking oleh Admin)
-    const hasGalaDinnerInvite = (
+    const isFktp = kategori.toLowerCase().includes('fktp') || kategori.toLowerCase().includes('layanan primer') || pilihanKegiatan.toLowerCase().includes('fktp');
+    // Hak Akses Undangan Gala Dinner (Default false / ditolak, di-marking oleh Admin; FKTP tidak termasuk Gala Dinner)
+    const hasGalaDinnerInvite = !isFktp && (
       p.hak_gala_dinner === true || 
       p.hak_gala_dinner === 'true' || 
       p["Hak_Gala_Dinner"] === true || 
@@ -1371,7 +1372,10 @@ function App() {
           rejectionReason = "TIKET KHUSUS ONLINE: Peserta terdaftar pada sesi daring (webinar) dan tidak termasuk undangan fisik Gala Dinner di Novotel Bogor.";
         } else if (!details.hasGalaDinnerInvite) {
           hasAccess = false;
-          rejectionReason = "AKSES DITOLAK: Nama peserta TIDAK terdaftar dalam daftar undangan Gala Dinner. Silakan konfirmasi ke meja panitia/sekretariat.";
+          const isFktpUser = details.kategori.toLowerCase().includes('fktp') || details.kategori.toLowerCase().includes('layanan primer') || details.pilihanKegiatan.toLowerCase().includes('fktp');
+          rejectionReason = isFktpUser
+            ? "AKSES DITOLAK: Paket pendaftaran Dokter Layanan Primer (FKTP) tidak termasuk sesi Gala Dinner Novotel."
+            : "AKSES DITOLAK: Nama peserta TIDAK terdaftar dalam daftar undangan Gala Dinner. Silakan konfirmasi ke meja panitia/sekretariat.";
         } else {
           hasAccess = true;
         }

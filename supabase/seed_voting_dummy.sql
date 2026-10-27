@@ -1,20 +1,25 @@
 -- ==============================================================================
--- KONAS PERSADIA 2026: DATA DUMMY SISTEM E-VOTING PRESIDEN PB PERSADIA (2029–2032)
+-- KONAS PERSADIA 2026: SEED DPT & KANDIDAT DUMMY E-VOTING PRESIDEN PB PERSADIA
+-- DISESUAIKAN TEPAT DENGAN STRUKTUR TABEL SUPABASE TERBARU
 -- ==============================================================================
--- Skrip ini memasukkan:
--- 1. 3 Calon Kandidat Presiden PB PERSADIA lengkap dengan Gelar, Visi, Misi, & CV
--- 2. 10 Data Pemilih Tetap (DPT) Delegasi Cabang + Nomor WA + Token Unik
+--
+-- Data yang dimasukkan:
+-- 1. 3 Calon Kandidat Presiden PB PERSADIA (Nomor Urut 1, 2, 3 lengkap dengan Visi, Misi, & Ringkasan CV)
+-- 2. 15 Daftar Pemilih Tetap (DPT) Delegasi Cabang Se-Indonesia dengan Token Unik
+-- 3. Konfigurasi Sesi Pemilihan (Status: 'open' & Quick Count: 'true')
 --
 -- CARA MENJALANKAN DI SUPABASE:
--- Buka Supabase Dashboard -> SQL Editor -> Tempel skrip ini -> Klik "Run".
+-- Buka Supabase Dashboard -> SQL Editor -> Tempel seluruh skrip ini -> Klik 'Run'.
 -- ==============================================================================
 
--- Pastikan kolom CV sudah ada pada tabel voting_kandidat
-ALTER TABLE public.voting_kandidat ADD COLUMN IF NOT EXISTS cv_url TEXT;
-ALTER TABLE public.voting_kandidat ADD COLUMN IF NOT EXISTS ringkasan_cv TEXT;
+-- ------------------------------------------------------------------------------
+-- 1. BERSIHKAN DATA KOTAK SUARA & RESET STATUS PEMILIH TERDAHULU (AGAR BERSIH)
+-- ------------------------------------------------------------------------------
+-- Kosongkan kotak suara simulasi sebelumnya
+DELETE FROM public.voting_suara WHERE id IS NOT NULL;
 
 -- ------------------------------------------------------------------------------
--- 1. SEED DATA DUMMY: 3 KANDIDAT CALON PRESIDEN PB PERSADIA
+-- 2. INSERT / UPDATE 3 KANDIDAT CALON PRESIDEN PB PERSADIA (voting_kandidat)
 -- ------------------------------------------------------------------------------
 INSERT INTO public.voting_kandidat (
     nomor_urut,
@@ -24,6 +29,7 @@ INSERT INTO public.voting_kandidat (
     foto_url,
     visi,
     misi,
+    created_at,
     cv_url,
     ringkasan_cv
 )
@@ -38,6 +44,7 @@ VALUES
     '1. Mengoptimalkan edukasi dan deteksi dini diabetes di seluruh pelosok Indonesia melalui penguatan jejaring cabang PERSADIA.
 2. Memperkokoh kemitraan strategis dengan Kementerian Kesehatan, Perkeni, dan organisasi internasional (IDF).
 3. Meningkatkan advokasi ketersediaan obat dan teknologi pemantauan glukosa yang merata dan terjangkau bagi seluruh penyandang diabetes.',
+    NOW(),
     'https://drive.google.com/file/d/dummy-cv-kandidat-01/view?usp=sharing',
     '• Guru Besar Ilmu Penyakit Dalam / Endokrinologi FK Universitas Udayana
 • Anggota Dewan Pertimbangan / Penasihat PB PERSADIA Pusat (2020–2025)
@@ -55,6 +62,7 @@ VALUES
     '1. Mengembangkan platform digital telemedicine dan monitoring glukosa terintegrasi untuk pendampingan pasien diabetes di era 5.0.
 2. Memberdayakan unit cabang dan ranting PERSADIA melalui program sertifikasi edukator diabetes berkelanjutan.
 3. Menggalakkan riset terapan pencegahan komplikasi kronik diabetes bekerja sama dengan fasilitas kesehatan primer (Puskesmas).',
+    NOW(),
     'https://drive.google.com/file/d/dummy-cv-kandidat-02/view?usp=sharing',
     '• Ketua PERSADIA Wilayah Jawa Barat (2018–2024)
 • Kepala Divisi Endokrinologi & Metabolisme Departemen Ilmu Penyakit Dalam RSHS Bandung
@@ -71,6 +79,7 @@ VALUES
     '1. Memperluas jangkauan dan mendirikan cabang baru PERSADIA di seluruh provinsi Indonesia Timur.
 2. Merevitalisasi klub-klub senam diabetes dan kelompok pendukung diabetes di tingkat akar rumput.
 3. Mendorong kolaborasi lintas profesi (dokter spesialis, dokter umum, perawat, ahli gizi, dan farmasis) dalam penanganan komprehensif diabetes.',
+    NOW(),
     'https://drive.google.com/file/d/dummy-cv-kandidat-03/view?usp=sharing',
     '• Ketua PERSADIA Cabang Surabaya (2019–2024)
 • Staf Senior Divisi Endokrinologi, Diabetes, & Metabolisme RSUD Dr. Soetomo Surabaya
@@ -88,126 +97,225 @@ ON CONFLICT (nomor_urut) DO UPDATE SET
     ringkasan_cv = EXCLUDED.ringkasan_cv;
 
 -- ------------------------------------------------------------------------------
--- 2. SEED DATA DUMMY: 10 DAFTAR PEMILIH TETAP (DPT) DELEGASI CABANG
+-- 3. INSERT / UPDATE 15 DAFTAR PEMILIH TETAP (DPT) DELEGASI CABANG (voting_dpt)
 -- ------------------------------------------------------------------------------
 INSERT INTO public.voting_dpt (
+    id,
     nama_lengkap,
     whatsapp,
     cabang_persadia,
     token,
     status_memilih,
     waktu_memilih,
-    catatan
+    catatan,
+    created_at
 )
 VALUES
 (
+    gen_random_uuid(),
     'dr. Ahmad Fauzi, Sp.PD',
     '081234567890',
-    'Cabang DKI Jakarta',
+    'PERSADIA Cabang DKI Jakarta',
     'KNAS-JKT01',
     FALSE,
     NULL,
-    'Ketua Delegasi Cabang DKI Jakarta'
+    'Ketua Delegasi Cabang DKI Jakarta',
+    NOW()
 ),
 (
-    'dr. Siti Nurhaliza, Sp.PD',
-    '081234567891',
-    'Cabang Surabaya (Jawa Timur)',
-    'KNAS-SBY02',
-    FALSE,
-    NULL,
-    'Delegasi Resmi Cabang Surabaya'
-),
-(
-    'dr. Budi Santoso, Sp.PD-KEMD',
-    '081234567892',
-    'Cabang Semarang (Jawa Tengah)',
-    'KNAS-SMG03',
-    FALSE,
-    NULL,
-    'Delegasi Resmi Cabang Semarang'
-),
-(
+    gen_random_uuid(),
     'dr. Maya Indrawati',
+    '081234567891',
+    'PERSADIA Cabang Kota Bandung',
+    'KNAS-BDG02',
+    FALSE,
+    NULL,
+    'Delegasi Resmi Cabang Bandung (Jawa Barat)',
+    NOW()
+),
+(
+    gen_random_uuid(),
+    'dr. H. Hendra Setiawan, Sp.PD',
+    '081234567892',
+    'PERSADIA Cabang Kota Bogor',
+    'KNAS-BGR03',
+    FALSE,
+    NULL,
+    'Delegasi Tuan Rumah Cabang Bogor',
+    NOW()
+),
+(
+    gen_random_uuid(),
+    'dr. Budi Santoso, Sp.PD-KEMD',
     '081234567893',
-    'Cabang Bandung (Jawa Barat)',
-    'KNAS-BDG04',
+    'PERSADIA Cabang Kota Semarang',
+    'KNAS-SMG04',
     FALSE,
     NULL,
-    'Sekretaris Delegasi Cabang Bandung'
+    'Delegasi Resmi Cabang Semarang (Jawa Tengah)',
+    NOW()
 ),
 (
-    'dr. Hendra Wijaya, Sp.PD',
+    gen_random_uuid(),
+    'dr. Siti Aminah, Sp.PD',
     '081234567894',
-    'Cabang DI Yogyakarta',
-    'KNAS-YOG05',
+    'PERSADIA Cabang Surakarta (Solo)',
+    'KNAS-SOL05',
     FALSE,
     NULL,
-    'Delegasi Resmi Cabang Yogyakarta'
+    'Delegasi Resmi Cabang Solo',
+    NOW()
 ),
 (
-    'dr. Rina Kartika, Sp.PD',
+    gen_random_uuid(),
+    'dr. Hendra Wijaya, Sp.PD',
     '081234567895',
-    'Cabang Medan (Sumatera Utara)',
-    'KNAS-MDN06',
+    'PERSADIA Cabang DI Yogyakarta',
+    'KNAS-YOG06',
     FALSE,
     NULL,
-    'Delegasi Resmi Cabang Medan'
+    'Delegasi Resmi Cabang Yogyakarta',
+    NOW()
 ),
 (
-    'dr. I Wayan Sudarsana, Sp.PD',
+    gen_random_uuid(),
+    'dr. Siti Nurhaliza, Sp.PD',
     '081234567896',
-    'Cabang Denpasar (Bali)',
-    'KNAS-DPS07',
+    'PERSADIA Cabang Kota Surabaya',
+    'KNAS-SBY07',
     FALSE,
     NULL,
-    'Delegasi Resmi Cabang Bali'
+    'Delegasi Resmi Cabang Surabaya (Jawa Timur)',
+    NOW()
 ),
 (
-    'dr. Andi Tenri, Sp.PD',
+    gen_random_uuid(),
+    'dr. I Wayan Sudarsana, Sp.PD',
     '081234567897',
-    'Cabang Makassar (Sulawesi Selatan)',
-    'KNAS-MKS08',
+    'PERSADIA Cabang Denpasar (Bali)',
+    'KNAS-DPS08',
     FALSE,
     NULL,
-    'Delegasi Resmi Cabang Makassar'
+    'Delegasi Resmi Cabang Denpasar Bali',
+    NOW()
 ),
 (
-    'dr. Muhammad Rizki',
+    gen_random_uuid(),
+    'dr. Rina Kartika, Sp.PD',
     '081234567898',
-    'Cabang Palembang (Sumatera Selatan)',
-    'KNAS-PLB09',
+    'PERSADIA Cabang Kota Medan',
+    'KNAS-MDN09',
     FALSE,
     NULL,
-    'Delegasi Resmi Cabang Palembang'
+    'Delegasi Resmi Cabang Medan (Sumatera Utara)',
+    NOW()
 ),
 (
-    'dr. Sri Wahyuni, Sp.PD',
+    gen_random_uuid(),
+    'dr. Zulkifli Rahman, Sp.PD',
     '081234567899',
-    'Cabang Banjarmasin (Kalimantan Selatan)',
-    'KNAS-BJM10',
+    'PERSADIA Cabang Kota Padang',
+    'KNAS-PDG10',
     FALSE,
     NULL,
-    'Delegasi Resmi Cabang Banjarmasin'
+    'Delegasi Resmi Cabang Padang (Sumatera Barat)',
+    NOW()
+),
+(
+    gen_random_uuid(),
+    'dr. Muhammad Rizki, Sp.PD',
+    '081234567800',
+    'PERSADIA Cabang Kota Palembang',
+    'KNAS-PLB11',
+    FALSE,
+    NULL,
+    'Delegasi Resmi Cabang Palembang (Sumatera Selatan)',
+    NOW()
+),
+(
+    gen_random_uuid(),
+    'dr. Sri Wahyuni, Sp.PD',
+    '081234567801',
+    'PERSADIA Cabang Banjarmasin',
+    'KNAS-BJM12',
+    FALSE,
+    NULL,
+    'Delegasi Resmi Cabang Banjarmasin (Kalsel)',
+    NOW()
+),
+(
+    gen_random_uuid(),
+    'dr. Agus Pranoto, Sp.PD',
+    '081234567802',
+    'PERSADIA Cabang Pontianak',
+    'KNAS-PNK13',
+    FALSE,
+    NULL,
+    'Delegasi Resmi Cabang Pontianak (Kalbar)',
+    NOW()
+),
+(
+    gen_random_uuid(),
+    'dr. Andi Tenri, Sp.PD',
+    '081234567803',
+    'PERSADIA Cabang Kota Makassar',
+    'KNAS-MKS14',
+    FALSE,
+    NULL,
+    'Delegasi Resmi Cabang Makassar (Sulsel)',
+    NOW()
+),
+(
+    gen_random_uuid(),
+    'dr. Fransiska Runtuwene, Sp.PD',
+    '081234567804',
+    'PERSADIA Cabang Kota Manado',
+    'KNAS-MND15',
+    FALSE,
+    NULL,
+    'Delegasi Resmi Cabang Manado (Sulut)',
+    NOW()
 )
 ON CONFLICT (token) DO UPDATE SET
     nama_lengkap = EXCLUDED.nama_lengkap,
     whatsapp = EXCLUDED.whatsapp,
     cabang_persadia = EXCLUDED.cabang_persadia,
+    status_memilih = FALSE,
+    waktu_memilih = NULL,
     catatan = EXCLUDED.catatan;
 
 -- ------------------------------------------------------------------------------
--- 3. RESET STATUS SESI PEMILIHAN KE 'draft' (ATAU SIAP BUKA 'open')
+-- 4. BUKA SESI PEMILIHAN & AKTIFKAN QUICK COUNT (voting_config)
 -- ------------------------------------------------------------------------------
-UPDATE public.voting_config
-SET value = 'open'
-WHERE key = 'status_pemilihan';
+INSERT INTO public.voting_config (key, value, description, updated_at)
+VALUES 
+    ('status_pemilihan', 'open', 'Status sesi sidang: draft (belum dibuka), open (sedang berlangsung), closed (ditutup)', NOW()),
+    ('tampilkan_quick_count', 'true', 'Tampilkan hasil suara real-time: true / false', NOW()),
+    ('judul_pemilihan', 'Pemilihan Presiden Pengurus Besar PERSADIA Periode 2029–2032', 'Judul resmi sesi sidang pemilihan', NOW()),
+    ('voting_admin_passcode', 'panlih2026', 'Passcode login darurat panitia pemilihan presidium', NOW()),
+    ('putaran_voting', '1', 'Putaran pemilihan: 1 (Putaran Pertama) atau 2 (Putaran Kedua / Run-off)', NOW()),
+    ('kandidat_putaran_2', '[]', 'Daftar ID kandidat yang berhak maju ke Putaran Kedua dalam format JSON array', NOW())
+ON CONFLICT (key) DO UPDATE SET 
+    value = EXCLUDED.value,
+    updated_at = NOW();
 
-UPDATE public.voting_config
-SET value = 'true'
-WHERE key = 'tampilkan_quick_count';
+-- ------------------------------------------------------------------------------
+-- 5. VERIFIKASI DATA YANG BERHASIL DIINPUT
+-- ------------------------------------------------------------------------------
+SELECT 
+    nomor_urut, 
+    nama_kandidat, 
+    gelar, 
+    institusi 
+FROM public.voting_kandidat 
+ORDER BY nomor_urut ASC;
 
--- Verifikasi output data yang baru saja dimasukkan
-SELECT 'KANDIDAT TERDAFTAR:' AS info, COUNT(*) AS jumlah FROM public.voting_kandidat
-UNION ALL
-SELECT 'DPT TERDAFTAR:' AS info, COUNT(*) AS jumlah FROM public.voting_dpt;
+SELECT 
+    token, 
+    nama_lengkap, 
+    cabang_persadia, 
+    status_memilih 
+FROM public.voting_dpt 
+ORDER BY token ASC;
+
+SELECT key, value, description FROM public.voting_config ORDER BY key ASC;

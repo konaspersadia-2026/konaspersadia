@@ -150,7 +150,7 @@ const matchesCategory = (rowCategory: string, targetCategory: string): boolean =
   return false;
 };
 
-// Helper: Memastikan HANYA peserta kegiatan Ilmiah Onsite (Dokter Spesialis, Dokter Umum, Dokter FKTP Onsite, Residen, Perawat/Workshop) yang berhak mendapat akses Gala Dinner
+// Helper: Memastikan HANYA peserta kegiatan Ilmiah Onsite (Dokter Spesialis, Dokter Umum, Residen, Perawat/Workshop) yang berhak mendapat akses Gala Dinner (Dokter FKTP Onsite tidak termasuk Gala Dinner)
 export const isEligibleForGalaDinner = (participant: Pendaftar | null | undefined): boolean => {
   if (!participant) return false;
 
@@ -176,6 +176,11 @@ export const isEligibleForGalaDinner = (participant: Pendaftar | null | undefine
     return false;
   }
 
+  // 2b. Bukan Dokter FKTP / Layanan Primer (Paket FKTP Onsite tidak termasuk Gala Dinner)
+  if (kat.includes("fktp") || kat.includes("layanan primer") || keg.includes("fktp")) {
+    return false;
+  }
+
   // 3. Harus Kategori Ilmiah Onsite
   const isIlmiah =
     kat.includes("dokter") ||
@@ -186,14 +191,13 @@ export const isEligibleForGalaDinner = (participant: Pendaftar | null | undefine
     kat.includes("edukator") ||
     kat.includes("gizi") ||
     kat.includes("mahasiswa") ||
-    kat.includes("fktp") ||
     keg.includes("simposium") ||
     keg.includes("symposium") ||
     keg.includes("workshop");
 
   if (!isIlmiah) return false;
 
-  // 4. Tenaga medis Onsite (Dokter Spesialis, Dokter Umum, Dokter FKTP Onsite, Residen, Perawat/Edukator) atau peserta ilmiah dengan workshop
+  // 4. Tenaga medis Onsite (Dokter Spesialis, Dokter Umum, Residen, Perawat/Edukator) atau peserta ilmiah dengan workshop
   const isDokter = kat.includes("dokter") || kat.includes("spesialis") || kat.includes("residen") || kat.includes("ppds");
   const hasWorkshop = keg.includes("workshop") || kat.includes("perawat") || kat.includes("edukator");
 
@@ -1609,7 +1613,8 @@ export default function AdminDashboard({ onNavigateHome }: AdminDashboardProps) 
       const scannerUrl = `${window.location.origin}/scanner.html?id=${encodeURIComponent(participant["No. Registrasi"])}`;
       const qrImageUrl = `https://quickchart.io/qr?text=${encodeURIComponent(scannerUrl)}&size=400&ecLevel=H`;
 
-      const hasGala = Boolean(
+      const isFktpParticipant = (participant["Kategori Peserta"] || "").toLowerCase().includes("fktp") || (participant["Akses Kegiatan"] || "").toLowerCase().includes("fktp");
+      const hasGala = !isFktpParticipant && Boolean(
         participant.hak_gala_dinner === true ||
         (participant as any).hak_gala_dinner === 'true' ||
         (participant as any).Hak_Gala_Dinner === true ||

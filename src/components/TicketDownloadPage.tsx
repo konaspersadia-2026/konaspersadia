@@ -98,6 +98,12 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
 
   const hasGalaDinnerAccess = (row: any): boolean => {
     if (!row) return false;
+    const kat = (row?.kategori_peserta || row?.["Kategori Peserta"] || "").toLowerCase();
+    const keg = (row?.pilihan_kegiatan || row?.["Akses Kegiatan"] || "").toLowerCase();
+    // FKTP tidak termasuk dalam paket Gala Dinner
+    if (kat.includes("fktp") || kat.includes("layanan primer") || keg.includes("fktp")) {
+      return false;
+    }
     return Boolean(
       row.hak_gala_dinner === true ||
       row.hak_gala_dinner === "true" ||

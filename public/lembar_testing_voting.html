@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulasi E-Voting: 3 Kandidat & 15 DPT Delegasi Cabang | KONAS PERSADIA 2026</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 p-4 sm:p-6 md:p-10 font-sans">
+  <div class="max-w-7xl mx-auto space-y-6 sm:space-y-8">
+    <!-- Header -->
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 md:p-8 space-y-5">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold tracking-widest text-emerald-600 uppercase">KONAS PERSADIA 2026</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+              konaspersadia.com
+            </span>
+          </div>
+          <h1 class="text-2xl md:text-3xl font-black text-slate-900 mt-1">Simulasi E-Voting Pemilihan Presiden PB PERSADIA</h1>
+          <p class="text-slate-600 text-sm mt-1">
+            Daftar <strong>3 Calon Kandidat</strong> dan <strong>15 Delegasi Cabang DPT</strong> dengan token unik untuk pengujian bilik suara & quick count real-time di <strong>konaspersadia.com</strong>.
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-2.5">
+          <a id="btnQuickCount" href="https://konaspersadia.com/#voting-live" target="_blank" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center gap-1.5">
+            📊 Layar Quick Count
+          </a>
+          <a id="btnAdminPanel" href="https://konaspersadia.com/#voting-admin" target="_blank" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center gap-1.5">
+            ⚙️ Panel Presidium (Admin)
+          </a>
+        </div>
+      </div>
+
+      <!-- Environment / Base URL Switcher -->
+      <div class="pt-4 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs">
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <span class="font-bold text-slate-700 flex items-center gap-1">
+            🌐 Target Domain:
+          </span>
+          <div class="inline-flex rounded-xl p-1 bg-slate-100 border border-slate-200" id="envSwitcher">
+            <button type="button" onclick="setBaseUrl('https://konaspersadia.com')" id="btn-prod" class="px-3.5 py-1.5 rounded-lg font-bold text-xs bg-emerald-600 text-white shadow-xs transition cursor-pointer">
+              konaspersadia.com (Live)
+            </button>
+            <button type="button" onclick="setBaseUrl('http://localhost:3000')" id="btn-local" class="px-3.5 py-1.5 rounded-lg font-bold text-xs text-slate-600 hover:text-slate-900 transition cursor-pointer">
+              localhost:3000
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 text-slate-600 font-mono text-[11px] bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-200">
+          <span>URL Aktif:</span>
+          <strong id="activeBaseUrlDisplay" class="text-emerald-700 font-bold">https://konaspersadia.com</strong>
+        </div>
+      </div>
+
+      <!-- Informasi Sesi -->
+      <div class="pt-3 border-t border-slate-100 flex flex-wrap gap-4 text-xs text-slate-600">
+        <div>🔑 Passcode Admin: <code class="bg-slate-100 px-2 py-0.5 rounded font-mono font-bold text-slate-800">panlih2026</code></div>
+        <div>🗳️ Sesi Sidang: <span class="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded">OPEN (Terbuka)</span></div>
+        <div>👥 Total DPT: <strong>15 Delegasi</strong></div>
+      </div>
+    </div>
+
+    <!-- 3 Kandidat -->
+    <div>
+      <h2 class="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
+        <span>👤 3 Calon Kandidat Presiden PB PERSADIA (2029–2032)</span>
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 flex flex-col items-center text-center hover:shadow-md transition-shadow">
+          <div class="w-12 h-12 rounded-full bg-emerald-600 text-white font-black text-xl flex items-center justify-center mb-3 shadow-sm">
+            #1
+          </div>
+          <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=600&auto=format&fit=crop&q=80" alt="Prof. Dr. dr. Ketut Suastika" class="w-24 h-24 rounded-full object-cover border-2 border-emerald-500 shadow-sm mb-3" />
+          <h3 class="font-bold text-slate-900 text-base leading-tight">Prof. Dr. dr. Ketut Suastika</h3>
+          <p class="text-xs text-emerald-700 font-semibold mb-1">Sp.PD-KEMD, FINASIM</p>
+          <p class="text-[11px] text-slate-500 mb-3">Universitas Udayana / RSUP Prof. I.G.N.G. Ngoerah Denpasar</p>
+          <p class="text-xs text-slate-600 italic bg-slate-50 p-3 rounded-2xl border border-slate-100 mt-auto leading-relaxed">"Mewujudkan PB PERSADIA sebagai organisasi profesi dan kemasyarakatan diabetes yang mandiri, inklusif, dan berstandar internasional."</p>
+        </div>
+        
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 flex flex-col items-center text-center hover:shadow-md transition-shadow">
+          <div class="w-12 h-12 rounded-full bg-emerald-600 text-white font-black text-xl flex items-center justify-center mb-3 shadow-sm">
+            #2
+          </div>
+          <img src="https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=600&auto=format&fit=crop&q=80" alt="Dr. dr. Hikmat Permana" class="w-24 h-24 rounded-full object-cover border-2 border-emerald-500 shadow-sm mb-3" />
+          <h3 class="font-bold text-slate-900 text-base leading-tight">Dr. dr. Hikmat Permana</h3>
+          <p class="text-xs text-emerald-700 font-semibold mb-1">Sp.PD-KEMD, FINASIM</p>
+          <p class="text-[11px] text-slate-500 mb-3">FK Universitas Padjadjaran / RSUP Dr. Hasan Sadikin Bandung</p>
+          <p class="text-xs text-slate-600 italic bg-slate-50 p-3 rounded-2xl border border-slate-100 mt-auto leading-relaxed">"Transformasi digital dan kolaboratif PERSADIA menuju pelayanan, edukasi, dan pencegahan diabetes mellitus yang merata."</p>
+        </div>
+        
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 flex flex-col items-center text-center hover:shadow-md transition-shadow">
+          <div class="w-12 h-12 rounded-full bg-emerald-600 text-white font-black text-xl flex items-center justify-center mb-3 shadow-sm">
+            #3
+          </div>
+          <img src="https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=600&auto=format&fit=crop&q=80" alt="Dr. dr. Sony Wibisono Mudjanarko" class="w-24 h-24 rounded-full object-cover border-2 border-emerald-500 shadow-sm mb-3" />
+          <h3 class="font-bold text-slate-900 text-base leading-tight">Dr. dr. Sony Wibisono Mudjanarko</h3>
+          <p class="text-xs text-emerald-700 font-semibold mb-1">Sp.PD-KEMD, FINASIM</p>
+          <p class="text-[11px] text-slate-500 mb-3">FK Universitas Airlangga / RSUD Dr. Soetomo Surabaya</p>
+          <p class="text-xs text-slate-600 italic bg-slate-50 p-3 rounded-2xl border border-slate-100 mt-auto leading-relaxed">"PERSADIA yang responsif, berdaya saing, dan bersinergi kuat untuk menurunkan laju prevalensi diabetes menuju Generasi Emas 2045."</p>
+        </div>
+        
+      </div>
+    </div>
+
+    <!-- 15 DPT -->
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="p-5 md:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div>
+          <h2 class="text-base font-bold text-slate-900">🗳️ 15 Delegasi Cabang (DPT Berhak Suara)</h2>
+          <p class="text-xs text-slate-500">
+            Gunakan tombol <strong>"🔗 Salin Link"</strong> untuk mengirimkan tautan bilik suara via WhatsApp ke HP pemilih, atau klik <strong>"Coblos ↗"</strong> untuk membuka bilik suara langsung.
+          </p>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead class="bg-slate-50 text-[11px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">
+            <tr>
+              <th class="p-3.5 text-center">No</th>
+              <th class="p-3.5">Nama Delegasi</th>
+              <th class="p-3.5">Cabang PERSADIA</th>
+              <th class="p-3.5 text-center">Token Rahasia</th>
+              <th class="p-3.5 hidden md:table-cell">Keterangan</th>
+              <th class="p-3.5 text-center">Aksi Uji Coba</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            
+            <tr class="hover:bg-slate-50 transition-colors text-xs">
+              <td class="p-3.5 text-center text-slate-400 font-mono font-bold">1</td>
+              <td class="p-3.5 font-bold text-slate-800">dr. Ahmad Fauzi, Sp.PD</td>
+              <td class="p-3.5 text-slate-600 font-medium">PERSADIA Cabang DKI Jakarta</td>
+              <td class="p-3.5 text-center">
+                <span class="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-emerald-300 tracking-wider inline-block">
+                  KNAS-JKT01
+                </span>
+              </td>
+              <td class="p-3.5 text-slate-500 hidden md:table-cell">Ketua Delegasi Cabang DKI Jakarta</td>
+              <td class="p-3.5 text-center">
+                <div class="flex items-center justify-center gap-1.5">
+                  <button onclick="copyToken('KNAS-JKT01')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Token">
+                    📋 Token
+                  </button>
+                  <button onclick="copyVotingLink('KNAS-JKT01')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Link Lengkap ke WhatsApp">
+                    🔗 Salin Link
+                  </button>
+                  <a href="https://konaspersadia.com/#voting-bilik?token=KNAS-JKT01" target="_blank" data-token="KNAS-JKT01" class="voting-link px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition-colors shadow-2xs">
+                    Coblos ↗
+                  </a>
+                </div>
+              </td>
+            </tr>
+            
+            <tr class="hover:bg-slate-50 transition-colors text-xs">
+              <td class="p-3.5 text-center text-slate-400 font-mono font-bold">2</td>
+              <td class="p-3.5 font-bold text-slate-800">dr. Maya Indrawati</td>
+              <td class="p-3.5 text-slate-600 font-medium">PERSADIA Cabang Kota Bandung</td>
+              <td class="p-3.5 text-center">
+                <span class="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-emerald-300 tracking-wider inline-block">
+                  KNAS-BDG02
+                </span>
+              </td>
+              <td class="p-3.5 text-slate-500 hidden md:table-cell">Delegasi Resmi Cabang Bandung (Jawa Barat)</td>
+              <td class="p-3.5 text-center">
+                <div class="flex items-center justify-center gap-1.5">
+                  <button onclick="copyToken('KNAS-BDG02')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Token">
+                    📋 Token
+                  </button>
+                  <button onclick="copyVotingLink('KNAS-BDG02')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Link Lengkap ke WhatsApp">
+                    🔗 Salin Link
+                  </button>
+                  <a href="https://konaspersadia.com/#voting-bilik?token=KNAS-BDG02" target="_blank" data-token="KNAS-BDG02" class="voting-link px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition-colors shadow-2xs">
+                    Coblos ↗
+                  </a>
+                </div>
+              </td>
+            </tr>
+            
+            <tr class="hover:bg-slate-50 transition-colors text-xs">
+              <td class="p-3.5 text-center text-slate-400 font-mono font-bold">3</td>
+              <td class="p-3.5 font-bold text-slate-800">dr. H. Hendra Setiawan, Sp.PD</td>
+              <td class="p-3.5 text-slate-600 font-medium">PERSADIA Cabang Kota Bogor</td>
+              <td class="p-3.5 text-center">
+                <span class="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-emerald-300 tracking-wider inline-block">
+                  KNAS-BGR03
+                </span>
+              </td>
+              <td class="p-3.5 text-slate-500 hidden md:table-cell">Delegasi Tuan Rumah Cabang Bogor</td>
+              <td class="p-3.5 text-center">
+                <div class="flex items-center justify-center gap-1.5">
+                  <button onclick="copyToken('KNAS-BGR03')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Token">
+                    📋 Token
+                  </button>
+                  <button onclick="copyVotingLink('KNAS-BGR03')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Link Lengkap ke WhatsApp">
+                    🔗 Salin Link
+                  </button>
+                  <a href="https://konaspersadia.com/#voting-bilik?token=KNAS-BGR03" target="_blank" data-token="KNAS-BGR03" class="voting-link px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition-colors shadow-2xs">
+                    Coblos ↗
+                  </a>
+                </div>
+              </td>
+            </tr>
+            
+            <tr class="hover:bg-slate-50 transition-colors text-xs">
+              <td class="p-3.5 text-center text-slate-400 font-mono font-bold">4</td>
+              <td class="p-3.5 font-bold text-slate-800">dr. Budi Santoso, Sp.PD-KEMD</td>
+              <td class="p-3.5 text-slate-600 font-medium">PERSADIA Cabang Kota Semarang</td>
+              <td class="p-3.5 text-center">
+                <span class="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-emerald-300 tracking-wider inline-block">
+                  KNAS-SMG04
+                </span>
+              </td>
+              <td class="p-3.5 text-slate-500 hidden md:table-cell">Delegasi Resmi Cabang Semarang (Jawa Tengah)</td>
+              <td class="p-3.5 text-center">
+                <div class="flex items-center justify-center gap-1.5">
+                  <button onclick="copyToken('KNAS-SMG04')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Token">
+                    📋 Token
+                  </button>
+                  <button onclick="copyVotingLink('KNAS-SMG04')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Link Lengkap ke WhatsApp">
+                    🔗 Salin Link
+                  </button>
+                  <a href="https://konaspersadia.com/#voting-bilik?token=KNAS-SMG04" target="_blank" data-token="KNAS-SMG04" class="voting-link px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition-colors shadow-2xs">
+                    Coblos ↗
+                  </a>
+                </div>
+              </td>
+            </tr>
+            
+            <tr class="hover:bg-slate-50 transition-colors text-xs">
+              <td class="p-3.5 text-center text-slate-400 font-mono font-bold">5</td>
+              <td class="p-3.5 font-bold text-slate-800">dr. Siti Aminah, Sp.PD</td>
+              <td class="p-3.5 text-slate-600 font-medium">PERSADIA Cabang Surakarta (Solo)</td>
+              <td class="p-3.5 text-center">
+                <span class="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-emerald-300 tracking-wider inline-block">
+                  KNAS-SOL05
+                </span>
+              </td>
+              <td class="p-3.5 text-slate-500 hidden md:table-cell">Delegasi Resmi Cabang Solo</td>
+              <td class="p-3.5 text-center">
+                <div class="flex items-center justify-center gap-1.5">
+                  <button onclick="copyToken('KNAS-SOL05')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Token">
+                    📋 Token
+                  </button>
+                  <button onclick="copyVotingLink('KNAS-SOL05')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Link Lengkap ke WhatsApp">
+                    🔗 Salin Link
+                  </button>
+                  <a href="https://konaspersadia.com/#voting-bilik?token=KNAS-SOL05" target="_blank" data-token="KNAS-SOL05" class="voting-link px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition-colors shadow-2xs">
+                    Coblos ↗
+                  </a>
+                </div>
+              </td>
+            </tr>
+            
+            <tr class="hover:bg-slate-50 transition-colors text-xs">
+              <td class="p-3.5 text-center text-slate-400 font-mono font-bold">6</td>
+              <td class="p-3.5 font-bold text-slate-800">dr. Hendra Wijaya, Sp.PD</td>
+              <td class="p-3.5 text-slate-600 font-medium">PERSADIA Cabang DI Yogyakarta</td>
+              <td class="p-3.5 text-center">
+                <span class="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-emerald-300 tracking-wider inline-block">
+                  KNAS-YOG06
+                </span>
+              </td>
+              <td class="p-3.5 text-slate-500 hidden md:table-cell">Delegasi Resmi Cabang Yogyakarta</td>
+              <td class="p-3.5 text-center">
+                <div class="flex items-center justify-center gap-1.5">
+                  <button onclick="copyToken('KNAS-YOG06')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Token">
+                    📋 Token
+                  </button>
+                  <button onclick="copyVotingLink('KNAS-YOG06')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Link Lengkap ke WhatsApp">
+                    🔗 Salin Link
+                  </button>
+                  <a href="https://konaspersadia.com/#voting-bilik?token=KNAS-YOG06" target="_blank" data-token="KNAS-YOG06" class="voting-link px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition-colors shadow-2xs">
+                    Coblos ↗
+                  </a>
+                </div>
+              </td>
+            </tr>
+            
+            <tr class="hover:bg-slate-50 transition-colors text-xs">
+              <td class="p-3.5 text-center text-slate-400 font-mono font-bold">7</td>
+              <td class="p-3.5 font-bold text-slate-800">dr. Siti Nurhaliza, Sp.PD</td>
+              <td class="p-3.5 text-slate-600 font-medium">PERSADIA Cabang Kota Surabaya</td>
+              <td class="p-3.5 text-center">
+                <span class="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-emerald-300 tracking-wider inline-block">
+                  KNAS-SBY07
+                </span>
+              </td>
+              <td class="p-3.5 text-slate-500 hidden md:table-cell">Delegasi Resmi Cabang Surabaya (Jawa Timur)</td>
+              <td class="p-3.5 text-center">
+                <div class="flex items-center justify-center gap-1.5">
+                  <button onclick="copyToken('KNAS-SBY07')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Token">
+                    📋 Token
+                  </button>
+                  <button onclick="copyVotingLink('KNAS-SBY07')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Link Lengkap ke WhatsApp">
+                    🔗 Salin Link
+                  </button>
+                  <a href="https://konaspersadia.com/#voting-bilik?token=KNAS-SBY07" target="_blank" data-token="KNAS-SBY07" class="voting-link px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition-colors shadow-2xs">
+                    Coblos ↗
+                  </a>
+                </div>
+              </td>
+            </tr>
+            
+            <tr class="hover:bg-slate-50 transition-colors text-xs">
+              <td class="p-3.5 text-center text-slate-400 font-mono font-bold">8</td>
+              <td class="p-3.5 font-bold text-slate-800">dr. I Wayan Sudarsana, Sp.PD</td>
+              <td class="p-3.5 text-slate-600 font-medium">PERSADIA Cabang Denpasar (Bali)</td>
+              <td class="p-3.5 text-center">
+                <span class="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-emerald-300 tracking-wider inline-block">
+                  KNAS-DPS08
+                </span>
+              </td>
+              <td class="p-3.5 text-slate-500 hidden md:table-cell">Delegasi Resmi Cabang Denpasar Bali</td>
+              <td class="p-3.5 text-center">
+                <div class="flex items-center justify-center gap-1.5">
+                  <button onclick="copyToken('KNAS-DPS08')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Token">
+                    📋 Token
+                  </button>
+                  <button onclick="copyVotingLink('KNAS-DPS08')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Link Lengkap ke WhatsApp">
+                    🔗 Salin Link
+                  </button>
+                  <a href="https://konaspersadia.com/#voting-bilik?token=KNAS-DPS08" target="_blank" data-token="KNAS-DPS08" class="voting-link px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition-colors shadow-2xs">
+                    Coblos ↗
+                  </a>
+                </div>
+              </td>
+            </tr>
+            
+            <tr class="hover:bg-slate-50 transition-colors text-xs">
+              <td class="p-3.5 text-center text-slate-400 font-mono font-bold">9</td>
+              <td class="p-3.5 font-bold text-slate-800">dr. Rina Kartika, Sp.PD</td>
+              <td class="p-3.5 text-slate-600 font-medium">PERSADIA Cabang Kota Medan</td>
+              <td class="p-3.5 text-center">
+                <span class="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-emerald-300 tracking-wider inline-block">
+                  KNAS-MDN09
+                </span>
+              </td>
+              <td class="p-3.5 text-slate-500 hidden md:table-cell">Delegasi Resmi Cabang Medan (Sumatera Utara)</td>
+              <td class="p-3.5 text-center">
+                <div class="flex items-center justify-center gap-1.5">
+                  <button onclick="copyToken('KNAS-MDN09')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Token">
+                    📋 Token
+                  </button>
+                  <button onclick="copyVotingLink('KNAS-MDN09')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Link Lengkap ke WhatsApp">
+                    🔗 Salin Link
+                  </button>
+                  <a href="https://konaspersadia.com/#voting-bilik?token=KNAS-MDN09" target="_blank" data-token="KNAS-MDN09" class="voting-link px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition-colors shadow-2xs">
+                    Coblos ↗
+                  </a>
+                </div>
+              </td>
+            </tr>
+            
+            <tr class="hover:bg-slate-50 transition-colors text-xs">
+              <td class="p-3.5 text-center text-slate-400 font-mono font-bold">10</td>
+              <td class="p-3.5 font-bold text-slate-800">dr. Zulkifli Rahman, Sp.PD</td>
+              <td class="p-3.5 text-slate-600 font-medium">PERSADIA Cabang Kota Padang</td>
+              <td class="p-3.5 text-center">
+                <span class="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-emerald-300 tracking-wider inline-block">
+                  KNAS-PDG10
+                </span>
+              </td>
+              <td class="p-3.5 text-slate-500 hidden md:table-cell">Delegasi Resmi Cabang Padang (Sumatera Barat)</td>
+              <td class="p-3.5 text-center">
+                <div class="flex items-center justify-center gap-1.5">
+                  <button onclick="copyToken('KNAS-PDG10')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Token">
+                    📋 Token
+                  </button>
+                  <button onclick="copyVotingLink('KNAS-PDG10')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Link Lengkap ke WhatsApp">
+                    🔗 Salin Link
+                  </button>
+                  <a href="https://konaspersadia.com/#voting-bilik?token=KNAS-PDG10" target="_blank" data-token="KNAS-PDG10" class="voting-link px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition-colors shadow-2xs">
+                    Coblos ↗
+                  </a>
+                </div>
+              </td>
+            </tr>
+            
+            <tr class="hover:bg-slate-50 transition-colors text-xs">
+              <td class="p-3.5 text-center text-slate-400 font-mono font-bold">11</td>
+              <td class="p-3.5 font-bold text-slate-800">dr. Muhammad Rizki, Sp.PD</td>
+              <td class="p-3.5 text-slate-600 font-medium">PERSADIA Cabang Kota Palembang</td>
+              <td class="p-3.5 text-center">
+                <span class="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-emerald-300 tracking-wider inline-block">
+                  KNAS-PLB11
+                </span>
+              </td>
+              <td class="p-3.5 text-slate-500 hidden md:table-cell">Delegasi Resmi Cabang Palembang (Sumatera Selatan)</td>
+              <td class="p-3.5 text-center">
+                <div class="flex items-center justify-center gap-1.5">
+                  <button onclick="copyToken('KNAS-PLB11')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Token">
+                    📋 Token
+                  </button>
+                  <button onclick="copyVotingLink('KNAS-PLB11')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Link Lengkap ke WhatsApp">
+                    🔗 Salin Link
+                  </button>
+                  <a href="https://konaspersadia.com/#voting-bilik?token=KNAS-PLB11" target="_blank" data-token="KNAS-PLB11" class="voting-link px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition-colors shadow-2xs">
+                    Coblos ↗
+                  </a>
+                </div>
+              </td>
+            </tr>
+            
+            <tr class="hover:bg-slate-50 transition-colors text-xs">
+              <td class="p-3.5 text-center text-slate-400 font-mono font-bold">12</td>
+              <td class="p-3.5 font-bold text-slate-800">dr. Sri Wahyuni, Sp.PD</td>
+              <td class="p-3.5 text-slate-600 font-medium">PERSADIA Cabang Banjarmasin</td>
+              <td class="p-3.5 text-center">
+                <span class="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-emerald-300 tracking-wider inline-block">
+                  KNAS-BJM12
+                </span>
+              </td>
+              <td class="p-3.5 text-slate-500 hidden md:table-cell">Delegasi Resmi Cabang Banjarmasin (Kalsel)</td>
+              <td class="p-3.5 text-center">
+                <div class="flex items-center justify-center gap-1.5">
+                  <button onclick="copyToken('KNAS-BJM12')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Token">
+                    📋 Token
+                  </button>
+                  <button onclick="copyVotingLink('KNAS-BJM12')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Link Lengkap ke WhatsApp">
+                    🔗 Salin Link
+                  </button>
+                  <a href="https://konaspersadia.com/#voting-bilik?token=KNAS-BJM12" target="_blank" data-token="KNAS-BJM12" class="voting-link px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition-colors shadow-2xs">
+                    Coblos ↗
+                  </a>
+                </div>
+              </td>
+            </tr>
+            
+            <tr class="hover:bg-slate-50 transition-colors text-xs">
+              <td class="p-3.5 text-center text-slate-400 font-mono font-bold">13</td>
+              <td class="p-3.5 font-bold text-slate-800">dr. Agus Pranoto, Sp.PD</td>
+              <td class="p-3.5 text-slate-600 font-medium">PERSADIA Cabang Pontianak</td>
+              <td class="p-3.5 text-center">
+                <span class="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-emerald-300 tracking-wider inline-block">
+                  KNAS-PNK13
+                </span>
+              </td>
+              <td class="p-3.5 text-slate-500 hidden md:table-cell">Delegasi Resmi Cabang Pontianak (Kalbar)</td>
+              <td class="p-3.5 text-center">
+                <div class="flex items-center justify-center gap-1.5">
+                  <button onclick="copyToken('KNAS-PNK13')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Token">
+                    📋 Token
+                  </button>
+                  <button onclick="copyVotingLink('KNAS-PNK13')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Link Lengkap ke WhatsApp">
+                    🔗 Salin Link
+                  </button>
+                  <a href="https://konaspersadia.com/#voting-bilik?token=KNAS-PNK13" target="_blank" data-token="KNAS-PNK13" class="voting-link px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition-colors shadow-2xs">
+                    Coblos ↗
+                  </a>
+                </div>
+              </td>
+            </tr>
+            
+            <tr class="hover:bg-slate-50 transition-colors text-xs">
+              <td class="p-3.5 text-center text-slate-400 font-mono font-bold">14</td>
+              <td class="p-3.5 font-bold text-slate-800">dr. Andi Tenri, Sp.PD</td>
+              <td class="p-3.5 text-slate-600 font-medium">PERSADIA Cabang Kota Makassar</td>
+              <td class="p-3.5 text-center">
+                <span class="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-emerald-300 tracking-wider inline-block">
+                  KNAS-MKS14
+                </span>
+              </td>
+              <td class="p-3.5 text-slate-500 hidden md:table-cell">Delegasi Resmi Cabang Makassar (Sulsel)</td>
+              <td class="p-3.5 text-center">
+                <div class="flex items-center justify-center gap-1.5">
+                  <button onclick="copyToken('KNAS-MKS14')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Token">
+                    📋 Token
+                  </button>
+                  <button onclick="copyVotingLink('KNAS-MKS14')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Link Lengkap ke WhatsApp">
+                    🔗 Salin Link
+                  </button>
+                  <a href="https://konaspersadia.com/#voting-bilik?token=KNAS-MKS14" target="_blank" data-token="KNAS-MKS14" class="voting-link px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition-colors shadow-2xs">
+                    Coblos ↗
+                  </a>
+                </div>
+              </td>
+            </tr>
+            
+            <tr class="hover:bg-slate-50 transition-colors text-xs">
+              <td class="p-3.5 text-center text-slate-400 font-mono font-bold">15</td>
+              <td class="p-3.5 font-bold text-slate-800">dr. Fransiska Runtuwene, Sp.PD</td>
+              <td class="p-3.5 text-slate-600 font-medium">PERSADIA Cabang Kota Manado</td>
+              <td class="p-3.5 text-center">
+                <span class="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-emerald-300 tracking-wider inline-block">
+                  KNAS-MND15
+                </span>
+              </td>
+              <td class="p-3.5 text-slate-500 hidden md:table-cell">Delegasi Resmi Cabang Manado (Sulut)</td>
+              <td class="p-3.5 text-center">
+                <div class="flex items-center justify-center gap-1.5">
+                  <button onclick="copyToken('KNAS-MND15')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Token">
+                    📋 Token
+                  </button>
+                  <button onclick="copyVotingLink('KNAS-MND15')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg font-bold transition-colors cursor-pointer" title="Salin Link Lengkap ke WhatsApp">
+                    🔗 Salin Link
+                  </button>
+                  <a href="https://konaspersadia.com/#voting-bilik?token=KNAS-MND15" target="_blank" data-token="KNAS-MND15" class="voting-link px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition-colors shadow-2xs">
+                    Coblos ↗
+                  </a>
+                </div>
+              </td>
+            </tr>
+            
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Inisialisasi Base URL default ke konaspersadia.com
+    let currentBaseUrl = 'https://konaspersadia.com';
+
+    // Jika dibuka langsung dari browser web dengan hostname tertentu, gunakan hostname tersebut bila sesuai
+    if (window.location.protocol.startsWith('http') && window.location.hostname !== '') {
+      if (window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1') {
+        // Tetap default ke konaspersadia.com sesuai permintaan, namun opsi localhost siap sedia
+      }
+    }
+
+    function setBaseUrl(url) {
+      currentBaseUrl = url.replace(/\/$/, '');
+      const displayElem = document.getElementById('activeBaseUrlDisplay');
+      if (displayElem) displayElem.innerText = currentBaseUrl;
+      
+      const btnProd = document.getElementById('btn-prod');
+      const btnLocal = document.getElementById('btn-local');
+
+      if (currentBaseUrl === 'https://konaspersadia.com') {
+        if (btnProd) btnProd.className = 'px-3.5 py-1.5 rounded-lg font-bold text-xs bg-emerald-600 text-white shadow-xs transition cursor-pointer';
+        if (btnLocal) btnLocal.className = 'px-3.5 py-1.5 rounded-lg font-bold text-xs text-slate-600 hover:text-slate-900 transition cursor-pointer';
+      } else {
+        if (btnLocal) btnLocal.className = 'px-3.5 py-1.5 rounded-lg font-bold text-xs bg-emerald-600 text-white shadow-xs transition cursor-pointer';
+        if (btnProd) btnProd.className = 'px-3.5 py-1.5 rounded-lg font-bold text-xs text-slate-600 hover:text-slate-900 transition cursor-pointer';
+      }
+
+      // Perbarui tautan Quick Count & Admin Panel
+      const btnQc = document.getElementById('btnQuickCount');
+      if (btnQc) btnQc.href = `${currentBaseUrl}/#voting-live`;
+
+      const btnAdmin = document.getElementById('btnAdminPanel');
+      if (btnAdmin) btnAdmin.href = `${currentBaseUrl}/#voting-admin`;
+
+      // Perbarui seluruh tautan Coblos di tabel DPT
+      document.querySelectorAll('a.voting-link').forEach(a => {
+        const token = a.getAttribute('data-token');
+        if (token) {
+          a.href = `${currentBaseUrl}/#voting-bilik?token=${encodeURIComponent(token)}`;
+        }
+      });
+    }
+
+    function copyVotingLink(token) {
+      const fullUrl = `${currentBaseUrl}/#voting-bilik?token=${encodeURIComponent(token)}`;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(fullUrl).then(() => {
+          alert(`✅ Tautan bilik suara untuk ${token} berhasil disalin:\n\n${fullUrl}\n\nSilakan kirimkan tautan ini via WhatsApp ke pemilih.`);
+        }).catch(() => {
+          prompt('Salin tautan ini untuk dikirim via WhatsApp:', fullUrl);
+        });
+      } else {
+        prompt('Salin tautan ini untuk dikirim via WhatsApp:', fullUrl);
+      }
+    }
+
+    function copyToken(token) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(token).then(() => {
+          alert(`✅ Kode Token ${token} berhasil disalin ke clipboard!`);
+        }).catch(() => {
+          prompt('Salin token ini:', token);
+        });
+      } else {
+        prompt('Salin token ini:', token);
+      }
+    }
+
+    // Jalankan inisialisasi awal saat halaman dimuat
+    setBaseUrl(currentBaseUrl);
+  </script>
+</body>
+</html>

@@ -814,7 +814,7 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
                       <span className="text-xs font-bold text-[#0B3D5E]">Rp 600.000</span>
                     </div>
                     <p className="text-[11px] text-slate-600 mt-1.5 leading-relaxed">
-                      Novotel Bogor: Hands-on Workshop, Lunch Buffet bintang 4, 2x Coffee Break, Gala Dinner, dan Akses Pesta Rakyat.
+                      Novotel Bogor: Hands-on Workshop, Lunch Buffet bintang 4, 2x Coffee Break, dan Akses Pesta Rakyat.
                     </p>
                   </div>
                 ) : (
@@ -840,7 +840,7 @@ export default function RegistrationPage({ onNavigateHome }: RegistrationPagePro
                         <span className="text-xs font-bold text-[#0B3D5E]">Rp 600.000</span>
                       </div>
                       <p className="text-[11px] text-slate-500 mt-1.5 ml-5 leading-relaxed">
-                        Novotel Bogor: Hands-on Workshop, Lunch Buffet bintang 4, 2x Coffee Break, Gala Dinner, dan Akses Pesta Rakyat.
+                        Novotel Bogor: Hands-on Workshop, Lunch Buffet bintang 4, 2x Coffee Break, dan Akses Pesta Rakyat.
                       </p>
                     </label>
 
