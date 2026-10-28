@@ -41,6 +41,7 @@ export default function VotingLiveResults({ onBackToAdmin, onNavigateHome }: Vot
   const [loading, setLoading] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
+  const [mobileTab, setMobileTab] = useState<'all' | 'candidates' | 'stats'>('all');
 
   const fetchLiveResults = async () => {
     if (!isSupabaseConfigured) return;
@@ -188,15 +189,15 @@ export default function VotingLiveResults({ onBackToAdmin, onNavigateHome }: Vot
   const sz = getResponsiveStyles();
 
   return (
-    <div className="min-h-screen md:h-screen md:max-h-screen w-full md:w-screen overflow-y-auto md:overflow-hidden bg-slate-50 text-slate-800 flex flex-col font-sans relative select-none">
+    <div className="min-h-screen md:h-screen md:max-h-screen w-full md:w-screen overflow-y-auto md:overflow-hidden bg-slate-50 text-slate-800 flex flex-col font-sans relative select-text md:select-none">
       {/* Background Subtle Gradient & Mesh */}
       <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px] opacity-40 z-0" />
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-100/40 rounded-full blur-[140px] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-teal-100/40 rounded-full blur-[140px] pointer-events-none" />
 
-      {/* Top Bar Proyektor Kompak (Light Theme) */}
-      <header className="px-3 sm:px-6 py-2.5 sm:py-3 border-b border-slate-200/90 bg-white/95 backdrop-blur-md relative z-10 shadow-xs shrink-0">
-        <div className="w-full flex items-center justify-between gap-2 sm:gap-3">
+      {/* Top Bar Proyektor Kompak & Mobile Header */}
+      <header className="border-b border-slate-200/90 bg-white/95 backdrop-blur-md sticky top-0 z-30 shadow-xs shrink-0">
+        <div className="px-3 sm:px-6 py-2 sm:py-3 w-full flex items-center justify-between gap-2 sm:gap-3">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <div className="flex items-center gap-1 shrink-0">
               <button
@@ -259,17 +260,59 @@ export default function VotingLiveResults({ onBackToAdmin, onNavigateHome }: Vot
 
             <button
               onClick={toggleFullscreen}
-              className="p-1.5 sm:p-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition cursor-pointer shadow-sm shadow-emerald-600/30"
+              className="hidden sm:inline-flex p-1.5 sm:p-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition cursor-pointer shadow-sm shadow-emerald-600/30"
               title={isFullscreen ? "Keluar Layar Penuh" : "Layar Penuh Proyektor"}
             >
               {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
             </button>
           </div>
         </div>
+
+        {/* Mobile Navigation Tabs (Khusus HP / Layar Kecil) */}
+        <div className="md:hidden px-3 pb-2 pt-0.5 border-t border-slate-100">
+          <div className="flex items-center justify-between gap-1 p-1 bg-slate-100/90 rounded-xl border border-slate-200/80">
+            <button
+              type="button"
+              onClick={() => setMobileTab('all')}
+              className={`flex-1 py-1 px-1 rounded-lg text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
+                mobileTab === 'all'
+                  ? 'bg-white text-emerald-950 shadow-2xs border border-emerald-200 font-black'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Sparkles className="w-3 h-3 text-emerald-600" />
+              <span>Semua</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileTab('candidates')}
+              className={`flex-1 py-1 px-1 rounded-lg text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
+                mobileTab === 'candidates'
+                  ? 'bg-white text-emerald-950 shadow-2xs border border-emerald-200 font-black'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Vote className="w-3 h-3 text-emerald-600" />
+              <span>Kandidat ({rekap?.kandidat?.length || 0})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileTab('stats')}
+              className={`flex-1 py-1 px-1 rounded-lg text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
+                mobileTab === 'stats'
+                  ? 'bg-white text-emerald-950 shadow-2xs border border-emerald-200 font-black'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Users className="w-3 h-3 text-emerald-600" />
+              <span>Statistik ({rekap?.persentase_partisipasi ?? 0}%)</span>
+            </button>
+          </div>
+        </div>
       </header>
 
-      {/* Main Viewport Container (Responsive Scroll on Mobile, Zero Scroll on Desktop/Projector) */}
-      <main className="flex-1 w-full p-3 sm:p-5 flex flex-col md:flex-row gap-4 sm:gap-6 overflow-y-auto md:overflow-hidden min-h-0 relative z-10">
+      {/* Main Viewport Container (Desktop/Proyektor: Zero Scroll, Split Layout) */}
+      <main className="hidden md:flex flex-1 w-full p-3 sm:p-5 flex-row gap-4 sm:gap-6 overflow-hidden min-h-0 relative z-10">
 
         {/* ============================================================== */}
         {/* KOLOM KIRI: STATISTIK PARTISIPASI & KUORUM SIDANG */}
@@ -519,6 +562,245 @@ export default function VotingLiveResults({ onBackToAdmin, onNavigateHome }: Vot
           )}
         </section>
       </main>
+
+      {/* ============================================================== */}
+      {/* TAMPILAN KHUSUS MOBILE (< md) — FULLY SCROLLABLE & RESPONSIVE */}
+      {/* ============================================================== */}
+      <div className="md:hidden flex flex-col w-full p-3 space-y-3.5 pb-24 relative z-10">
+        {/* Banner Pemenang / Draw di Mobile */}
+        {isWinnerDecided && winnerCandidate && (
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-400 text-slate-950 shadow-md border-2 border-amber-300 space-y-1.5 animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-slate-950 text-amber-300 flex items-center justify-center shrink-0">
+                <Award className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-900/80 block">
+                  Keputusan Akhir Sidang Pleno
+                </span>
+                <h3 className="text-sm font-black text-slate-950 leading-tight">
+                  PRESIDEN TERPILIH PB PERSADIA
+                </h3>
+              </div>
+            </div>
+            <div className="pt-2 border-t border-slate-950/15 flex items-center justify-between">
+              <div>
+                <strong className="text-base font-black text-slate-950 block">{winnerCandidate.nama_kandidat}</strong>
+                {winnerCandidate.gelar && <p className="text-xs font-bold text-slate-800">{winnerCandidate.gelar}</p>}
+              </div>
+              <div className="text-right">
+                <span className="text-xl font-black text-slate-950 block leading-tight">{winnerCandidate.total_suara} Suara</span>
+                <span className="text-[11px] font-bold text-slate-900 bg-white/60 px-2 py-0.5 rounded-full inline-block">{winnerCandidate.persentase}%</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isClosed && isTie && (
+          <div className="p-3.5 rounded-2xl bg-amber-50 border-2 border-amber-300 shadow-xs flex items-center gap-3 text-left">
+            <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Scale className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-xs font-black text-amber-950">
+                Hasil Seri (Draw): {highestVotes} Suara Seimbang
+              </h3>
+              <p className="text-[11px] text-amber-900/80 leading-tight">
+                Perolehan suara tertinggi sama. Menunggu pembukaan Putaran Kedua (Run-off).
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* STATISTIK & KUORUM DI MOBILE */}
+        {(mobileTab === 'all' || mobileTab === 'stats') && (
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-3.5 shadow-xs space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                  <Vote className="w-3.5 h-3.5" />
+                </div>
+                <h3 className="text-xs font-black text-slate-900 uppercase tracking-wide">
+                  Statistik &amp; Kuorum Sidang
+                </h3>
+              </div>
+              <span className="text-[10px] font-mono text-slate-500 font-semibold">
+                Sync {lastRefreshed.toLocaleTimeString('id-ID')} WIB
+              </span>
+            </div>
+
+            {/* 2x2 Compact Metric Cards */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Total DPT</span>
+                <span className="text-xl font-black text-slate-900">{rekap?.total_dpt ?? 0}</span>
+                <span className="text-[9px] text-slate-500 block leading-tight">Delegasi Sah</span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200/80">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 block">Suara Masuk</span>
+                <span className="text-xl font-black text-emerald-700">{rekap?.total_suara_masuk ?? 0}</span>
+                <span className="text-[9px] text-emerald-800/80 block leading-tight">Surat Suara Sah</span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/80">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 block">Belum Memilih</span>
+                <span className="text-xl font-black text-amber-700">{rekap?.belum_memilih ?? 0}</span>
+                <span className="text-[9px] text-amber-800/80 block leading-tight">Menunggu Suara</span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-teal-50/70 border border-teal-200/80">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-teal-800 block">Partisipasi</span>
+                <span className="text-xl font-black text-teal-700">{rekap?.persentase_partisipasi ?? 0}%</span>
+                <span className="text-[9px] text-teal-800/80 block leading-tight">Dari Total Kuorum</span>
+              </div>
+            </div>
+
+            {/* Partisipasi Progress Bar */}
+            <div className="pt-1">
+              <div className="w-full bg-slate-200/80 h-2.5 rounded-full overflow-hidden p-0.5">
+                <div
+                  className="bg-gradient-to-r from-emerald-600 to-teal-500 h-full rounded-full transition-all duration-700"
+                  style={{ width: `${rekap?.persentase_partisipasi ?? 0}%` }}
+                />
+              </div>
+              <div className="flex justify-between items-center text-[10px] text-slate-500 mt-1.5 font-medium">
+                <span>Kuorum Suara Sah Sidang</span>
+                <span className="font-bold text-slate-700">{rekap?.total_suara_masuk ?? 0} / {rekap?.total_dpt ?? 0} Hak Suara</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* DAFTAR KANDIDAT DI MOBILE */}
+        {(mobileTab === 'all' || mobileTab === 'candidates') && (
+          <div className="space-y-3">
+            {!rekap?.tampilkan_quick_count && rekap?.status_pemilihan === 'open' ? (
+              <div className="p-6 rounded-2xl bg-white border border-slate-200 text-center space-y-3 shadow-xs">
+                <div className="w-12 h-12 bg-emerald-50 border border-emerald-200 rounded-2xl mx-auto flex items-center justify-center text-emerald-600">
+                  <ShieldCheck className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-sm font-black text-slate-900">Kotak Suara Terkunci</h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Sesi pemilihan sedang aktif. Perolehan suara akan ditampilkan setelah sesi voting ditutup oleh Presidium Sidang.
+                  </p>
+                </div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800 font-bold">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                  <span>Menerima Suara Delegasi</span>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between px-1">
+                  <h3 className="text-xs font-black text-slate-900 uppercase tracking-wide flex items-center gap-1.5">
+                    <Vote className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Perolehan Suara Kandidat</span>
+                  </h3>
+                  <span className="text-[10px] text-slate-500 font-semibold">
+                    {rekap?.kandidat?.length ?? 0} Calon Terdaftar
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  {rekap?.kandidat.map((cand) => {
+                    const isWinner = isWinnerDecided && winnerCandidate?.id === cand.id;
+                    const isTopTied = isClosed && isTie && topTiedCandidates.some(t => t.id === cand.id);
+
+                    return (
+                      <div
+                        key={cand.id}
+                        className={`rounded-2xl p-3.5 border-2 transition-all relative overflow-hidden bg-white shadow-xs ${
+                          isWinner
+                            ? 'border-amber-400 ring-2 ring-amber-300/40 bg-gradient-to-b from-amber-50/50 via-white to-white'
+                            : isTopTied
+                            ? 'border-amber-300 bg-amber-50/20'
+                            : 'border-slate-200/90'
+                        }`}
+                      >
+                        {/* Winner/Tie Pill di Mobile */}
+                        {isWinner && (
+                          <div className="absolute top-2.5 right-2.5 flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black text-[9px] uppercase tracking-wider shadow-xs">
+                            <Award className="w-3 h-3" />
+                            <span>Terpilih</span>
+                          </div>
+                        )}
+                        {isTopTied && (
+                          <div className="absolute top-2.5 right-2.5 flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 border border-amber-300 text-amber-900 font-black text-[9px] uppercase tracking-wider">
+                            <Scale className="w-3 h-3 text-amber-700" />
+                            <span>Seri</span>
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-3">
+                          {/* Foto Kandidat */}
+                          <div className="relative shrink-0">
+                            {cand.foto_url ? (
+                              <img
+                                src={cand.foto_url}
+                                alt={cand.nama_kandidat}
+                                className="w-20 h-24 rounded-xl object-cover border-2 border-slate-100 shadow-xs bg-slate-100"
+                              />
+                            ) : (
+                              <div className="w-20 h-24 rounded-xl bg-emerald-50 border-2 border-emerald-100 flex items-center justify-center text-emerald-600">
+                                <Vote className="w-8 h-8" />
+                              </div>
+                            )}
+                            <span className="absolute -top-1.5 -left-1.5 w-6 h-6 rounded-lg bg-emerald-600 text-white font-mono font-black text-xs flex items-center justify-center shadow-xs border border-white">
+                              {cand.nomor_urut}
+                            </span>
+                          </div>
+
+                          {/* Detail & Suara Kandidat */}
+                          <div className="flex-1 min-w-0 pr-1">
+                            <span className="inline-block px-2 py-0.2 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 font-mono font-bold text-[9px] uppercase tracking-wider mb-0.5">
+                              Calon No. {cand.nomor_urut}
+                            </span>
+                            <h4 className="text-sm font-black text-slate-900 leading-snug truncate">
+                              {cand.nama_kandidat}
+                            </h4>
+                            {cand.gelar && (
+                              <p className="text-[11px] font-bold text-emerald-800 truncate">{cand.gelar}</p>
+                            )}
+                            {cand.institusi && (
+                              <p className="text-[10px] text-slate-500 truncate">{cand.institusi}</p>
+                            )}
+
+                            {/* Perolehan Suara */}
+                            <div className="mt-2 flex items-baseline justify-between gap-2">
+                              <div className="flex items-baseline gap-1">
+                                <span className="text-2xl font-black text-slate-900 leading-none">
+                                  {cand.total_suara}
+                                </span>
+                                <span className="text-xs font-bold text-slate-500">Suara</span>
+                              </div>
+                              <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-black">
+                                {cand.persentase}%
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Progress Bar di Bawah */}
+                        <div className="w-full bg-slate-200/80 h-2 rounded-full overflow-hidden p-0.5 mt-2.5">
+                          <div
+                            className="bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-500 h-full rounded-full transition-all duration-700"
+                            style={{ width: `${cand.persentase}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Footer Asas LUBER di Mobile */}
+        <div className="pt-2 flex items-center justify-center gap-1.5 text-[10px] text-slate-500 text-center">
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+          <span>Asas LUBER: Langsung, Umum, Bebas, Rahasia, Jujur &amp; Adil.</span>
+        </div>
+      </div>
     </div>
   );
 }
