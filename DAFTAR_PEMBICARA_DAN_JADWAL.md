@@ -51,12 +51,12 @@
 
 ---
 
-## 3. Sesi 4 — Paralel Room Gede & Room Pangrango
+## 3. Sesi 4 — Paralel Room Gede, Room Pangrango & Workshop 2
 
-| Sesi / Waktu | Room Gede (200) | Room Pangrango (200) |
-|---|---|---|
-| **SESI 4**<br>11.30 – 12.10 | **TOPIC: Footsteps Leading to Neuropathy**<br><br>**11.30 – 11.50**<br>From Upstream: Endocrinologist POV<br>**SPEAKER 1: dr. Roy Panusunan Sibarani, SpPD-KEMD**<br><br>**11.50 – 12.10**<br>To Downstream: Neurologist POV<br>**SPEAKER 2: dr. Gloria Tanjung, SpN**<br><br>**MODERATOR: dr. William Djauhari** | **WORKSHOP 1: Diabetes Technology: CGM**<br><br>**11.30 – 12.00 — Doctor's POV**<br>**SPEAKER 1: dr. Johanes Purwoto, SpPD-KEMD**<br>Topic:<br>• Mastering ambulatory glucose profile (AGP): A step-by-step guide to read CGM reports<br>• CGM-driven clinical decisions: Tailoring therapy in type 1 and type 2 diabetes<br>• CGM in special populations: prediabetes, pregnancy, elderly, and hospitalized care<br><br>**12.00 – 12.10 — Patient's POV**<br>**SPEAKER 2: Daniel Surbakti** |
-| 12.10 – 12.30 | DISCUSSION | **HANDS ON: Case-based CGM Workshop: Solving real-world glycemic profiles and artifacts**<br>**FASILITATOR:**<br>Dr. Johanes Purwoto, SpPD-KEMD<br>Dr. Libriansyah, MM, SpPD-KEMD<br>Dr. Leny Puspitasari, SpPD-KEMD |
+| Sesi / Waktu | Room Gede (200) | Room Pangrango (200) | Workshop 2 |
+|---|---|---|---|
+| **SESI 4**<br>11.30 – 12.10 | **TOPIC: Footsteps Leading to Neuropathy**<br><br>**11.30 – 11.50**<br>From Upstream: Endocrinologist POV<br>**SPEAKER 1: dr. Roy Panusunan Sibarani, SpPD-KEMD**<br><br>**11.50 – 12.10**<br>To Downstream: Neurologist POV<br>**SPEAKER 2: dr. Gloria Tanjung, SpN**<br><br>**MODERATOR: dr. William Djauhari** | **WORKSHOP 1: Diabetes Technology: CGM**<br><br>**11.30 – 12.00 — Doctor's POV**<br>**SPEAKER 1: dr. Johanes Purwoto, SpPD-KEMD**<br>Topic:<br>• Mastering ambulatory glucose profile (AGP): A step-by-step guide to read CGM reports<br>• CGM-driven clinical decisions: Tailoring therapy in type 1 and type 2 diabetes<br>• CGM in special populations: prediabetes, pregnancy, elderly, and hospitalized care<br><br>**12.00 – 12.10 — Patient's POV**<br>**SPEAKER 2: Daniel Surbakti** | **WORKSHOP 2: Inflammatory and Autonomic Markers after 30-Day Propolis Extract Supplementation in Obesity with Diabetes**<br><br>**11.30 – 12.10**<br>**SPEAKER: dr. H. Harli Amir Mahmudji, SpPD-KEMD** |
+| 12.10 – 12.30 | DISCUSSION | **HANDS ON: Case-based CGM Workshop: Solving real-world glycemic profiles and artifacts**<br>**FASILITATOR:**<br>Dr. Johanes Purwoto, SpPD-KEMD<br>Dr. Libriansyah, MM, SpPD-KEMD<br>Dr. Leny Puspitasari, SpPD-KEMD | DISCUSSION |
 
 ---
 

@@ -180,8 +180,8 @@ export default function SponsorshipPage({ onNavigateHome }: SponsorshipPageProps
       accentColor: "bg-indigo-600",
       description: "Bentuk dukungan agar pelaku usaha lokal dapat turut ambil bagian, memperkenalkan produk, dan membangun jejaring dengan tenaga kesehatan & masyarakat.",
       benefits: [
-        "Tenda Sarnafil (Rp 3.000.000): Booth ukuran 3 × 3 meter, lokasi di area depan (tidak termasuk listrik).",
-        "Tenda Kerucut (Rp 1.500.000): Booth ukuran 3 × 3 meter, lokasi di area belakang (tidak termasuk listrik)."
+        "Tenda Sarnafil (Rp 3.000.000): Booth ukuran 3x3 m, lokasi di area depan, fasilitas 1 meja & 2 kursi, serta disediakan colokan listrik.",
+        "Tenda Kerucut (Rp 1.500.000): Booth ukuran 3x3 m, lokasi di area belakang, fasilitas 1 meja & 2 kursi, serta disediakan colokan listrik."
       ]
     }
   ];
@@ -444,14 +444,14 @@ export default function SponsorshipPage({ onNavigateHome }: SponsorshipPageProps
                   </td>
                   <td className="p-4 text-center align-top">
                     <span className="font-black text-indigo-900 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-200 inline-block">
-                      Rp 3.000.000
+                       Rp 3.000.000
                     </span>
                   </td>
                   <td className="p-4 text-center align-top font-bold text-indigo-800">
                     Mitra UMKM
                   </td>
                   <td className="p-4 text-slate-700 align-top leading-relaxed">
-                    Booth ukuran 3 × 3 meter <strong>Tenda Sarnafil</strong>, lokasi di area depan <em>(tidak termasuk listrik)</em>.
+                    Booth ukuran 3x3 m <strong>Tenda Sarnafil</strong>, lokasi di area depan, fasilitas 1 meja &amp; 2 kursi, serta <em>disediakan colokan listrik</em>.
                   </td>
                 </tr>
 
@@ -469,7 +469,7 @@ export default function SponsorshipPage({ onNavigateHome }: SponsorshipPageProps
                     Mitra UMKM
                   </td>
                   <td className="p-4 text-slate-700 align-top leading-relaxed">
-                    Booth ukuran 3 × 3 meter <strong>Tenda Kerucut</strong>, lokasi di area belakang <em>(tidak termasuk listrik)</em>.
+                    Booth ukuran 3x3 m <strong>Tenda Kerucut</strong>, lokasi di area belakang, fasilitas 1 meja &amp; 2 kursi, serta <em>disediakan colokan listrik</em>.
                   </td>
                 </tr>
               </tbody>

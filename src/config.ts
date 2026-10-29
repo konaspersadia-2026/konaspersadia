@@ -265,6 +265,19 @@ export const DUMMY_SPEAKERS: Speaker[] = [
     category: "workshop"
   },
   {
+    id: "sp-harli",
+    name: "dr. H. Harli Amir Mahmudji, SpPD-KEMD",
+    title: "Konsultan Endokrinologi, Metabolisme, dan Diabetes",
+    institution: "PB PERSADIA / Divisi Endokrinologi",
+    imageUrl: "https://placehold.co/400x400/0B3D5E/ffffff?text=dr+Harli+Amir",
+    topics: [
+      "Inflammatory and Autonomic Markers after 30-Day Propolis Extract Supplementation in Obesity with Diabetes",
+      "Peran Terapi Nutrisi & Suplementasi Terstandar pada Kardiometabolik"
+    ],
+    role: "Workshop 2",
+    category: "workshop"
+  },
+  {
     id: "sp-boyke",
     name: "dr. Boyke Dian Nugraha, SpOG, MARS",
     title: "Dokter Spesialis Obstetri & Ginekologi / Seksolog Klinis",

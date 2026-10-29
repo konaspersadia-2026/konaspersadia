@@ -93,9 +93,9 @@ export default function Schedules() {
     },
     {
       time: "11:30 – 12:30",
-      title: "SESI 4 — Sesi Paralel: Simposium Neuropati & Workshop 1 (CGM)",
-      location: "Room Gede & Room Pangrango",
-      speaker: "dr. Roy Panusunan Sibarani, dr. Gloria Tanjung, dr. Johanes Purwoto, Daniel Surbakti",
+      title: "SESI 4 — Sesi Paralel: Simposium Neuropati, Workshop 1 (CGM) & Workshop 2",
+      location: "Room Gede, Room Pangrango & Workshop 2",
+      speaker: "dr. Roy Panusunan Sibarani, dr. Gloria Tanjung, dr. Johanes Purwoto, Daniel Surbakti, dr. H. Harli Amir Mahmudji",
       type: "parallel",
       parallelRooms: [
         {
@@ -116,6 +116,15 @@ export default function Schedules() {
             "11.30 – 12.00: Doctor's POV — dr. Johanes Purwoto, SpPD-KEMD (Mastering AGP reports, CGM-driven clinical decisions in T1D & T2D, CGM in special populations: prediabetes, pregnancy, elderly, hospitalized)",
             "12.00 – 12.10: Patient's POV — Daniel Surbakti",
             "12.10 – 12.30: HANDS ON: Case-based CGM Workshop — Solving real-world glycemic profiles & artifacts"
+          ]
+        },
+        {
+          room: "Workshop 2",
+          trackTitle: "Workshop 2: Inflammatory and Autonomic Markers after 30-Day Propolis Extract Supplementation in Obesity with Diabetes",
+          speaker: "Speaker: dr. H. Harli Amir Mahmudji, SpPD-KEMD",
+          details: [
+            "11.30 – 12.10: Inflammatory and Autonomic Markers after 30-Day Propolis Extract Supplementation in Obesity with Diabetes — dr. H. Harli Amir Mahmudji, SpPD-KEMD",
+            "12.10 – 12.30: DISCUSSION & Tanya Jawab Klinis"
           ]
         }
       ]
@@ -423,11 +432,11 @@ export default function Schedules() {
     }
   };
 
-  const getEventTypeName = (type: string) => {
+  const getEventTypeName = (type: string, count?: number) => {
     switch (type) {
       case "symposium": return "Simposium Medis";
       case "workshop": return "Workshop Praktis";
-      case "parallel": return "Sesi Paralel (2 Ruang)";
+      case "parallel": return count ? `Sesi Paralel (${count} Ruang)` : "Sesi Paralel";
       case "activity": return "Aktivitas Komunitas";
       case "health_check": return "Skrining Kesehatan Gratis";
       case "talkshow": return "Edukasi & Talkshow";
@@ -537,7 +546,7 @@ export default function Schedules() {
         </motion.div>
 
         {/* Schedule Display */}
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -618,7 +627,7 @@ export default function Schedules() {
                             {event.time}
                           </span>
                           <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${getBadgeStyle(event.type)} w-fit`}>
-                            {getEventTypeName(event.type)}
+                            {getEventTypeName(event.type, event.parallelRooms?.length)}
                           </span>
                         </div>
 
@@ -639,9 +648,9 @@ export default function Schedules() {
                           </div>
                         )}
 
-                        {/* Parallel Rooms Card (Room Gede vs Room Pangrango) */}
+                        {/* Parallel Rooms Card (Room Gede vs Room Pangrango vs Workshop 2) */}
                         {event.parallelRooms && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 my-3">
+                          <div className={`grid grid-cols-1 ${event.parallelRooms.length >= 3 ? "md:grid-cols-3" : "md:grid-cols-2"} gap-3.5 my-3`}>
                             {event.parallelRooms.map((par, pIdx) => (
                               <div 
                                 key={pIdx} 
@@ -668,7 +677,7 @@ export default function Schedules() {
 
                                 <div className="pt-2 border-t border-blue-100/80 text-[11px] text-slate-700 font-medium flex items-center gap-1.5">
                                   <UserCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                                  <span className="truncate">{par.speaker}</span>
+                                  <span className="truncate" title={par.speaker}>{par.speaker}</span>
                                 </div>
                               </div>
                             ))}

@@ -251,9 +251,9 @@ Acara ini membuka kemitraan industri yang dikelola langsung bersama Seksi Kemitr
 *   **Fasilitas Utama:** Booth 1 hari di lokasi Novotel Bogor. 1 voucher konsumsi panitia, dan 5 tiket undangan dinner symposium.
 
 #### F. Paket Pendukung (Mitra Lokal / UMKM) — Rp 1.500.000 / Rp 3.000.000
-Tersedia dua pilihan booth berukuran 3 × 3 meter *(tidak termasuk listrik)*:
-*   **Tenda Sarnafil (Rp 3.000.000):** Lokasi di area depan.
-*   **Tenda Kerucut (Rp 1.500.000):** Lokasi di area belakang.
+Tersedia dua pilihan booth berukuran 3 × 3 m (fasilitas 1 meja, 2 kursi, dan disediakan colokan listrik):
+*   **Tenda Sarnafil (Rp 3.000.000):** Booth ukuran 3x3 m, lokasi di area depan, fasilitas 1 meja & 2 kursi, serta disediakan colokan listrik.
+*   **Tenda Kerucut (Rp 1.500.000):** Booth ukuran 3x3 m, lokasi di area belakang, fasilitas 1 meja & 2 kursi, serta disediakan colokan listrik.
 
 ### 9.3 Aturan & Ketentuan Sponsorship
 *   **Batas Waktu Pembayaran:** Paling lambat tanggal **23 Oktober 2026** (2 minggu sebelum acara).

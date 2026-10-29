@@ -67,8 +67,8 @@
 | **RUBY** | **Rp 150.000.000** | Terbuka | Presentasi Symposium & Workshop, Booth Novotel, Tenda Sarnavile 3x3m Pakansari, branding promosi, free 1 peserta ilmiah, 30 undangan dinner, karya seni Anggota PERSADIA Bogor |
 | **EMERALD** | **Rp 50.000.000** | Terbuka | Presentasi sesi Workshop, Booth Novotel, Tenda Sarnavile 3x3m Pakansari, logo promosi, free 2 peserta workshop, 20 undangan dinner |
 | **TOPAZ** | **Rp 25.000.000** | Terbuka | 1 Booth stand pameran 1 hari di Novotel Bogor, 5 tiket undangan dinner symposium, 1 voucher konsumsi panitia |
-| **PENDUKUNG (UMKM)**<br>*(Pilihan Tenda Sarnafil)* | **Rp 3.000.000** | Mitra UMKM | Stand booth ukuran 3x3 meter **termasuk tenda** pada area pameran Novotel Bogor & Stadion Pakansari |
-| **PENDUKUNG (UMKM)**<br>*(Pilihan Meja Saja)* | **Rp 1.500.000** | Mitra UMKM | Fasilitas stand dengan **hanya meja saja** pada area pameran Novotel Bogor & Stadion Pakansari |
+| **PENDUKUNG (UMKM)**<br>*(Pilihan Tenda Sarnafil)* | **Rp 3.000.000** | Mitra UMKM | Stand booth ukuran 3x3 m **Tenda Sarnafil** di area depan, fasilitas 1 meja & 2 kursi, serta disediakan colokan listrik |
+| **PENDUKUNG (UMKM)**<br>*(Pilihan Tenda Kerucut)* | **Rp 1.500.000** | Mitra UMKM | Stand booth ukuran 3x3 m **Tenda Kerucut** di area belakang, fasilitas 1 meja & 2 kursi, serta disediakan colokan listrik |
 
 ---
 
