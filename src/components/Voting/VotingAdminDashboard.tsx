@@ -957,6 +957,39 @@ export default function VotingAdminDashboard({
     showToast(`Magic link disalin: ${link}`);
   };
 
+  // Format Pesan Undangan Resmi E-Voting
+  const buildVotingInvitationMessage = (voter: VoterDPT) => {
+    const magicLink = `${window.location.origin}/#voting-bilik?token=${voter.token}`;
+    const roundInfo = putaranVoting === '2' ? ' *PUTARAN KE-2 (RUN-OFF)*' : '';
+    return (
+      `*UNDANGAN PEMILIHAN RESMI (E-VOTING)${roundInfo}*\n` +
+      `*KONGRES NASIONAL PERSADIA 2026*\n\n` +
+      `Kepada Yth. Delegasi Sah Cabang:\n` +
+      `*${voter.nama_lengkap}* (${voter.cabang_persadia})\n\n` +
+      `Berikut adalah kode akses resmi untuk memberikan hak suara dalam Pemilihan Presiden Pengurus Besar PERSADIA Periode 2029–2032:\n\n` +
+      `🔑 *KODE TOKEN SUARA:* \`${voter.token}\`\n\n` +
+      `🗳️ *Akses Langsung Bilik Suara:*\n` +
+      `${magicLink}\n\n` +
+      `_Petunjuk Penggunaan:_\n` +
+      `1. Klik tautan bilik suara di atas atau buka menu Pemilihan di sistem Kongres.\n` +
+      `2. Masukkan kode token Anda.\n` +
+      `3. Pelajari rekam jejak calon, lalu tentukan pilihan Anda.\n` +
+      `4. Satu token hanya dapat digunakan 1 (satu) kali dan akan hangus otomatis setelah suara terkirim.\n\n` +
+      `_Kerahasiaan pilihan suara Anda dijamin sepenuhnya oleh sistem LUBER Sidang Pleno._\n\n` +
+      `Mohon link ini disimpan untuk acara voting tgl 7 nov 2026\n\n` +
+      `Terima kasih \n` +
+      `Salam hangat,\n` +
+      `*Panitia Pemilihan - KONAS PERSADIA 2026*`
+    );
+  };
+
+  // Salin Pesan Undangan Lengkap ke Clipboard
+  const handleCopyInvitation = (voter: VoterDPT) => {
+    const message = buildVotingInvitationMessage(voter);
+    navigator.clipboard.writeText(message);
+    showToast(`Format undangan voting untuk ${voter.nama_lengkap} disalin ke clipboard!`);
+  };
+
   // Handler Kirim Undangan & Token via WhatsApp
   const handleSendWhatsApp = (voter: VoterDPT) => {
     let phone = voter.whatsapp ? voter.whatsapp.trim().replace(/\D/g, '') : '';
@@ -975,26 +1008,7 @@ export default function VotingAdminDashboard({
       phone = '62' + phone;
     }
 
-    const magicLink = `${window.location.origin}/#voting-bilik?token=${voter.token}`;
-    const roundInfo = putaranVoting === '2' ? ' *PUTARAN KE-2 (RUN-OFF)*' : '';
-    const message =
-      `*UNDANGAN PEMILIHAN RESMI (E-VOTING)${roundInfo}*\n` +
-      `*KONGRES NASIONAL PERSADIA 2026*\n\n` +
-      `Kepada Yth. Delegasi Sah Cabang:\n` +
-      `*${voter.nama_lengkap}* (${voter.cabang_persadia})\n\n` +
-      `Berikut adalah kode akses resmi untuk memberikan hak suara dalam Pemilihan Presiden Pengurus Besar PERSADIA Periode 2029–2032:\n\n` +
-      `🔑 *KODE TOKEN SUARA:* \`${voter.token}\`\n\n` +
-      `🗳️ *Akses Langsung Bilik Suara:*\n` +
-      `${magicLink}\n\n` +
-      `_Petunjuk Penggunaan:_\n` +
-      `1. Klik tautan bilik suara di atas atau buka menu Pemilihan di sistem Kongres.\n` +
-      `2. Masukkan kode token Anda.\n` +
-      `3. Pelajari rekam jejak calon, lalu tentukan pilihan Anda.\n` +
-      `4. Satu token hanya dapat digunakan 1 (satu) kali dan akan hangus otomatis setelah suara terkirim.\n\n` +
-      `_Kerahasiaan pilihan suara Anda dijamin sepenuhnya oleh sistem LUBER Sidang Pleno._\n\n` +
-      `Salam hangat,\n` +
-      `*Panitia Pemilihan - KONAS PERSADIA 2026*`;
-
+    const message = buildVotingInvitationMessage(voter);
     const waUrl = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
     window.open(waUrl, '_blank');
   };
@@ -1459,6 +1473,14 @@ export default function VotingAdminDashboard({
                               >
                                 <MessageCircle className="w-3.5 h-3.5" />
                                 <span>Kirim WA</span>
+                              </button>
+
+                              <button
+                                onClick={() => handleCopyInvitation(voter)}
+                                className="px-2 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-[11px] font-semibold transition cursor-pointer"
+                                title="Salin format lengkap teks undangan WhatsApp ke clipboard"
+                              >
+                                Salin Pesan
                               </button>
 
                               <button
