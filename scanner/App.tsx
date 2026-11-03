@@ -118,7 +118,7 @@ function App() {
   const [torchOn, setTorchOn] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   
-  type ScannerMode = 'registrasi' | 'gala_dinner' | 'workshop' | 'snack' | 'makan_siang' | 'gula_darah' | 'baju';
+  type ScannerMode = 'registrasi' | 'gala_dinner' | 'workshop' | 'snack' | 'makan_siang' | 'gula_darah' | 'baju' | 'dhf';
   const [scannerMode, setScannerMode] = useState<ScannerMode | null>(null);
 
   // Pilihan Tanggal Kegiatan Acara (HANYA 2 PILIHAN: Hari 1 Novotel atau Hari 2 GOR Pakansari)
@@ -146,9 +146,11 @@ function App() {
 
   const getAvailableModesForDate = (date: EventDate) => {
     if (date === '2026-11-07') {
-      // 2 Pos Hari ke-1 Novotel Bogor Golf Resort
+      // 4 Pos Hari ke-1 Novotel Bogor Golf Resort
       return [
         { id: 'registrasi' as ScannerMode, label: 'Registrasi Onsite', sub: 'Lobby Novotel Bogor', icon: UserCheck },
+        { id: 'dhf' as ScannerMode, label: 'Sesi DHF (Health Forum)', sub: 'Ballroom 2 Novotel', icon: Sparkles },
+        { id: 'makan_siang' as ScannerMode, label: 'Pengambilan Makan Siang', sub: 'Restoran Novotel Bogor', icon: Utensils },
         { id: 'gala_dinner' as ScannerMode, label: 'Akses Gala Dinner', sub: 'Grand Ballroom Novotel', icon: Utensils }
       ];
     } else {
@@ -1152,7 +1154,7 @@ function App() {
       const updatePayload: any = {
         tinggi_badan: tinggiBadan ? parseFloat(tinggiBadan) : null,
         berat_badan: beratBadan ? parseFloat(beratBadan) : null,
-        tensi: (tensiSistolik && tensiDiastolik) ? `${tensiSistolik}/${tensiDiastolik}` : '',
+        tensi: (tensiSistolik && tensiDiastolik) ? `${tensiSistolik}/${tensiDiastolik}` : (selectedUser.tensi || ''),
         gula_darah: gulaDarah.trim(),
         lingkar_perut: lingkarPerut,
         kesediaan_data: kesediaanData ? 'Ya' : 'Tidak',
@@ -1246,13 +1248,17 @@ function App() {
 
     // Kategori Ilmiah: Dokter Spesialis, Dokter Umum, FKTP, Residen/PPDS, Perawat/Edukator, Mahasiswa S1
     const isIlmiah = catObj ? catObj.akses === "ilmiah" : (
-      /dokter|spesialis|residen|ppds|perawat|gizi|edukator|mahasiswa/i.test(kategori)
+      /dokter|spesialis|residen|ppds|perawat|gizi|edukator|mahasiswa|fktp/i.test(kategori)
     );
 
     // DHF (Diabetes Health Forum)
     const isDHF = catObj?.id === "diabetes_health_forum" || 
       /diabetes health forum|health forum|health talk/i.test(kategori) || 
-      /health forum|health talk/i.test(pilihanKegiatan);
+      /health forum|health talk/i.test(pilihanKegiatan) ||
+      p.ikut_health_talk === true ||
+      p["ikut_health_talk"] === true ||
+      p["Ikut_Health_Talk"] === true ||
+      p["ikut_health_talk"] === 'true';
 
     // Pesta Rakyat
     const isPestaRakyat = (catObj?.akses === "pesta_rakyat" && !isDHF) || 
@@ -1378,6 +1384,19 @@ function App() {
             : "AKSES DITOLAK: Nama peserta TIDAK terdaftar dalam daftar undangan Gala Dinner. Silakan konfirmasi ke meja panitia/sekretariat.";
         } else {
           hasAccess = true;
+        }
+      } else if (scannerMode === 'dhf') {
+        if (selectedDate === '2026-11-08') {
+          hasAccess = false;
+          rejectionReason = "SELESAI: Sesi Diabetes Health Forum (DHF) dilaksanakan pada Hari ke-1 (Sabtu, 7 Nov 2026 di Ballroom 2 Novotel Bogor). Hari ini adalah agenda Pesta Rakyat di GOR Pakansari.";
+        } else if (details.isOnline) {
+          hasAccess = false;
+          rejectionReason = "TIKET ONLINE: Sesi DHF / Health Forum ini khusus bagi peserta tatap muka (onsite).";
+        } else if (details.isDHF) {
+          hasAccess = true;
+        } else {
+          hasAccess = false;
+          rejectionReason = "AKSES DITOLAK: Tiket peserta bukan kategori Diabetes Health Forum (DHF). Sesi ini khusus peserta DHF di Ballroom 2 Novotel.";
         }
       } else if (scannerMode === 'workshop') {
         if (selectedDate === '2026-11-08') {
@@ -2199,7 +2218,7 @@ function App() {
                       )}
                       {(selectedUser['Kehadiran_Workshop'] === 'Ya' || selectedUser['kehadiran_workshop'] === 'Ya') && (
                         <span className="text-[11px] font-bold px-2 py-0.5 bg-purple-100 text-purple-800 border border-purple-300 rounded-md flex items-center gap-1">
-                          ✓ Hadir Workshop
+                          ✓ {details.isDHF ? 'Hadir Sesi DHF' : 'Hadir Workshop'}
                         </span>
                       )}
                       {(selectedUser['Makan_Siang_Hari_1'] === 'Ya' || selectedUser['makan_siang_hari_1'] === 'Ya') && (
@@ -2500,6 +2519,7 @@ function App() {
                   Peserta berhak mengakses pos <strong>{
                     scannerMode === 'registrasi' ? (selectedDate === '2026-11-08' ? 'Registrasi Onsite (Pintu Masuk)' : 'Registrasi Onsite (Novotel)') :
                     scannerMode === 'gala_dinner' ? 'Akses Gala Dinner (Grand Ballroom Novotel)' :
+                    scannerMode === 'dhf' ? 'Sesi DHF / Health Forum (Ballroom 2 Novotel)' :
                     scannerMode === 'workshop' ? 'Ruang Sesi Workshop' :
                     scannerMode === 'snack' ? 'Pengambilan Snack' :
                     scannerMode === 'makan_siang' ? (selectedDate === '2026-11-07' ? 'Makan Siang Hari 1 (Novotel)' : 'Pengambilan Makan Siang Hari 2 (Pakansari)') :
@@ -2589,6 +2609,37 @@ function App() {
                     {(selectedUser.waktu_akses_gala_dinner || selectedUser['waktu_akses_gala_dinner'] || selectedUser.waktu_kehadiran_gala_dinner || selectedUser['waktu_kehadiran_gala_dinner']) && (
                       <p className="text-[11px] text-slate-500">
                         Masuk ballroom pada: <strong>{formatWaktu(selectedUser.waktu_akses_gala_dinner || selectedUser['waktu_akses_gala_dinner'] || selectedUser.waktu_kehadiran_gala_dinner || selectedUser['waktu_kehadiran_gala_dinner'])}</strong>
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Mode: Sesi DHF (Health Forum) Hari 1 */}
+                {scannerMode === 'dhf' && (
+                  <div className="space-y-2">
+                    <button
+                      disabled={actionLoading === 'Kehadiran_Workshop' || selectedUser['Kehadiran_Workshop'] === 'Ya' || selectedUser['kehadiran_workshop'] === 'Ya'}
+                      onClick={() => handleUpdateCheckpoint('Kehadiran_Workshop', selectedUser['Kehadiran_Workshop'] === 'Ya' || selectedUser['kehadiran_workshop'] === 'Ya')}
+                      className={`w-full py-3.5 px-4 rounded-xl font-bold flex items-center justify-center transition-all cursor-pointer ${
+                        (selectedUser['Kehadiran_Workshop'] === 'Ya' || selectedUser['kehadiran_workshop'] === 'Ya')
+                          ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                          : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md'
+                      }`}
+                    >
+                      {actionLoading === 'Kehadiran_Workshop' ? (
+                        <RefreshCw className="w-5 h-5 animate-spin mr-2" />
+                      ) : (selectedUser['Kehadiran_Workshop'] === 'Ya' || selectedUser['kehadiran_workshop'] === 'Ya') ? (
+                        <CheckCircle2 className="w-5 h-5 mr-2 text-emerald-700" />
+                      ) : (
+                        <Sparkles className="w-5 h-5 mr-2" />
+                      )}
+                      {(selectedUser['Kehadiran_Workshop'] === 'Ya' || selectedUser['kehadiran_workshop'] === 'Ya') 
+                        ? 'Sudah Presensi Sesi DHF' 
+                        : 'Check-In Sesi DHF (Health Forum)'}
+                    </button>
+                    {(selectedUser.waktu_kehadiran_workshop || selectedUser['waktu_kehadiran_workshop']) && (
+                      <p className="text-[11px] text-slate-500">
+                        Presensi DHF pada: <strong>{formatWaktu(selectedUser.waktu_kehadiran_workshop || selectedUser['waktu_kehadiran_workshop'])}</strong>
                       </p>
                     )}
                   </div>
@@ -2853,16 +2904,7 @@ function App() {
                           required 
                         />
                       </div>
-                      <div className="col-span-2">
-                        <label className="block text-[11px] font-medium text-slate-600 mb-1 truncate" title="Tensi (mmHg)">Tensi (mmHg)</label>
-                        <div className="grid grid-cols-2 gap-3 relative items-center">
-                          <input type="number" value={tensiSistolik} onChange={e => setTensiSistolik(e.target.value)} className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-200 outline-none text-center" placeholder="120" />
-                          <div className="absolute inset-0 flex justify-center items-center pointer-events-none">
-                            <span className="text-slate-400 font-bold text-sm bg-white px-1">/</span>
-                          </div>
-                          <input type="number" value={tensiDiastolik} onChange={e => setTensiDiastolik(e.target.value)} className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-200 outline-none text-center" placeholder="80" />
-                        </div>
-                      </div>
+                      {/* Kolom Tensi (mmHg) di-hide sesuai instruksi panitia */}
                     </div>
 
                     <div className="pt-2 border-t border-slate-100 space-y-2.5">
