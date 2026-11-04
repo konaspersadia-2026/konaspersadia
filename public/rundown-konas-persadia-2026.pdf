@@ -4,7 +4,7 @@
 << /Type /Catalog /Pages 2 0 R >>
 endobj
 2 0 obj
-<< /Type /Pages /Kids [5 0 R 7 0 R 9 0 R] /Count 3 >>
+<< /Type /Pages /Kids [5 0 R 7 0 R 9 0 R 11 0 R] /Count 4 >>
 endobj
 3 0 obj
 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
@@ -16,7 +16,7 @@ endobj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 6 0 R >>
 endobj
 6 0 obj
-<< /Length 10346 >>
+<< /Length 11356 >>
 stream
 q
 1.50 w
@@ -46,7 +46,7 @@ BT
 /F1 7.50 Tf
 0.750 0.900 0.950 rg
 1 0 0 1 51.00 754.89 Tm
-(Novotel Bogor & Stadion Pakansari, Cibinong, Kabupaten Bogor  |  7 - 8 November 2026) Tj
+(Novotel Bogor Golf Resort & Stadion Pakansari, Cibinong, Kabupaten Bogor  |  7 - 8 November 2026) Tj
 ET
 q
 0.000 0.706 0.675 rg
@@ -63,7 +63,7 @@ BT
 /F1 7.50 Tf
 0.400 0.450 0.500 rg
 1 0 0 1 45.00 699.39 Tm
-(Venue: Novotel Bogor Golf Resort  |  Room Gede & Room Pangrango) Tj
+(Venue: Novotel Bogor Golf Resort & Convention Center \(Room Gede, Room Pangrango & Room Geulis\)) Tj
 ET
 q
 0.75 w
@@ -129,7 +129,7 @@ BT
 /F2 8.00 Tf
 0.043 0.239 0.369 rg
 1 0 0 1 41.00 663.89 Tm
-(08.00 - 08.30) Tj
+(07.00 - 08.00) Tj
 ET
 BT
 /F2 8.00 Tf
@@ -147,7 +147,7 @@ BT
 /F1 7.50 Tf
 0.180 0.220 0.260 rg
 1 0 0 1 236.00 663.89 Tm
-(Re-registrasi peserta Simposium & Workshop) Tj
+(Registrasi dan re-registrasi peserta Simposium & Workshop Medis) Tj
 ET
 q
 0.75 w
@@ -174,7 +174,7 @@ BT
 /F2 8.00 Tf
 0.043 0.239 0.369 rg
 1 0 0 1 41.00 635.39 Tm
-(08.30 - 08.50) Tj
+(08.00 - 08.20) Tj
 ET
 BT
 /F2 8.00 Tf
@@ -216,20 +216,20 @@ q
 0.75 w
 0.970 0.980 0.990 rg
 0.860 0.880 0.910 RG
-35.00 568.39 525.28 30.00 re
+35.00 478.39 525.28 120.00 re
 B
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-115.00 568.39 m
+115.00 478.39 m
 115.00 598.39 l
 S
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-230.00 568.39 m
+230.00 478.39 m
 230.00 598.39 l
 S
 Q
@@ -237,7 +237,7 @@ BT
 /F2 8.00 Tf
 0.043 0.239 0.369 rg
 1 0 0 1 41.00 585.39 Tm
-(08.50 - 09.00) Tj
+(08.20 - 08.55) Tj
 ET
 BT
 /F2 8.00 Tf
@@ -255,125 +255,86 @@ BT
 /F1 7.50 Tf
 0.180 0.220 0.260 rg
 1 0 0 1 236.00 585.39 Tm
-(Pembukaan resmi Kongres Nasional PERSADIA & Konferensi Gabungan 2026 oleh) Tj
+(MC: Dr. dr. Rudy Kurniawan, SpPD, MM, MARS, Dip.TH, DCD) Tj
 ET
 BT
-/F1 7.50 Tf
-0.180 0.220 0.260 rg
-1 0 0 1 242.00 575.39 Tm
-(Pimpinan Pengurus Pusat & Tamu Kehormatan) Tj
-ET
-q
-0.75 w
-1.000 1.000 1.000 rg
-0.860 0.880 0.910 RG
-35.00 478.39 525.28 90.00 re
-B
-Q
-q
-0.75 w
-0.860 0.880 0.910 RG
-115.00 478.39 m
-115.00 568.39 l
-S
-Q
-q
-0.75 w
-0.860 0.880 0.910 RG
-230.00 478.39 m
-230.00 568.39 l
-S
-Q
-BT
-/F2 8.00 Tf
+/F2 7.50 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 41.00 555.39 Tm
-(09.00 - 10.00) Tj
+1 0 0 1 236.00 575.39 Tm
+(• 08.20 - 08.25: Pembacaan Doa - Pak Agus Sumitro \(Persadia Depok\)) Tj
 ET
 BT
-/F2 8.00 Tf
-0.120 0.160 0.200 rg
-1 0 0 1 121.00 555.39 Tm
-(SESI 2: Presidents') Tj
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 236.00 565.39 Tm
+(• 08.25 - 08.30: Lagu Kebangsaan Indonesia Raya - Ibu Susan \(Persadia Bogor\)) Tj
 ET
 BT
-/F2 8.00 Tf
-0.120 0.160 0.200 rg
-1 0 0 1 121.00 545.39 Tm
-(Lecture) Tj
-ET
-BT
-/F1 7.00 Tf
-0.420 0.470 0.520 rg
-1 0 0 1 121.00 534.39 Tm
-(Room Gede) Tj
-ET
-BT
-/F1 7.50 Tf
-0.180 0.220 0.260 rg
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
 1 0 0 1 236.00 555.39 Tm
-(Moderator: dr. Fauzia Kirana, SpPD) Tj
+(• 08.30 - 08.32: Sambutan Selamat Datang Ketua Panitia - dr. Roy Panusunan) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 236.00 545.39 Tm
-(• 09.00 - 09.20: Obesity: The Growing Metabolic Challenge - Prof. Dr. dr.) Tj
+1 0 0 1 242.00 545.39 Tm
+(Sibarani, SpPD-KEMD) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 242.00 535.39 Tm
-(Sidartawan Soegondo, SpPD-KEMD \(FKUI - RSCM / PB PERKENI\)) Tj
+1 0 0 1 236.00 535.39 Tm
+(• 08.32 - 08.35: Sambutan Selamat Datang Presiden Persadia - DR. dr. K. Heri) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 236.00 525.39 Tm
-(• 09.20 - 09.40: Tirzepatide: Beyond the Numbers \(Dual GIP/GLP-1\) - Dr. dr. K.) Tj
+1 0 0 1 242.00 525.39 Tm
+(Nugroho Harioseno, SpPD-KEMD) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 242.00 515.39 Tm
-(Heri Nugroho Harioseno, SpPD-KEMD \(UNDIP / RSUP Dr. Kariadi\)) Tj
+1 0 0 1 236.00 515.39 Tm
+(• 08.35 - 08.50: Sambutan Wakil Menteri Kesehatan RI - Prof. dr. Dante Saksono) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 236.00 505.39 Tm
-(• 09.40 - 10.00: Diabetes Update Treatment: Janus, The First and After - Prof.) Tj
+1 0 0 1 242.00 505.39 Tm
+(Harbuwono, SpPD-KEMD, PhD) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 242.00 495.39 Tm
-(Dr. dr. Achmad Rudijanto, SpPD-KEMD \(Universitas Brawijaya / PB) Tj
+1 0 0 1 236.00 495.39 Tm
+(• 08.50 - 08.55: Pembukaan Resmi Konas Persadia, Konker PEDI, dan Konker) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
 1 0 0 1 242.00 485.39 Tm
-(PERKENI\)) Tj
+(PERKENI 2026) Tj
 ET
 q
 0.75 w
-0.970 0.980 0.990 rg
+1.000 1.000 1.000 rg
 0.860 0.880 0.910 RG
-35.00 448.39 525.28 30.00 re
+35.00 378.39 525.28 100.00 re
 B
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-115.00 448.39 m
+115.00 378.39 m
 115.00 478.39 l
 S
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-230.00 448.39 m
+230.00 378.39 m
 230.00 478.39 l
 S
 Q
@@ -381,279 +342,351 @@ BT
 /F2 8.00 Tf
 0.043 0.239 0.369 rg
 1 0 0 1 41.00 465.39 Tm
-(10.00 - 10.30) Tj
+(09.00 - 10.30) Tj
 ET
 BT
 /F2 8.00 Tf
 0.120 0.160 0.200 rg
 1 0 0 1 121.00 465.39 Tm
-(Coffee Break & Diskusi) Tj
-ET
-BT
-/F1 7.00 Tf
-0.420 0.470 0.520 rg
-1 0 0 1 121.00 454.39 Tm
-(Foyer Novotel) Tj
-ET
-BT
-/F1 7.50 Tf
-0.180 0.220 0.260 rg
-1 0 0 1 236.00 465.39 Tm
-(Tanya jawab interaktif bersama pembicara Presidents' Lecture & Rehat Kopi/Kudapan) Tj
-ET
-BT
-/F1 7.50 Tf
-0.180 0.220 0.260 rg
-1 0 0 1 242.00 455.39 Tm
-(Pagi di Foyer Novotel Bogor) Tj
-ET
-q
-0.75 w
-1.000 1.000 1.000 rg
-0.860 0.880 0.910 RG
-35.00 358.39 525.28 90.00 re
-B
-Q
-q
-0.75 w
-0.860 0.880 0.910 RG
-115.00 358.39 m
-115.00 448.39 l
-S
-Q
-q
-0.75 w
-0.860 0.880 0.910 RG
-230.00 358.39 m
-230.00 448.39 l
-S
-Q
-BT
-/F2 8.00 Tf
-0.043 0.239 0.369 rg
-1 0 0 1 41.00 435.39 Tm
-(10.30 - 11.30) Tj
+(SESI 2: Presidents') Tj
 ET
 BT
 /F2 8.00 Tf
 0.120 0.160 0.200 rg
-1 0 0 1 121.00 435.39 Tm
-(SESI 3: Dokter FKTP) Tj
+1 0 0 1 121.00 455.39 Tm
+(Lecture) Tj
 ET
 BT
 /F1 7.00 Tf
 0.420 0.470 0.520 rg
-1 0 0 1 121.00 424.39 Tm
+1 0 0 1 121.00 444.39 Tm
 (Room Gede) Tj
 ET
 BT
 /F1 7.50 Tf
 0.180 0.220 0.260 rg
+1 0 0 1 236.00 465.39 Tm
+(Moderator: dr. Fauzia Kirana, SpPD) Tj
+ET
+BT
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 236.00 455.39 Tm
+(• 09.00 - 09.30: Topic: Obesity: The Growing Metabolic Challenge - Prof. Dr. dr.) Tj
+ET
+BT
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 242.00 445.39 Tm
+(Sidartawan Soegondo, SpPD-KEMD \(FKUI - RSCM / PB PERKENI\)) Tj
+ET
+BT
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
 1 0 0 1 236.00 435.39 Tm
-(Moderator: dr. Nur Rusyda Kuddah, SpPD-KEMD) Tj
+(• 09.30 - 09.50: Topic: Tirzepatide: Beyond the Numbers - Dr. dr. K. Heri) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 236.00 425.39 Tm
-(• 10.30 - 10.35: Opening Speech - Prof. Dr. dr. Sidartawan Soegondo,) Tj
+1 0 0 1 242.00 425.39 Tm
+(Nugroho Harioseno, SpPD-KEMD \(UNDIP / RSUP Dr. Kariadi\)) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 242.00 415.39 Tm
-(SpPD-KEMD) Tj
+1 0 0 1 236.00 415.39 Tm
+(• 09.50 - 10.10: Topic: Diabetes Update Treatment: Janus, The First and After -) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 236.00 405.39 Tm
-(• 10.35 - 10.50: My Life in FKTP: Realita & Dedikasi Layanan Primer - dr.) Tj
+1 0 0 1 242.00 405.39 Tm
+(Prof. Dr. dr. Achmad Rudijanto, SpPD-KEMD \(Universitas Brawijaya / PB) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
 1 0 0 1 242.00 395.39 Tm
-(Baringin T A Manik, MKM \(Dokter Praktisi Layanan Primer\)) Tj
+(PERKENI\)) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
 1 0 0 1 236.00 385.39 Tm
-(• 10.50 - 11.10: Diabetes Approach in FKTP: Deteksi Cepat & Tatalaksana - dr.) Tj
-ET
-BT
-/F2 7.50 Tf
-0.043 0.239 0.369 rg
-1 0 0 1 242.00 375.39 Tm
-(Dicky Levenus Tahapary, SpPD-KEMD, PhD \(FKUI - RSCM / PB PERSADIA\)) Tj
-ET
-BT
-/F2 7.50 Tf
-0.043 0.239 0.369 rg
-1 0 0 1 236.00 365.39 Tm
-(• 11.10 - 11.30: Diskusi & Tanya Jawab) Tj
+(• 10.10 - 10.30: Discussion + Coffee Break) Tj
 ET
 q
 0.75 w
 0.970 0.980 0.990 rg
 0.860 0.880 0.910 RG
-35.00 218.39 525.28 140.00 re
+35.00 278.39 525.28 100.00 re
 B
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-115.00 218.39 m
-115.00 358.39 l
+115.00 278.39 m
+115.00 378.39 l
 S
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-230.00 218.39 m
-230.00 358.39 l
+230.00 278.39 m
+230.00 378.39 l
 S
 Q
 BT
 /F2 8.00 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 41.00 345.39 Tm
-(11.30 - 12.30) Tj
+1 0 0 1 41.00 365.39 Tm
+(10.30 - 11.30) Tj
 ET
 BT
 /F2 8.00 Tf
 0.120 0.160 0.200 rg
-1 0 0 1 121.00 345.39 Tm
-(SESI 4: Paralel Sesi) Tj
+1 0 0 1 121.00 365.39 Tm
+(SESI 3: Dokter Layanan) Tj
+ET
+BT
+/F2 8.00 Tf
+0.120 0.160 0.200 rg
+1 0 0 1 121.00 355.39 Tm
+(Primer) Tj
 ET
 BT
 /F1 7.00 Tf
 0.420 0.470 0.520 rg
-1 0 0 1 121.00 334.39 Tm
-(Room Gede & Pangrango) Tj
+1 0 0 1 121.00 344.39 Tm
+(Room Gede \(FKTP\)) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 365.39 Tm
+(Moderator: dr. Nur Rusyda Kuddah, SpPD-KEMD) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 236.00 345.39 Tm
-(ROOM GEDE: Footsteps Leading to Neuropathy) Tj
+1 0 0 1 236.00 355.39 Tm
+(• 10.30 - 10.35: Opening Speech - Prof. Dr. dr. Sidartawan Soegondo,) Tj
+ET
+BT
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 242.00 345.39 Tm
+(SpPD-KEMD) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
 1 0 0 1 236.00 335.39 Tm
-(• 11.30 - 11.50: From Upstream: dr. Roy Panusunan Sibarani, SpPD-KEMD) Tj
+(• 10.35 - 10.50: Topic: My Life in FKTP: Realita & Dedikasi Layanan Primer - dr.) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
 1 0 0 1 242.00 325.39 Tm
-(\(Ketua Panitia / RS EMC Sentul\)) Tj
+(Baringin T A Manik, MKM) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
 1 0 0 1 236.00 315.39 Tm
-(• 11.50 - 12.10: To Downstream: dr. Gloria Tanjung, SpN \(PERDOSNI\) - Mod: dr.) Tj
+(• 10.50 - 11.20: Topic: Diabetes Approach in FKTP: Deteksi Cepat &) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
 1 0 0 1 242.00 305.39 Tm
-(William Djauhari) Tj
+(Tatalaksana - dr. Dicky Levenus Tahapary, SpPD-KEMD, PhD \(FKUI - RSCM) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 236.00 295.39 Tm
-(• 12.10 - 12.30: Diskusi & Tanya Jawab) Tj
+1 0 0 1 242.00 295.39 Tm
+(/ PB PERSADIA\)) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
 1 0 0 1 236.00 285.39 Tm
-(ROOM PANGRANGO: Workshop 1 - Diabetes Technology: CGM) Tj
-ET
-BT
-/F2 7.50 Tf
-0.043 0.239 0.369 rg
-1 0 0 1 236.00 275.39 Tm
-(• 11.30 - 12.00: Doctor's POV: dr. Johanes Purwoto, SpPD-KEMD \(RS Mandaya) Tj
-ET
-BT
-/F2 7.50 Tf
-0.043 0.239 0.369 rg
-1 0 0 1 242.00 265.39 Tm
-(Royal Puri / DII\)) Tj
-ET
-BT
-/F2 7.50 Tf
-0.043 0.239 0.369 rg
-1 0 0 1 236.00 255.39 Tm
-(• 12.00 - 12.10: Patient's POV: Daniel Surbakti \(Patient Advocate / Pegiat) Tj
-ET
-BT
-/F2 7.50 Tf
-0.043 0.239 0.369 rg
-1 0 0 1 242.00 245.39 Tm
-(Diabetes\)) Tj
-ET
-BT
-/F2 7.50 Tf
-0.043 0.239 0.369 rg
-1 0 0 1 236.00 235.39 Tm
-(• 12.10 - 12.30: HANDS ON: Simulasi pemecahan kasus profil glikemik nyata &) Tj
-ET
-BT
-/F2 7.50 Tf
-0.043 0.239 0.369 rg
-1 0 0 1 242.00 225.39 Tm
-(artefak sensor) Tj
+(• 11.20 - 11.30: Discussion & Tanya Jawab) Tj
 ET
 q
 0.75 w
 1.000 1.000 1.000 rg
 0.860 0.880 0.910 RG
-35.00 189.89 525.28 28.50 re
+35.00 118.39 525.28 160.00 re
 B
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-115.00 189.89 m
-115.00 218.39 l
+115.00 118.39 m
+115.00 278.39 l
 S
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-230.00 189.89 m
-230.00 218.39 l
+230.00 118.39 m
+230.00 278.39 l
 S
 Q
 BT
 /F2 8.00 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 41.00 205.39 Tm
-(12.30 - 14.00) Tj
+1 0 0 1 41.00 265.39 Tm
+(11.30 - 12.30) Tj
 ET
 BT
 /F2 8.00 Tf
 0.120 0.160 0.200 rg
-1 0 0 1 121.00 205.39 Tm
+1 0 0 1 121.00 265.39 Tm
+(SESI 4: Paralel 3 Ruang) Tj
+ET
+BT
+/F1 7.00 Tf
+0.420 0.470 0.520 rg
+1 0 0 1 121.00 254.39 Tm
+(Gede, Pangrango, Geulis) Tj
+ET
+BT
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 236.00 265.39 Tm
+(ROOM GEDE: Footsteps Leading to Neuropathy \(Mod: dr. William Djauhari\)) Tj
+ET
+BT
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 236.00 255.39 Tm
+(• 11.40 - 12.00: From Upstream: Endocrinologist POV - dr. Roy Panusunan) Tj
+ET
+BT
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 242.00 245.39 Tm
+(Sibarani, SpPD-KEMD) Tj
+ET
+BT
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 236.00 235.39 Tm
+(• 12.00 - 12.20: To Downstream: Neurologist POV - dr. Gloria Tanjung, SpN) Tj
+ET
+BT
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 242.00 225.39 Tm
+(\(PERDOSNI\)) Tj
+ET
+BT
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 236.00 215.39 Tm
+(• 12.20 - 12.30: Discussion & Tanya Jawab) Tj
+ET
+BT
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 236.00 205.39 Tm
+(ROOM PANGRANGO: Workshop 1 - Diabetes Technology: CGM \(Mod: dr. Kartika,) Tj
+ET
+BT
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 242.00 195.39 Tm
+(SpPD\)) Tj
+ET
+BT
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 236.00 185.39 Tm
+(• 11.30 - 12.00: Doctor's POV - dr. Johanes Purwoto, SpPD-KEMD) Tj
+ET
+BT
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 236.00 175.39 Tm
+(• 12.00 - 12.10: Patient's POV - Daniel Surbakti \(Patient Advocate\)) Tj
+ET
+BT
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 236.00 165.39 Tm
+(• 12.10 - 12.30: HANDS ON & Discussion: Pemasangan CGM & Studi Kasus Profil) Tj
+ET
+BT
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 242.00 155.39 Tm
+(Glikemik) Tj
+ET
+BT
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 236.00 145.39 Tm
+(ROOM GEULIS: Workshop 6 - Propolis Extract \(Propoelix\) in Obesity & Diabetes) Tj
+ET
+BT
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 236.00 135.39 Tm
+(• 11.30 - 12.00: Speaker: dr. H. Harli Amir Mahmudji, SpPD-KEMD) Tj
+ET
+BT
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 236.00 125.39 Tm
+(• 12.00 - 12.30: Discussion & Tanya Jawab) Tj
+ET
+q
+0.75 w
+0.970 0.980 0.990 rg
+0.860 0.880 0.910 RG
+35.00 89.89 525.28 28.50 re
+B
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+115.00 89.89 m
+115.00 118.39 l
+S
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+230.00 89.89 m
+230.00 118.39 l
+S
+Q
+BT
+/F2 8.00 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 41.00 105.39 Tm
+(12.40 - 14.00) Tj
+ET
+BT
+/F2 8.00 Tf
+0.120 0.160 0.200 rg
+1 0 0 1 121.00 105.39 Tm
 (ISHOMA) Tj
 ET
 BT
 /F1 7.00 Tf
 0.420 0.470 0.520 rg
-1 0 0 1 121.00 194.39 Tm
+1 0 0 1 121.00 94.39 Tm
 (Restoran Novotel) Tj
 ET
 BT
 /F1 7.50 Tf
 0.180 0.220 0.260 rg
-1 0 0 1 236.00 205.39 Tm
+1 0 0 1 236.00 105.39 Tm
 (Istirahat, Sholat Dzuhur, dan Makan Siang Buffet di Restoran Novotel Bogor) Tj
 ET
 q
@@ -679,7 +712,7 @@ BT
 /F2 7.00 Tf
 0.400 0.450 0.500 rg
 1 0 0 1 485.28 18.00 Tm
-(Halaman 1 dari 3) Tj
+(Halaman 1 dari 4) Tj
 ET
 
 endstream
@@ -688,7 +721,7 @@ endobj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 8 0 R >>
 endobj
 8 0 obj
-<< /Length 12162 >>
+<< /Length 10724 >>
 stream
 q
 0.043 0.239 0.369 rg
@@ -699,7 +732,7 @@ BT
 /F2 8.50 Tf
 1.000 1.000 1.000 rg
 1 0 0 1 45.00 809.39 Tm
-(RUNDOWN SIMPOSIUM, WORKSHOP & HEALTH FORUM \(7 NOV 2026\)) Tj
+(RUNDOWN SIMPOSIUM MEDIS & HEALTH FORUM \(7 NOV 2026\)) Tj
 ET
 BT
 /F1 8.00 Tf
@@ -716,7 +749,7 @@ BT
 /F2 10.00 Tf
 0.043 0.239 0.369 rg
 1 0 0 1 45.00 774.89 Tm
-(LANJUTAN WORKSHOP MEDIS \(SABTU SIANG, 7 NOV 2026\)) Tj
+(LANJUTAN SIMPOSIUM & WORKSHOP MEDIS \(SABTU SIANG, 7 NOV 2026\)) Tj
 ET
 BT
 /F1 7.50 Tf
@@ -767,20 +800,20 @@ q
 0.75 w
 1.000 1.000 1.000 rg
 0.860 0.880 0.910 RG
-35.00 649.89 525.28 90.00 re
+35.00 609.89 525.28 130.00 re
 B
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-115.00 649.89 m
+115.00 609.89 m
 115.00 739.89 l
 S
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-230.00 649.89 m
+230.00 609.89 m
 230.00 739.89 l
 S
 Q
@@ -812,717 +845,558 @@ BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
 1 0 0 1 236.00 716.89 Tm
-(• Narasumber: dr. Sony Wibisono Mudjanarko, SpPD-KEMD \(UNAIR / RSUD Dr.) Tj
+(• 14.00 - 14.30: Speaker: dr. Sony Wibisono Mudjanarko, SpPD-KEMD \(UNAIR /) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
 1 0 0 1 242.00 706.89 Tm
-(Soetomo\)) Tj
+(RSUD Dr. Soetomo\)) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
 1 0 0 1 236.00 696.89 Tm
-(• HANDS ON: Navigating Real-World Prediabetes with Semaglutide) Tj
+(• 14.30 - 15.00: HANDS ON: Case-Based Learning: Navigating Prediabetes with) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 236.00 686.89 Tm
+1 0 0 1 242.00 686.89 Tm
+(Semaglutide) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 676.89 Tm
+(  Fasilitator: dr. Sony Wibisono Mudjanarko, dr. Khomimah, dr. Nanang Miftah Fajari) Tj
+ET
+BT
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 236.00 666.89 Tm
 (ROOM PANGRANGO: Workshop 3 - Nutrition in Diabetes) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 236.00 676.89 Tm
-(• Narasumber: dr. Santi Syafril, SpPD-KEMD \(USU / RSUP H. Adam Malik) Tj
-ET
-BT
-/F2 7.50 Tf
-0.043 0.239 0.369 rg
-1 0 0 1 242.00 666.89 Tm
-(Medan\)) Tj
-ET
-BT
-/F2 7.50 Tf
-0.043 0.239 0.369 rg
 1 0 0 1 236.00 656.89 Tm
-(• HANDS ON: Meal planning & case-based practical diets) Tj
+(• 14.00 - 14.30: Speaker: dr. Santi Syafril, SpPD-KEMD \(USU / RSUP H. Adam) Tj
 ET
-q
-0.75 w
-0.970 0.980 0.990 rg
-0.860 0.880 0.910 RG
-35.00 549.89 525.28 100.00 re
-B
-Q
-q
-0.75 w
-0.860 0.880 0.910 RG
-115.00 549.89 m
-115.00 649.89 l
-S
-Q
-q
-0.75 w
-0.860 0.880 0.910 RG
-230.00 549.89 m
-230.00 649.89 l
-S
-Q
 BT
-/F2 8.00 Tf
+/F2 7.50 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 41.00 636.89 Tm
-(15.00 - 16.00) Tj
-ET
-BT
-/F2 8.00 Tf
-0.120 0.160 0.200 rg
-1 0 0 1 121.00 636.89 Tm
-(SESI 6: Paralel WS) Tj
-ET
-BT
-/F1 7.00 Tf
-0.420 0.470 0.520 rg
-1 0 0 1 121.00 625.89 Tm
-(Room Gede & Pangrango) Tj
+1 0 0 1 242.00 646.89 Tm
+(Malik Medan\)) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
 1 0 0 1 236.00 636.89 Tm
-(ROOM GEDE: Workshop 4 - Investigating Hypoglycemia) Tj
+(• 14.30 - 15.00: HANDS ON: Meal Planning & Practical Diets \(Shift Worker,) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 236.00 626.89 Tm
-(• Narasumber: Dr. dr. Yuanita Langi, SpPD-KEMD \(UNSRAT / RSUP Prof.) Tj
+1 0 0 1 242.00 626.89 Tm
+(Obesity, Elderly\)) Tj
 ET
 BT
-/F2 7.50 Tf
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 616.89 Tm
+(  Fasilitator: dr. Santi Syafril, dr. Herni Basir, dr. Brama Ihsan Sazli) Tj
+ET
+q
+0.75 w
+0.970 0.980 0.990 rg
+0.860 0.880 0.910 RG
+35.00 459.89 525.28 150.00 re
+B
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+115.00 459.89 m
+115.00 609.89 l
+S
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+230.00 459.89 m
+230.00 609.89 l
+S
+Q
+BT
+/F2 8.00 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 242.00 616.89 Tm
-(Kandou\)) Tj
+1 0 0 1 41.00 596.89 Tm
+(15.00 - 16.00) Tj
 ET
 BT
-/F2 7.50 Tf
-0.043 0.239 0.369 rg
-1 0 0 1 236.00 606.89 Tm
-(• HANDS ON: Case-based complex hypoglycemia \(dr. Henny Megawati, SpPD\)) Tj
+/F2 8.00 Tf
+0.120 0.160 0.200 rg
+1 0 0 1 121.00 596.89 Tm
+(SESI 6: Paralel WS) Tj
+ET
+BT
+/F1 7.00 Tf
+0.420 0.470 0.520 rg
+1 0 0 1 121.00 585.89 Tm
+(Room Gede & Pangrango) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
 1 0 0 1 236.00 596.89 Tm
-(ROOM PANGRANGO: Workshop 5 - Pre-Diabetes: Counting the Time) Tj
+(ROOM GEDE: Workshop 4 - Investigating Hypoglycemia) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
 1 0 0 1 236.00 586.89 Tm
-(• Narasumber: Dr. dr. Made Ratna Saraswati, SpPD-KEMD \(UNUD / RSUP Prof.) Tj
+(• 15.00 - 15.30: Speaker: Dr. dr. Yuanita Langi, SpPD-KEMD \(UNSRAT / RSUP) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
 1 0 0 1 242.00 576.89 Tm
-(Ngoerah\)) Tj
+(Prof. Kandou\)) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
 1 0 0 1 236.00 566.89 Tm
-(• HANDS ON: Personalizing prediabetes management \(dr. Pandu Sakti, SpPD,) Tj
+(• 15.30 - 16.00: HANDS ON: Case-based workshop: Navigating Complex) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
 1 0 0 1 242.00 556.89 Tm
-(AIFO-K\)) Tj
-ET
-q
-0.75 w
-1.000 1.000 1.000 rg
-0.860 0.880 0.910 RG
-35.00 521.39 525.28 28.50 re
-B
-Q
-q
-0.75 w
-0.860 0.880 0.910 RG
-115.00 521.39 m
-115.00 549.89 l
-S
-Q
-q
-0.75 w
-0.860 0.880 0.910 RG
-230.00 521.39 m
-230.00 549.89 l
-S
-Q
-BT
-/F2 8.00 Tf
-0.043 0.239 0.369 rg
-1 0 0 1 41.00 536.89 Tm
-(16.00 - 18.30) Tj
+(Hypoglycemic Scenarios) Tj
 ET
 BT
-/F2 8.00 Tf
-0.120 0.160 0.200 rg
-1 0 0 1 121.00 536.89 Tm
-(ISHOMA) Tj
-ET
-BT
-/F1 7.00 Tf
-0.420 0.470 0.520 rg
-1 0 0 1 121.00 525.89 Tm
-(Novotel Bogor) Tj
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 546.89 Tm
+(  Fasilitator: Dr. dr. Yuanita Langi, dr. Rulli Rosandi, dr. Yohana Ceria Anindita) Tj
 ET
 BT
 /F1 7.50 Tf
 0.180 0.220 0.260 rg
 1 0 0 1 236.00 536.89 Tm
-(Istirahat, Sholat, dan Persiapan Acara Malam) Tj
+(  Filling the gap: dr. Henny Megawati, SpPD) Tj
+ET
+BT
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 236.00 526.89 Tm
+(ROOM PANGRANGO: Workshop 5 - Pre-Diabetes: Counting the Time) Tj
+ET
+BT
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 236.00 516.89 Tm
+(• 15.00 - 15.30: Speaker: Dr. dr. Made Ratna Saraswati, SpPD-KEMD \(UNUD /) Tj
+ET
+BT
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 242.00 506.89 Tm
+(RSUP Prof. Ngoerah\)) Tj
+ET
+BT
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 236.00 496.89 Tm
+(• 15.30 - 16.00: HANDS ON: Case-based learning: Personalizing Prediabetes) Tj
+ET
+BT
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 242.00 486.89 Tm
+(Management) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 476.89 Tm
+(  Fasilitator: Dr. dr. Made Ratna Saraswati, Dr. dr. Fabiola MS Adam, dr. Nurleny Sutanto) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 466.89 Tm
+(  Filling the gap: dr. Pandu Sakti, SpPD, AIFO-K) Tj
 ET
 q
 0.75 w
-0.970 0.980 0.990 rg
+1.000 1.000 1.000 rg
 0.860 0.880 0.910 RG
-35.00 481.39 525.28 40.00 re
+35.00 431.39 525.28 28.50 re
 B
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-115.00 481.39 m
-115.00 521.39 l
+115.00 431.39 m
+115.00 459.89 l
 S
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-230.00 481.39 m
-230.00 521.39 l
+230.00 431.39 m
+230.00 459.89 l
 S
 Q
 BT
 /F2 8.00 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 41.00 508.39 Tm
-(18.30 - 21.00) Tj
+1 0 0 1 41.00 446.89 Tm
+(16.00 - 18.30) Tj
 ET
 BT
 /F2 8.00 Tf
 0.120 0.160 0.200 rg
-1 0 0 1 121.00 508.39 Tm
-(Malam Keakraban) Tj
+1 0 0 1 121.00 446.89 Tm
+(ISHOMA) Tj
 ET
 BT
 /F1 7.00 Tf
 0.420 0.470 0.520 rg
-1 0 0 1 121.00 497.39 Tm
-(Grand Ballroom Novotel) Tj
+1 0 0 1 121.00 435.89 Tm
+(Novotel Bogor) Tj
 ET
 BT
 /F1 7.50 Tf
 0.180 0.220 0.260 rg
-1 0 0 1 236.00 508.39 Tm
-(Gala Dinner, Sambutan Pimpinan & Dewan Penasehat) Tj
-ET
-BT
-/F1 7.50 Tf
-0.180 0.220 0.260 rg
-1 0 0 1 236.00 498.39 Tm
-(Ramah Tamah Nasional Lintas Cabang se-Indonesia) Tj
-ET
-BT
-/F1 7.50 Tf
-0.180 0.220 0.260 rg
-1 0 0 1 236.00 488.39 Tm
-(Pagelaran Seni Budaya Lagu dan Tari Lilin-Lilin Kecil) Tj
+1 0 0 1 236.00 446.89 Tm
+(Istirahat, Sholat, dan Persiapan Acara Malam Lilin Kecil / Rapat Organisasi) Tj
 ET
 q
 0.000 0.706 0.675 rg
-35.00 463.39 3.50 16.00 re
+35.00 413.39 3.50 16.00 re
 f
 Q
 BT
 /F2 10.00 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 45.00 466.39 Tm
+1 0 0 1 45.00 416.39 Tm
 (B. DIABETES HEALTH FORUM \(SABTU, 7 NOV 2026\)) Tj
 ET
 BT
 /F1 7.50 Tf
 0.400 0.450 0.500 rg
-1 0 0 1 45.00 453.89 Tm
-(Venue: Ballroom 2 Novotel Bogor  |  Khusus Awam, Keluarga & Komunitas) Tj
+1 0 0 1 45.00 403.89 Tm
+(Venue: Ballroom 2 Novotel Bogor  |  Khusus Komunitas, Keluarga & Awam) Tj
 ET
 q
 0.75 w
 0.910 0.935 0.965 rg
 0.820 0.860 0.900 RG
-35.00 431.39 525.28 16.00 re
+35.00 381.39 525.28 16.00 re
 B
 Q
 q
 0.75 w
 0.820 0.860 0.900 RG
-115.00 431.39 m
-115.00 447.39 l
+115.00 381.39 m
+115.00 397.39 l
 S
 Q
 q
 0.75 w
 0.820 0.860 0.900 RG
-230.00 431.39 m
-230.00 447.39 l
+230.00 381.39 m
+230.00 397.39 l
 S
 Q
 BT
 /F2 7.50 Tf
 0.100 0.200 0.300 rg
-1 0 0 1 41.00 435.89 Tm
+1 0 0 1 41.00 385.89 Tm
 (WAKTU) Tj
 ET
 BT
 /F2 7.50 Tf
 0.100 0.200 0.300 rg
-1 0 0 1 121.00 435.89 Tm
+1 0 0 1 121.00 385.89 Tm
 (KEGIATAN) Tj
 ET
 BT
 /F2 7.50 Tf
 0.100 0.200 0.300 rg
-1 0 0 1 236.00 435.89 Tm
-(KETERANGAN & DETAIL ACARA) Tj
-ET
-q
-0.75 w
-1.000 1.000 1.000 rg
-0.860 0.880 0.910 RG
-35.00 402.89 525.28 28.50 re
-B
-Q
-q
-0.75 w
-0.860 0.880 0.910 RG
-115.00 402.89 m
-115.00 431.39 l
-S
-Q
-q
-0.75 w
-0.860 0.880 0.910 RG
-230.00 402.89 m
-230.00 431.39 l
-S
-Q
-BT
-/F2 8.00 Tf
-0.043 0.239 0.369 rg
-1 0 0 1 41.00 418.39 Tm
-(08.30 - 08.40) Tj
-ET
-BT
-/F2 8.00 Tf
-0.120 0.160 0.200 rg
-1 0 0 1 121.00 418.39 Tm
-(Pembukaan) Tj
-ET
-BT
-/F1 7.00 Tf
-0.420 0.470 0.520 rg
-1 0 0 1 121.00 407.39 Tm
-(Ballroom 2) Tj
-ET
-BT
-/F1 7.50 Tf
-0.180 0.220 0.260 rg
-1 0 0 1 236.00 418.39 Tm
-(Pembukaan resmi oleh Panitia Pelaksana & MC) Tj
+1 0 0 1 236.00 385.89 Tm
+(KETERANGAN & NARASUMBER) Tj
 ET
 q
 0.75 w
 0.970 0.980 0.990 rg
 0.860 0.880 0.910 RG
-35.00 372.89 525.28 30.00 re
+35.00 352.89 525.28 28.50 re
 B
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-115.00 372.89 m
-115.00 402.89 l
+115.00 352.89 m
+115.00 381.39 l
 S
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-230.00 372.89 m
-230.00 402.89 l
+230.00 352.89 m
+230.00 381.39 l
 S
 Q
 BT
 /F2 8.00 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 41.00 389.89 Tm
-(08.40 - 09.25) Tj
+1 0 0 1 41.00 368.39 Tm
+(09.10 - 09.30) Tj
 ET
 BT
 /F2 8.00 Tf
 0.120 0.160 0.200 rg
-1 0 0 1 121.00 389.89 Tm
-(Sesi Edukasi) Tj
+1 0 0 1 121.00 368.39 Tm
+(DIVILAB Cor 3) Tj
 ET
 BT
 /F1 7.00 Tf
 0.420 0.470 0.520 rg
-1 0 0 1 121.00 378.89 Tm
+1 0 0 1 121.00 357.39 Tm
+(Ballroom 2) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 368.39 Tm
+(Sesi pengenalan & inovasi pemantauan diabetes terkini) Tj
+ET
+q
+0.75 w
+1.000 1.000 1.000 rg
+0.860 0.880 0.910 RG
+35.00 312.89 525.28 40.00 re
+B
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+115.00 312.89 m
+115.00 352.89 l
+S
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+230.00 312.89 m
+230.00 352.89 l
+S
+Q
+BT
+/F2 8.00 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 41.00 339.89 Tm
+(09.35 - 10.35) Tj
+ET
+BT
+/F2 8.00 Tf
+0.120 0.160 0.200 rg
+1 0 0 1 121.00 339.89 Tm
+(Talkshow 1) Tj
+ET
+BT
+/F1 7.00 Tf
+0.420 0.470 0.520 rg
+1 0 0 1 121.00 328.89 Tm
 (Ballroom 2) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 236.00 389.89 Tm
-(Topik: 'Masih muda, kok diabetes?') Tj
+1 0 0 1 236.00 339.89 Tm
+(Topik: Temu 6 Tokoh Senior Penyandang Diabetes) Tj
 ET
 BT
 /F1 7.50 Tf
 0.180 0.220 0.260 rg
-1 0 0 1 236.00 379.89 Tm
-(Membedah tren peningkatan diabetes pada usia produktif) Tj
-ET
-q
-0.75 w
-1.000 1.000 1.000 rg
-0.860 0.880 0.910 RG
-35.00 344.39 525.28 28.50 re
-B
-Q
-q
-0.75 w
-0.860 0.880 0.910 RG
-115.00 344.39 m
-115.00 372.89 l
-S
-Q
-q
-0.75 w
-0.860 0.880 0.910 RG
-230.00 344.39 m
-230.00 372.89 l
-S
-Q
-BT
-/F2 8.00 Tf
-0.043 0.239 0.369 rg
-1 0 0 1 41.00 359.89 Tm
-(09.25 - 09.55) Tj
-ET
-BT
-/F2 8.00 Tf
-0.120 0.160 0.200 rg
-1 0 0 1 121.00 359.89 Tm
-(Tanya Jawab) Tj
-ET
-BT
-/F1 7.00 Tf
-0.420 0.470 0.520 rg
-1 0 0 1 121.00 348.89 Tm
-(Ballroom 2) Tj
+1 0 0 1 236.00 329.89 Tm
+(Inspirasi dan keteladanan hidup sehat berkualitas puluhan tahun bersama diabetes) Tj
 ET
 BT
 /F1 7.50 Tf
 0.180 0.220 0.260 rg
-1 0 0 1 236.00 359.89 Tm
-(Sesi interaktif tanya jawab narasumber dan peserta) Tj
+1 0 0 1 236.00 319.89 Tm
+(Anchor: Ibu Manuella) Tj
 ET
 q
 0.75 w
 0.970 0.980 0.990 rg
 0.860 0.880 0.910 RG
-35.00 315.89 525.28 28.50 re
+35.00 252.89 525.28 60.00 re
 B
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-115.00 315.89 m
-115.00 344.39 l
+115.00 252.89 m
+115.00 312.89 l
 S
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-230.00 315.89 m
-230.00 344.39 l
-S
-Q
-BT
-/F2 8.00 Tf
-0.043 0.239 0.369 rg
-1 0 0 1 41.00 331.39 Tm
-(09.55 - 10.25) Tj
-ET
-BT
-/F2 8.00 Tf
-0.120 0.160 0.200 rg
-1 0 0 1 121.00 331.39 Tm
-(Temu 6 Tokoh Senior) Tj
-ET
-BT
-/F1 7.00 Tf
-0.420 0.470 0.520 rg
-1 0 0 1 121.00 320.39 Tm
-(Ballroom 2) Tj
-ET
-BT
-/F1 7.50 Tf
-0.180 0.220 0.260 rg
-1 0 0 1 236.00 331.39 Tm
-(Inspirasi & keteladanan hidup sehat berkualitas puluhan tahun bersama diabetes) Tj
-ET
-q
-0.75 w
-1.000 1.000 1.000 rg
-0.860 0.880 0.910 RG
-35.00 287.39 525.28 28.50 re
-B
-Q
-q
-0.75 w
-0.860 0.880 0.910 RG
-115.00 287.39 m
-115.00 315.89 l
-S
-Q
-q
-0.75 w
-0.860 0.880 0.910 RG
-230.00 287.39 m
-230.00 315.89 l
+230.00 252.89 m
+230.00 312.89 l
 S
 Q
 BT
 /F2 8.00 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 41.00 302.89 Tm
-(10.25 - 10.35) Tj
+1 0 0 1 41.00 299.89 Tm
+(10.40 - 11.40) Tj
 ET
 BT
 /F2 8.00 Tf
 0.120 0.160 0.200 rg
-1 0 0 1 121.00 302.89 Tm
-(Coffee Break) Tj
+1 0 0 1 121.00 299.89 Tm
+(Talkshow 2 & Fashion) Tj
 ET
 BT
 /F1 7.00 Tf
 0.420 0.470 0.520 rg
-1 0 0 1 121.00 291.89 Tm
-(Ballroom 2) Tj
-ET
-BT
-/F1 7.50 Tf
-0.180 0.220 0.260 rg
-1 0 0 1 236.00 302.89 Tm
-(Rehat & kudapan sehat) Tj
-ET
-q
-0.75 w
-0.970 0.980 0.990 rg
-0.860 0.880 0.910 RG
-35.00 257.39 525.28 30.00 re
-B
-Q
-q
-0.75 w
-0.860 0.880 0.910 RG
-115.00 257.39 m
-115.00 287.39 l
-S
-Q
-q
-0.75 w
-0.860 0.880 0.910 RG
-230.00 257.39 m
-230.00 287.39 l
-S
-Q
-BT
-/F2 8.00 Tf
-0.043 0.239 0.369 rg
-1 0 0 1 41.00 274.39 Tm
-(10.35 - 11.20) Tj
-ET
-BT
-/F2 8.00 Tf
-0.120 0.160 0.200 rg
-1 0 0 1 121.00 274.39 Tm
-(Talkshow Spesial) Tj
-ET
-BT
-/F1 7.00 Tf
-0.420 0.470 0.520 rg
-1 0 0 1 121.00 263.39 Tm
+1 0 0 1 121.00 288.89 Tm
 (Ballroom 2) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 236.00 274.39 Tm
-(Topik: 'Cantik, Bugar, Bergairah') Tj
+1 0 0 1 236.00 299.89 Tm
+(Topik: Cantik, Bugar, Bergairah \(Vitalitas & Keharmonisan Keluarga\)) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 289.89 Tm
+(Anchor: dr. Mayorita) Tj
 ET
 BT
 /F2 7.50 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 236.00 264.39 Tm
-(Narasumber: dr. Boyke Dian Nugraha, SpOG, MARS) Tj
+1 0 0 1 236.00 279.89 Tm
+(Narasumber 1: dr. Boyke Dian Nugraha, SpOG, MARS) Tj
+ET
+BT
+/F2 7.50 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 236.00 269.89 Tm
+(Narasumber 2: dr. Roy Panusunan Sibarani, SpPD-KEMD) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 259.89 Tm
+(Fashion Show: Peragaan Busana Karya Pembinaan Batik Marunda) Tj
 ET
 q
 0.75 w
 1.000 1.000 1.000 rg
 0.860 0.880 0.910 RG
-35.00 228.89 525.28 28.50 re
+35.00 224.39 525.28 28.50 re
 B
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-115.00 228.89 m
-115.00 257.39 l
+115.00 224.39 m
+115.00 252.89 l
 S
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-230.00 228.89 m
-230.00 257.39 l
+230.00 224.39 m
+230.00 252.89 l
 S
 Q
 BT
 /F2 8.00 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 41.00 244.39 Tm
-(11.20 - 11.50) Tj
+1 0 0 1 41.00 239.89 Tm
+(11.40 - 12.00) Tj
 ET
 BT
 /F2 8.00 Tf
 0.120 0.160 0.200 rg
-1 0 0 1 121.00 244.39 Tm
-(Tanya Jawab dr. Boyke) Tj
+1 0 0 1 121.00 239.89 Tm
+(Doorprize & Foto) Tj
 ET
 BT
 /F1 7.00 Tf
 0.420 0.470 0.520 rg
-1 0 0 1 121.00 233.39 Tm
+1 0 0 1 121.00 228.89 Tm
 (Ballroom 2) Tj
 ET
 BT
 /F1 7.50 Tf
 0.180 0.220 0.260 rg
-1 0 0 1 236.00 244.39 Tm
-(Tanya jawab seputar keharmonisan keluarga, kesehatan seksual & vitalitas) Tj
+1 0 0 1 236.00 239.89 Tm
+(Pengundian doorprize menarik dan sesi dokumentasi foto bersama) Tj
 ET
 q
 0.75 w
 0.970 0.980 0.990 rg
 0.860 0.880 0.910 RG
-35.00 200.39 525.28 28.50 re
+35.00 185.89 525.28 38.50 re
 B
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-115.00 200.39 m
-115.00 228.89 l
+115.00 185.89 m
+115.00 224.39 l
 S
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-230.00 200.39 m
-230.00 228.89 l
-S
-Q
-BT
-/F2 8.00 Tf
-0.043 0.239 0.369 rg
-1 0 0 1 41.00 215.89 Tm
-(11.50 - 12.00) Tj
-ET
-BT
-/F2 8.00 Tf
-0.120 0.160 0.200 rg
-1 0 0 1 121.00 215.89 Tm
-(Penutupan & Foto) Tj
-ET
-BT
-/F1 7.00 Tf
-0.420 0.470 0.520 rg
-1 0 0 1 121.00 204.89 Tm
-(Ballroom 2) Tj
-ET
-BT
-/F1 7.50 Tf
-0.180 0.220 0.260 rg
-1 0 0 1 236.00 215.89 Tm
-(Penyerahan plakat dan dokumentasi bersama) Tj
-ET
-q
-0.75 w
-1.000 1.000 1.000 rg
-0.860 0.880 0.910 RG
-35.00 161.89 525.28 38.50 re
-B
-Q
-q
-0.75 w
-0.860 0.880 0.910 RG
-115.00 161.89 m
-115.00 200.39 l
-S
-Q
-q
-0.75 w
-0.860 0.880 0.910 RG
-230.00 161.89 m
-230.00 200.39 l
+230.00 185.89 m
+230.00 224.39 l
 S
 Q
 BT
 /F2 8.00 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 41.00 187.39 Tm
+1 0 0 1 41.00 211.39 Tm
 (12.00 - Selesai) Tj
 ET
 BT
 /F2 8.00 Tf
 0.120 0.160 0.200 rg
-1 0 0 1 121.00 187.39 Tm
+1 0 0 1 121.00 211.39 Tm
 (Makan Siang & Ramah) Tj
 ET
 BT
 /F2 8.00 Tf
 0.120 0.160 0.200 rg
-1 0 0 1 121.00 177.39 Tm
+1 0 0 1 121.00 201.39 Tm
 (Tamah) Tj
 ET
 BT
 /F1 7.00 Tf
 0.420 0.470 0.520 rg
-1 0 0 1 121.00 166.39 Tm
-(Ballroom 2 / Restoran) Tj
+1 0 0 1 121.00 190.39 Tm
+(Ballroom 2 / Resto) Tj
 ET
 BT
 /F1 7.50 Tf
 0.180 0.220 0.260 rg
-1 0 0 1 236.00 187.39 Tm
-(Ramah tamah dan makan siang bersama di Ballroom 2 / Restoran Novotel) Tj
+1 0 0 1 236.00 211.39 Tm
+(Santap siang bersama dan ramah tamah peserta Diabetes Health Forum) Tj
 ET
 q
 0.50 w
@@ -1547,7 +1421,7 @@ BT
 /F2 7.00 Tf
 0.400 0.450 0.500 rg
 1 0 0 1 485.28 18.00 Tm
-(Halaman 2 dari 3) Tj
+(Halaman 2 dari 4) Tj
 ET
 
 endstream
@@ -1556,7 +1430,7 @@ endobj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 10 0 R >>
 endobj
 10 0 obj
-<< /Length 10168 >>
+<< /Length 11974 >>
 stream
 q
 0.043 0.239 0.369 rg
@@ -1567,7 +1441,7 @@ BT
 /F2 8.50 Tf
 1.000 1.000 1.000 rg
 1 0 0 1 45.00 809.39 Tm
-(RAPAT ORGANISASI \(7 NOV\) & PESTA RAKYAT \(8 NOV 2026\)) Tj
+(MALAM LILIN KECIL & RAPAT ORGANISASI \(7 NOV 2026\)) Tj
 ET
 BT
 /F1 8.00 Tf
@@ -1584,13 +1458,13 @@ BT
 /F2 10.00 Tf
 0.043 0.239 0.369 rg
 1 0 0 1 45.00 774.89 Tm
-(C. JADWAL RAPAT ORGANISASI PERSADIA, PEDI & PERKENI) Tj
+(C. MALAM LILIN KECIL / GALA DINNER \(SABTU, 7 NOV 2026\)) Tj
 ET
 BT
 /F1 7.50 Tf
 0.400 0.450 0.500 rg
 1 0 0 1 45.00 762.39 Tm
-(Venue: Novotel Bogor  |  Sabtu, 7 November 2026) Tj
+(Venue: Grand Ballroom Novotel Bogor  |  Waktu: 18.30 - 21.00 WIB) Tj
 ET
 q
 0.75 w
@@ -1623,32 +1497,32 @@ BT
 /F2 7.50 Tf
 0.100 0.200 0.300 rg
 1 0 0 1 121.00 744.39 Tm
-(ORGANISASI / RUANG) Tj
+(AGENDA / ACARA) Tj
 ET
 BT
 /F2 7.50 Tf
 0.100 0.200 0.300 rg
 1 0 0 1 236.00 744.39 Tm
-(DETAIL AGENDA KERJA) Tj
+(DETAIL ACARA & PENGISI ACARA) Tj
 ET
 q
 0.75 w
-1.000 1.000 1.000 rg
+0.970 0.980 0.990 rg
 0.860 0.880 0.910 RG
-35.00 709.89 525.28 30.00 re
+35.00 711.39 525.28 28.50 re
 B
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-115.00 709.89 m
+115.00 711.39 m
 115.00 739.89 l
 S
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-230.00 709.89 m
+230.00 711.39 m
 230.00 739.89 l
 S
 Q
@@ -1656,279 +1530,313 @@ BT
 /F2 8.00 Tf
 0.043 0.239 0.369 rg
 1 0 0 1 41.00 726.89 Tm
-(14.00 - 17.00) Tj
+(18.30 - 19.30) Tj
 ET
 BT
 /F2 8.00 Tf
 0.120 0.160 0.200 rg
 1 0 0 1 121.00 726.89 Tm
-(PERSADIA) Tj
+(Makan Malam Bersama) Tj
 ET
 BT
 /F1 7.00 Tf
 0.420 0.470 0.520 rg
 1 0 0 1 121.00 715.89 Tm
-(Karang-Sanggar) Tj
+(Grand Ballroom) Tj
 ET
 BT
 /F1 7.50 Tf
 0.180 0.220 0.260 rg
 1 0 0 1 236.00 726.89 Tm
-(Rapat Kerja Nasional PERSADIA) Tj
-ET
-BT
-/F1 7.50 Tf
-0.180 0.220 0.260 rg
-1 0 0 1 236.00 716.89 Tm
-(Ruang Breakout Sidang: Ruang Karang, Ruang Sanggar, Ruang Geulis) Tj
-ET
-q
-0.75 w
-0.970 0.980 0.990 rg
-0.860 0.880 0.910 RG
-35.00 681.39 525.28 28.50 re
-B
-Q
-q
-0.75 w
-0.860 0.880 0.910 RG
-115.00 681.39 m
-115.00 709.89 l
-S
-Q
-q
-0.75 w
-0.860 0.880 0.910 RG
-230.00 681.39 m
-230.00 709.89 l
-S
-Q
-BT
-/F2 8.00 Tf
-0.043 0.239 0.369 rg
-1 0 0 1 41.00 696.89 Tm
-(14.00 - 17.00) Tj
-ET
-BT
-/F2 8.00 Tf
-0.120 0.160 0.200 rg
-1 0 0 1 121.00 696.89 Tm
-(PEDI) Tj
-ET
-BT
-/F1 7.00 Tf
-0.420 0.470 0.520 rg
-1 0 0 1 121.00 685.89 Tm
-(Ruang Kencana) Tj
-ET
-BT
-/F1 7.50 Tf
-0.180 0.220 0.260 rg
-1 0 0 1 236.00 696.89 Tm
-(Rapat Kerja Pengurus Perkumpulan Edukator Diabetes Indonesia \(PEDI\)) Tj
+(Makan malam ramah tamah nasional diiringi penampilan live music AXXI 8 Band) Tj
 ET
 q
 0.75 w
 1.000 1.000 1.000 rg
 0.860 0.880 0.910 RG
-35.00 652.89 525.28 28.50 re
+35.00 682.89 525.28 28.50 re
 B
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-115.00 652.89 m
-115.00 681.39 l
+115.00 682.89 m
+115.00 711.39 l
 S
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-230.00 652.89 m
-230.00 681.39 l
+230.00 682.89 m
+230.00 711.39 l
 S
 Q
 BT
 /F2 8.00 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 41.00 668.39 Tm
-(18.00 - 19.00) Tj
+1 0 0 1 41.00 698.39 Tm
+(19.15 - 19.30) Tj
 ET
 BT
 /F2 8.00 Tf
 0.120 0.160 0.200 rg
-1 0 0 1 121.00 668.39 Tm
-(PERKENI) Tj
+1 0 0 1 121.00 698.39 Tm
+(Soyjoy Menu Creation) Tj
 ET
 BT
 /F1 7.00 Tf
 0.420 0.470 0.520 rg
-1 0 0 1 121.00 657.39 Tm
-(Ballroom 2 Novotel) Tj
+1 0 0 1 121.00 687.39 Tm
+(Panggung Utama) Tj
 ET
 BT
 /F1 7.50 Tf
 0.180 0.220 0.260 rg
-1 0 0 1 236.00 668.39 Tm
-(Rapat Kerja Perkumpulan Endokrinologi Indonesia \(PERKENI\)) Tj
-ET
-q
-0.000 0.706 0.675 rg
-35.00 634.89 3.50 16.00 re
-f
-Q
-BT
-/F2 10.00 Tf
-0.043 0.239 0.369 rg
-1 0 0 1 45.00 637.89 Tm
-(D. PESTA RAKYAT & SENAM SEHAT NUSANTARA) Tj
-ET
-BT
-/F1 7.50 Tf
-0.400 0.450 0.500 rg
-1 0 0 1 45.00 625.39 Tm
-(Venue: Stadion Pakansari, Cibinong, Kabupaten Bogor  |  Minggu, 8 November 2026) Tj
-ET
-q
-0.75 w
-0.910 0.935 0.965 rg
-0.820 0.860 0.900 RG
-35.00 602.89 525.28 16.00 re
-B
-Q
-q
-0.75 w
-0.820 0.860 0.900 RG
-115.00 602.89 m
-115.00 618.89 l
-S
-Q
-q
-0.75 w
-0.820 0.860 0.900 RG
-230.00 602.89 m
-230.00 618.89 l
-S
-Q
-BT
-/F2 7.50 Tf
-0.100 0.200 0.300 rg
-1 0 0 1 41.00 607.39 Tm
-(WAKTU) Tj
-ET
-BT
-/F2 7.50 Tf
-0.100 0.200 0.300 rg
-1 0 0 1 121.00 607.39 Tm
-(KEGIATAN) Tj
-ET
-BT
-/F2 7.50 Tf
-0.100 0.200 0.300 rg
-1 0 0 1 236.00 607.39 Tm
-(KETERANGAN & DETAIL ACARA) Tj
-ET
-q
-0.75 w
-1.000 1.000 1.000 rg
-0.860 0.880 0.910 RG
-35.00 574.39 525.28 28.50 re
-B
-Q
-q
-0.75 w
-0.860 0.880 0.910 RG
-115.00 574.39 m
-115.00 602.89 l
-S
-Q
-q
-0.75 w
-0.860 0.880 0.910 RG
-230.00 574.39 m
-230.00 602.89 l
-S
-Q
-BT
-/F2 8.00 Tf
-0.043 0.239 0.369 rg
-1 0 0 1 41.00 589.89 Tm
-(05.00 - 06.00) Tj
-ET
-BT
-/F2 8.00 Tf
-0.120 0.160 0.200 rg
-1 0 0 1 121.00 589.89 Tm
-(Registrasi Peserta) Tj
-ET
-BT
-/F1 7.00 Tf
-0.420 0.470 0.520 rg
-1 0 0 1 121.00 578.89 Tm
-(Pintu 8 Pakansari) Tj
-ET
-BT
-/F1 7.50 Tf
-0.180 0.220 0.260 rg
-1 0 0 1 236.00 589.89 Tm
-(Pengambilan snack box & paket peserta di Pintu 8 Stadion Pakansari) Tj
+1 0 0 1 236.00 698.39 Tm
+(Presentasi demo kreasi kudapan sehat bergizi berbahan kedelai Soyjoy) Tj
 ET
 q
 0.75 w
 0.970 0.980 0.990 rg
 0.860 0.880 0.910 RG
-35.00 535.89 525.28 38.50 re
+35.00 654.39 525.28 28.50 re
+B
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+115.00 654.39 m
+115.00 682.89 l
+S
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+230.00 654.39 m
+230.00 682.89 l
+S
+Q
+BT
+/F2 8.00 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 41.00 669.89 Tm
+(19.30 - 19.32) Tj
+ET
+BT
+/F2 8.00 Tf
+0.120 0.160 0.200 rg
+1 0 0 1 121.00 669.89 Tm
+(Pembukaan Malam) Tj
+ET
+BT
+/F1 7.00 Tf
+0.420 0.470 0.520 rg
+1 0 0 1 121.00 658.89 Tm
+(Grand Ballroom) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 669.89 Tm
+(Pembukaan resmi Malam Lilin Kecil & Gala Dinner | MC: Tamara Geraldine) Tj
+ET
+q
+0.75 w
+1.000 1.000 1.000 rg
+0.860 0.880 0.910 RG
+35.00 624.39 525.28 30.00 re
+B
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+115.00 624.39 m
+115.00 654.39 l
+S
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+230.00 624.39 m
+230.00 654.39 l
+S
+Q
+BT
+/F2 8.00 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 41.00 641.39 Tm
+(19.32 - 19.35) Tj
+ET
+BT
+/F2 8.00 Tf
+0.120 0.160 0.200 rg
+1 0 0 1 121.00 641.39 Tm
+(Ketua Umum Terpilih) Tj
+ET
+BT
+/F1 7.00 Tf
+0.420 0.470 0.520 rg
+1 0 0 1 121.00 630.39 Tm
+(Panggung Utama) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 641.39 Tm
+(Perkenalan Ketua Umum Terpilih PB PERSADIA Periode 2026 - 2029: dr. Roy Panusunan) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 242.00 631.39 Tm
+(Sibarani, SpPD-KEMD) Tj
+ET
+q
+0.75 w
+0.970 0.980 0.990 rg
+0.860 0.880 0.910 RG
+35.00 594.39 525.28 30.00 re
+B
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+115.00 594.39 m
+115.00 624.39 l
+S
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+230.00 594.39 m
+230.00 624.39 l
+S
+Q
+BT
+/F2 8.00 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 41.00 611.39 Tm
+(19.35 - 19.45) Tj
+ET
+BT
+/F2 8.00 Tf
+0.120 0.160 0.200 rg
+1 0 0 1 121.00 611.39 Tm
+(Product Launching CGM) Tj
+ET
+BT
+/F1 7.00 Tf
+0.420 0.470 0.520 rg
+1 0 0 1 121.00 600.39 Tm
+(Panggung Utama) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 611.39 Tm
+(Dreisam - CGM S1 Pro: Mr. Chawn Hu \(Marketing Director\)) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 601.39 Tm
+(Pemutaran Video & Prosesi Pemencetan Tombol Production Launching) Tj
+ET
+q
+0.75 w
+1.000 1.000 1.000 rg
+0.860 0.880 0.910 RG
+35.00 565.89 525.28 28.50 re
+B
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+115.00 565.89 m
+115.00 594.39 l
+S
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+230.00 565.89 m
+230.00 594.39 l
+S
+Q
+BT
+/F2 8.00 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 41.00 581.39 Tm
+(19.45 - 20.00) Tj
+ET
+BT
+/F2 8.00 Tf
+0.120 0.160 0.200 rg
+1 0 0 1 121.00 581.39 Tm
+(Penampilan Musik) Tj
+ET
+BT
+/F1 7.00 Tf
+0.420 0.470 0.520 rg
+1 0 0 1 121.00 570.39 Tm
+(Panggung Utama) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 581.39 Tm
+(AXXI 8 Band: Lagu 'Yang Terbaik', 'September Ceria', 'Astaga') Tj
+ET
+q
+0.75 w
+0.970 0.980 0.990 rg
+0.860 0.880 0.910 RG
+35.00 535.89 525.28 30.00 re
 B
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
 115.00 535.89 m
-115.00 574.39 l
+115.00 565.89 l
 S
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
 230.00 535.89 m
-230.00 574.39 l
+230.00 565.89 l
 S
 Q
 BT
 /F2 8.00 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 41.00 561.39 Tm
-(06.00 - 07.00) Tj
+1 0 0 1 41.00 552.89 Tm
+(20.00 - 20.10) Tj
 ET
 BT
 /F2 8.00 Tf
 0.120 0.160 0.200 rg
-1 0 0 1 121.00 561.39 Tm
-(Parade Cabang &) Tj
-ET
-BT
-/F2 8.00 Tf
-0.120 0.160 0.200 rg
-1 0 0 1 121.00 551.39 Tm
-(Skrining) Tj
+1 0 0 1 121.00 552.89 Tm
+(Pembacaan Sajak) Tj
 ET
 BT
 /F1 7.00 Tf
 0.420 0.470 0.520 rg
-1 0 0 1 121.00 540.39 Tm
-(Area Stadion) Tj
+1 0 0 1 121.00 541.89 Tm
+(Panggung Utama) Tj
 ET
 BT
 /F1 7.50 Tf
 0.180 0.220 0.260 rg
-1 0 0 1 236.00 561.39 Tm
-(Parade Kontingen Cabang PERSADIA se-Indonesia & Defile) Tj
+1 0 0 1 236.00 552.89 Tm
+(Pembacaan Sajak 'Life Is Too Sweet for Giving Up': Anita Sabidin dan Pak Imam) Tj
 ET
 BT
 /F1 7.50 Tf
 0.180 0.220 0.260 rg
-1 0 0 1 236.00 551.39 Tm
-(Pemeriksaan Gula Darah Massal Gratis \(Target 7.000 Peserta\)) Tj
+1 0 0 1 242.00 542.89 Tm
+(Soeseno) Tj
 ET
 q
 0.75 w
@@ -1955,13 +1863,13 @@ BT
 /F2 8.00 Tf
 0.043 0.239 0.369 rg
 1 0 0 1 41.00 522.89 Tm
-(07.00 - 07.30) Tj
+(20.10 - 20.25) Tj
 ET
 BT
 /F2 8.00 Tf
 0.120 0.160 0.200 rg
 1 0 0 1 121.00 522.89 Tm
-(Pembukaan Acara) Tj
+(Penampilan Musik) Tj
 ET
 BT
 /F1 7.00 Tf
@@ -1973,26 +1881,26 @@ BT
 /F1 7.50 Tf
 0.180 0.220 0.260 rg
 1 0 0 1 236.00 522.89 Tm
-(Menyanyikan Lagu Kebangsaan Indonesia Raya, Sambutan Pimpinan & Tamu Kehormatan) Tj
+(AXXI 8 Band: Lagu 'Amburadul' \(AXXI 8\) & 'Tuhan Ada Dimana-mana' \(Tulus\)) Tj
 ET
 q
 0.75 w
 0.970 0.980 0.990 rg
 0.860 0.880 0.910 RG
-35.00 477.39 525.28 30.00 re
+35.00 478.89 525.28 28.50 re
 B
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-115.00 477.39 m
+115.00 478.89 m
 115.00 507.39 l
 S
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-230.00 477.39 m
+230.00 478.89 m
 230.00 507.39 l
 S
 Q
@@ -2000,260 +1908,369 @@ BT
 /F2 8.00 Tf
 0.043 0.239 0.369 rg
 1 0 0 1 41.00 494.39 Tm
-(07.30 - 08.30) Tj
+(20.25 - 20.40) Tj
 ET
 BT
 /F2 8.00 Tf
 0.120 0.160 0.200 rg
 1 0 0 1 121.00 494.39 Tm
-(Senam Bugar Massal) Tj
+(Fashion Show Batik) Tj
 ET
 BT
 /F1 7.00 Tf
 0.420 0.470 0.520 rg
 1 0 0 1 121.00 483.39 Tm
-(Lapangan Utama) Tj
-ET
-BT
-/F1 7.50 Tf
-0.180 0.220 0.260 rg
-1 0 0 1 236.00 494.39 Tm
-(Senam Bugar Diabetes Nasional Massal bersama instruktur profesional) Tj
-ET
-BT
-/F1 7.50 Tf
-0.180 0.220 0.260 rg
-1 0 0 1 236.00 484.39 Tm
-(\(Paralel Skrining Massal Gula Darah\)) Tj
-ET
-q
-0.75 w
-1.000 1.000 1.000 rg
-0.860 0.880 0.910 RG
-35.00 438.89 525.28 38.50 re
-B
-Q
-q
-0.75 w
-0.860 0.880 0.910 RG
-115.00 438.89 m
-115.00 477.39 l
-S
-Q
-q
-0.75 w
-0.860 0.880 0.910 RG
-230.00 438.89 m
-230.00 477.39 l
-S
-Q
-BT
-/F2 8.00 Tf
-0.043 0.239 0.369 rg
-1 0 0 1 41.00 464.39 Tm
-(08.30 - 10.00) Tj
-ET
-BT
-/F2 8.00 Tf
-0.120 0.160 0.200 rg
-1 0 0 1 121.00 464.39 Tm
-(Showcase Senam) Tj
-ET
-BT
-/F2 8.00 Tf
-0.120 0.160 0.200 rg
-1 0 0 1 121.00 454.39 Tm
-(Daerah) Tj
-ET
-BT
-/F1 7.00 Tf
-0.420 0.470 0.520 rg
-1 0 0 1 121.00 443.39 Tm
-(Panggung & Lapangan) Tj
-ET
-BT
-/F1 7.50 Tf
-0.180 0.220 0.260 rg
-1 0 0 1 236.00 464.39 Tm
-(Peragaan variasi senam kebugaran perwakilan cabang daerah) Tj
-ET
-BT
-/F1 7.50 Tf
-0.180 0.220 0.260 rg
-1 0 0 1 236.00 454.39 Tm
-(\(Paralel Skrining Massal Gula Darah\)) Tj
-ET
-q
-0.75 w
-0.970 0.980 0.990 rg
-0.860 0.880 0.910 RG
-35.00 400.39 525.28 38.50 re
-B
-Q
-q
-0.75 w
-0.860 0.880 0.910 RG
-115.00 400.39 m
-115.00 438.89 l
-S
-Q
-q
-0.75 w
-0.860 0.880 0.910 RG
-230.00 400.39 m
-230.00 438.89 l
-S
-Q
-BT
-/F2 8.00 Tf
-0.043 0.239 0.369 rg
-1 0 0 1 41.00 425.89 Tm
-(10.00 - 11.00) Tj
-ET
-BT
-/F2 8.00 Tf
-0.120 0.160 0.200 rg
-1 0 0 1 121.00 425.89 Tm
-(Panggung Hiburan) Tj
-ET
-BT
-/F2 8.00 Tf
-0.120 0.160 0.200 rg
-1 0 0 1 121.00 415.89 Tm
-(Rakyat) Tj
-ET
-BT
-/F1 7.00 Tf
-0.420 0.470 0.520 rg
-1 0 0 1 121.00 404.89 Tm
 (Panggung Utama) Tj
 ET
 BT
 /F1 7.50 Tf
 0.180 0.220 0.260 rg
-1 0 0 1 236.00 425.89 Tm
-(Hiburan musik & pengumuman pemenang doorprize hadiah utama) Tj
-ET
-BT
-/F1 7.50 Tf
-0.180 0.220 0.260 rg
-1 0 0 1 236.00 415.89 Tm
-(\(Paralel Skrining Massal Gula Darah\)) Tj
+1 0 0 1 236.00 494.39 Tm
+(Fashion Show Batik Marunda: Peragaan busana karya pembinaan pembatik Marunda) Tj
 ET
 q
 0.75 w
 1.000 1.000 1.000 rg
 0.860 0.880 0.910 RG
-35.00 371.89 525.28 28.50 re
+35.00 450.39 525.28 28.50 re
 B
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-115.00 371.89 m
-115.00 400.39 l
+115.00 450.39 m
+115.00 478.89 l
 S
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-230.00 371.89 m
-230.00 400.39 l
+230.00 450.39 m
+230.00 478.89 l
 S
 Q
 BT
 /F2 8.00 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 41.00 387.39 Tm
-(11.00 - 12.00) Tj
+1 0 0 1 41.00 465.89 Tm
+(20.40 - 20.45) Tj
 ET
 BT
 /F2 8.00 Tf
 0.120 0.160 0.200 rg
-1 0 0 1 121.00 387.39 Tm
-(Makan Siang) Tj
+1 0 0 1 121.00 465.89 Tm
+(Narasi Puitis Cinta) Tj
 ET
 BT
 /F1 7.00 Tf
 0.420 0.470 0.520 rg
-1 0 0 1 121.00 376.39 Tm
-(Area Tribun & Lapangan) Tj
+1 0 0 1 121.00 454.89 Tm
+(Panggung Utama) Tj
 ET
 BT
 /F1 7.50 Tf
 0.180 0.220 0.260 rg
-1 0 0 1 236.00 387.39 Tm
-(Pembagian dan santap makan siang bersama seluruh peserta) Tj
+1 0 0 1 236.00 465.89 Tm
+(Narasi puitis tentang ketabahan dan cinta kasih dibawakan oleh Tamara Geraldine) Tj
 ET
 q
 0.75 w
 0.970 0.980 0.990 rg
 0.860 0.880 0.910 RG
-35.00 343.39 525.28 28.50 re
+35.00 420.39 525.28 30.00 re
 B
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-115.00 343.39 m
-115.00 371.89 l
+115.00 420.39 m
+115.00 450.39 l
 S
 Q
 q
 0.75 w
 0.860 0.880 0.910 RG
-230.00 343.39 m
-230.00 371.89 l
+230.00 420.39 m
+230.00 450.39 l
 S
 Q
 BT
 /F2 8.00 Tf
 0.043 0.239 0.369 rg
-1 0 0 1 41.00 358.89 Tm
-(12.00 - Selesai) Tj
+1 0 0 1 41.00 437.39 Tm
+(20.45 - 20.55) Tj
 ET
 BT
 /F2 8.00 Tf
 0.120 0.160 0.200 rg
-1 0 0 1 121.00 358.89 Tm
-(Penutupan Acara) Tj
+1 0 0 1 121.00 437.39 Tm
+(Lagu Lilin Lilin Kecil) Tj
 ET
 BT
 /F1 7.00 Tf
 0.420 0.470 0.520 rg
-1 0 0 1 121.00 347.89 Tm
-(Stadion Pakansari) Tj
+1 0 0 1 121.00 426.39 Tm
+(Grand Ballroom) Tj
 ET
 BT
 /F1 7.50 Tf
 0.180 0.220 0.260 rg
-1 0 0 1 236.00 358.89 Tm
-(Penutupan resmi Pesta Rakyat KONAS PERSADIA 2026) Tj
+1 0 0 1 236.00 437.39 Tm
+(Penampilan khidmat Paduan Suara Pria GKI Pengadilan Bogor menyanyikan 'Lilin-Lilin) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 242.00 427.39 Tm
+(Kecil') Tj
 ET
 q
 0.75 w
-0.990 0.980 0.950 rg
-0.900 0.800 0.600 RG
-35.00 305.39 525.28 32.00 re
+1.000 1.000 1.000 rg
+0.860 0.880 0.910 RG
+35.00 390.39 525.28 30.00 re
 B
 Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+115.00 390.39 m
+115.00 420.39 l
+S
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+230.00 390.39 m
+230.00 420.39 l
+S
+Q
 BT
-/F2 7.00 Tf
-0.700 0.350 0.050 rg
-1 0 0 1 45.00 329.39 Tm
-(* CATATAN PENTING & DISCLAIMER:) Tj
+/F2 8.00 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 41.00 407.39 Tm
+(20.55 - 21.00) Tj
 ET
 BT
-/F1 6.50 Tf
-0.400 0.300 0.100 rg
-1 0 0 1 45.00 319.39 Tm
-(Seluruh susunan jadwal acara, pembagian ruangan, dan daftar narasumber/pembicara dapat berubah sewaktu-waktu) Tj
+/F2 8.00 Tf
+0.120 0.160 0.200 rg
+1 0 0 1 121.00 407.39 Tm
+(Penutupan & Foto) Tj
 ET
 BT
-/F1 6.50 Tf
-0.400 0.300 0.100 rg
-1 0 0 1 45.00 311.39 Tm
-(tanpa pemberitahuan terlebih dahulu menyesuaikan dengan dinamika teknis di lokasi acara. Informasi terbaru via website resmi.) Tj
+/F1 7.00 Tf
+0.420 0.470 0.520 rg
+1 0 0 1 121.00 396.39 Tm
+(Grand Ballroom) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 407.39 Tm
+(Ucapan terima kasih, sesi foto bersama seluruh jajaran pimpinan & penutupan resmi acara) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 242.00 397.39 Tm
+(malam) Tj
+ET
+q
+0.000 0.706 0.675 rg
+35.00 372.39 3.50 16.00 re
+f
+Q
+BT
+/F2 10.00 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 45.00 375.39 Tm
+(D. JADWAL RAPAT ORGANISASI PERSADIA, PEDI & PERKENI) Tj
+ET
+BT
+/F1 7.50 Tf
+0.400 0.450 0.500 rg
+1 0 0 1 45.00 362.89 Tm
+(Venue: Novotel Bogor Golf Resort  |  Sabtu, 7 November 2026) Tj
+ET
+q
+0.75 w
+0.910 0.935 0.965 rg
+0.820 0.860 0.900 RG
+35.00 340.39 525.28 16.00 re
+B
+Q
+q
+0.75 w
+0.820 0.860 0.900 RG
+115.00 340.39 m
+115.00 356.39 l
+S
+Q
+q
+0.75 w
+0.820 0.860 0.900 RG
+230.00 340.39 m
+230.00 356.39 l
+S
+Q
+BT
+/F2 7.50 Tf
+0.100 0.200 0.300 rg
+1 0 0 1 41.00 344.89 Tm
+(WAKTU) Tj
+ET
+BT
+/F2 7.50 Tf
+0.100 0.200 0.300 rg
+1 0 0 1 121.00 344.89 Tm
+(ORGANISASI) Tj
+ET
+BT
+/F2 7.50 Tf
+0.100 0.200 0.300 rg
+1 0 0 1 236.00 344.89 Tm
+(RUANGAN & DETAIL AGENDA KERJA) Tj
+ET
+q
+0.75 w
+0.970 0.980 0.990 rg
+0.860 0.880 0.910 RG
+35.00 310.39 525.28 30.00 re
+B
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+115.00 310.39 m
+115.00 340.39 l
+S
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+230.00 310.39 m
+230.00 340.39 l
+S
+Q
+BT
+/F2 8.00 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 41.00 327.39 Tm
+(13.00 - 17.00) Tj
+ET
+BT
+/F2 8.00 Tf
+0.120 0.160 0.200 rg
+1 0 0 1 121.00 327.39 Tm
+(PERSADIA) Tj
+ET
+BT
+/F1 7.00 Tf
+0.420 0.470 0.520 rg
+1 0 0 1 121.00 316.39 Tm
+(Kencana-Sanggar) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 327.39 Tm
+(Rapat Kerja Nasional PERSADIA) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 317.39 Tm
+(Ruang Breakout Sidang Komisi: Ruang Kencana, Ruang Sanggar, Ruang Geulis) Tj
+ET
+q
+0.75 w
+1.000 1.000 1.000 rg
+0.860 0.880 0.910 RG
+35.00 281.89 525.28 28.50 re
+B
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+115.00 281.89 m
+115.00 310.39 l
+S
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+230.00 281.89 m
+230.00 310.39 l
+S
+Q
+BT
+/F2 8.00 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 41.00 297.39 Tm
+(13.00 - 17.00) Tj
+ET
+BT
+/F2 8.00 Tf
+0.120 0.160 0.200 rg
+1 0 0 1 121.00 297.39 Tm
+(PEDI) Tj
+ET
+BT
+/F1 7.00 Tf
+0.420 0.470 0.520 rg
+1 0 0 1 121.00 286.39 Tm
+(Ruang Karang) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 297.39 Tm
+(Rapat Kerja Pengurus Perkumpulan Edukator Diabetes Indonesia \(PEDI\)) Tj
+ET
+q
+0.75 w
+0.970 0.980 0.990 rg
+0.860 0.880 0.910 RG
+35.00 253.39 525.28 28.50 re
+B
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+115.00 253.39 m
+115.00 281.89 l
+S
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+230.00 253.39 m
+230.00 281.89 l
+S
+Q
+BT
+/F2 8.00 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 41.00 268.89 Tm
+(18.00 - 21.15) Tj
+ET
+BT
+/F2 8.00 Tf
+0.120 0.160 0.200 rg
+1 0 0 1 121.00 268.89 Tm
+(PERKENI) Tj
+ET
+BT
+/F1 7.00 Tf
+0.420 0.470 0.520 rg
+1 0 0 1 121.00 257.89 Tm
+(Ballroom 2 Novotel) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 268.89 Tm
+(Rapat Kerja Perkumpulan Endokrinologi Indonesia \(PERKENI\)) Tj
 ET
 q
 0.50 w
@@ -2278,26 +2295,578 @@ BT
 /F2 7.00 Tf
 0.400 0.450 0.500 rg
 1 0 0 1 485.28 18.00 Tm
-(Halaman 3 dari 3) Tj
+(Halaman 3 dari 4) Tj
+ET
+
+endstream
+endobj
+11 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 12 0 R >>
+endobj
+12 0 obj
+<< /Length 8133 >>
+stream
+q
+0.043 0.239 0.369 rg
+35.00 803.89 525.28 20.00 re
+f
+Q
+BT
+/F2 8.50 Tf
+1.000 1.000 1.000 rg
+1 0 0 1 45.00 809.39 Tm
+(PESTA RAKYAT & SENAM BERSAMA NUSANTARA \(8 NOV 2026\)) Tj
+ET
+BT
+/F1 8.00 Tf
+0.800 0.900 0.950 rg
+1 0 0 1 415.28 809.39 Tm
+(KONAS PERSADIA 2026) Tj
+ET
+q
+0.000 0.706 0.675 rg
+35.00 771.89 3.50 16.00 re
+f
+Q
+BT
+/F2 10.00 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 45.00 774.89 Tm
+(E. PESTA RAKYAT & SENAM BERSAMA NUSANTARA \(MINGGU, 8 NOV 2026\)) Tj
+ET
+BT
+/F1 7.50 Tf
+0.400 0.450 0.500 rg
+1 0 0 1 45.00 762.39 Tm
+(Venue: Stadion Pakansari, Cibinong, Kabupaten Bogor  |  Target: 7.000 Peserta) Tj
+ET
+q
+0.75 w
+0.910 0.935 0.965 rg
+0.820 0.860 0.900 RG
+35.00 739.89 525.28 16.00 re
+B
+Q
+q
+0.75 w
+0.820 0.860 0.900 RG
+115.00 739.89 m
+115.00 755.89 l
+S
+Q
+q
+0.75 w
+0.820 0.860 0.900 RG
+230.00 739.89 m
+230.00 755.89 l
+S
+Q
+BT
+/F2 7.50 Tf
+0.100 0.200 0.300 rg
+1 0 0 1 41.00 744.39 Tm
+(WAKTU) Tj
+ET
+BT
+/F2 7.50 Tf
+0.100 0.200 0.300 rg
+1 0 0 1 121.00 744.39 Tm
+(KEGIATAN) Tj
+ET
+BT
+/F2 7.50 Tf
+0.100 0.200 0.300 rg
+1 0 0 1 236.00 744.39 Tm
+(KETERANGAN & DETAIL ACARA) Tj
+ET
+q
+0.75 w
+0.970 0.980 0.990 rg
+0.860 0.880 0.910 RG
+35.00 711.39 525.28 28.50 re
+B
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+115.00 711.39 m
+115.00 739.89 l
+S
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+230.00 711.39 m
+230.00 739.89 l
+S
+Q
+BT
+/F2 8.00 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 41.00 726.89 Tm
+(05.00 - 06.00) Tj
+ET
+BT
+/F2 8.00 Tf
+0.120 0.160 0.200 rg
+1 0 0 1 121.00 726.89 Tm
+(Registrasi Peserta) Tj
+ET
+BT
+/F1 7.00 Tf
+0.420 0.470 0.520 rg
+1 0 0 1 121.00 715.89 Tm
+(Pintu 8 Pakansari) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 726.89 Tm
+(Pengambilan snack box & paket peserta di Pintu 8 Stadion Pakansari) Tj
+ET
+q
+0.75 w
+1.000 1.000 1.000 rg
+0.860 0.880 0.910 RG
+35.00 681.39 525.28 30.00 re
+B
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+115.00 681.39 m
+115.00 711.39 l
+S
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+230.00 681.39 m
+230.00 711.39 l
+S
+Q
+BT
+/F2 8.00 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 41.00 698.39 Tm
+(06.00 - 07.00) Tj
+ET
+BT
+/F2 8.00 Tf
+0.120 0.160 0.200 rg
+1 0 0 1 121.00 698.39 Tm
+(Parade & Skrining) Tj
+ET
+BT
+/F1 7.00 Tf
+0.420 0.470 0.520 rg
+1 0 0 1 121.00 687.39 Tm
+(Area Stadion) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 698.39 Tm
+(Parade Kontingen Cabang PERSADIA se-Indonesia & Defile) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 688.39 Tm
+(Pemeriksaan Gula Darah Massal Gratis \(Target 7.000 Peserta\)) Tj
+ET
+q
+0.75 w
+0.970 0.980 0.990 rg
+0.860 0.880 0.910 RG
+35.00 641.39 525.28 40.00 re
+B
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+115.00 641.39 m
+115.00 681.39 l
+S
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+230.00 641.39 m
+230.00 681.39 l
+S
+Q
+BT
+/F2 8.00 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 41.00 668.39 Tm
+(07.00 - 07.30) Tj
+ET
+BT
+/F2 8.00 Tf
+0.120 0.160 0.200 rg
+1 0 0 1 121.00 668.39 Tm
+(Pembukaan Acara) Tj
+ET
+BT
+/F1 7.00 Tf
+0.420 0.470 0.520 rg
+1 0 0 1 121.00 657.39 Tm
+(Panggung Utama) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 668.39 Tm
+(Menyanyikan Lagu Kebangsaan Indonesia Raya) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 658.39 Tm
+(Sambutan Pimpinan Pengurus Pusat PERSADIA & Pejabat Pemerintahan / Tamu) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 242.00 648.39 Tm
+(Kehormatan) Tj
+ET
+q
+0.75 w
+1.000 1.000 1.000 rg
+0.860 0.880 0.910 RG
+35.00 611.39 525.28 30.00 re
+B
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+115.00 611.39 m
+115.00 641.39 l
+S
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+230.00 611.39 m
+230.00 641.39 l
+S
+Q
+BT
+/F2 8.00 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 41.00 628.39 Tm
+(07.30 - 08.30) Tj
+ET
+BT
+/F2 8.00 Tf
+0.120 0.160 0.200 rg
+1 0 0 1 121.00 628.39 Tm
+(Senam Bugar Massal) Tj
+ET
+BT
+/F1 7.00 Tf
+0.420 0.470 0.520 rg
+1 0 0 1 121.00 617.39 Tm
+(Lapangan Utama) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 628.39 Tm
+(Senam Bugar Diabetes Nasional Massal bersama instruktur profesional nasional) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 618.39 Tm
+(\(Pelaksanaan paralel dengan Skrining Massal Gula Darah\)) Tj
+ET
+q
+0.75 w
+0.970 0.980 0.990 rg
+0.860 0.880 0.910 RG
+35.00 572.89 525.28 38.50 re
+B
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+115.00 572.89 m
+115.00 611.39 l
+S
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+230.00 572.89 m
+230.00 611.39 l
+S
+Q
+BT
+/F2 8.00 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 41.00 598.39 Tm
+(08.30 - 10.00) Tj
+ET
+BT
+/F2 8.00 Tf
+0.120 0.160 0.200 rg
+1 0 0 1 121.00 598.39 Tm
+(Showcase Senam) Tj
+ET
+BT
+/F2 8.00 Tf
+0.120 0.160 0.200 rg
+1 0 0 1 121.00 588.39 Tm
+(Daerah) Tj
+ET
+BT
+/F1 7.00 Tf
+0.420 0.470 0.520 rg
+1 0 0 1 121.00 577.39 Tm
+(Panggung & Lapangan) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 598.39 Tm
+(Peragaan variasi senam kebugaran perwakilan kontingen cabang daerah se-Indonesia) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 588.39 Tm
+(\(Pelaksanaan paralel dengan Skrining Massal Gula Darah\)) Tj
+ET
+q
+0.75 w
+1.000 1.000 1.000 rg
+0.860 0.880 0.910 RG
+35.00 542.89 525.28 30.00 re
+B
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+115.00 542.89 m
+115.00 572.89 l
+S
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+230.00 542.89 m
+230.00 572.89 l
+S
+Q
+BT
+/F2 8.00 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 41.00 559.89 Tm
+(10.00 - 11.00) Tj
+ET
+BT
+/F2 8.00 Tf
+0.120 0.160 0.200 rg
+1 0 0 1 121.00 559.89 Tm
+(Panggung Hiburan) Tj
+ET
+BT
+/F1 7.00 Tf
+0.420 0.470 0.520 rg
+1 0 0 1 121.00 548.89 Tm
+(Panggung Utama) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 559.89 Tm
+(Hiburan panggung musik rakyat & pengumuman undian doorprize hadiah utama) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 549.89 Tm
+(\(Pelaksanaan paralel dengan Skrining Massal Gula Darah\)) Tj
+ET
+q
+0.75 w
+0.970 0.980 0.990 rg
+0.860 0.880 0.910 RG
+35.00 514.39 525.28 28.50 re
+B
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+115.00 514.39 m
+115.00 542.89 l
+S
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+230.00 514.39 m
+230.00 542.89 l
+S
+Q
+BT
+/F2 8.00 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 41.00 529.89 Tm
+(11.00 - 12.00) Tj
+ET
+BT
+/F2 8.00 Tf
+0.120 0.160 0.200 rg
+1 0 0 1 121.00 529.89 Tm
+(Makan Siang) Tj
+ET
+BT
+/F1 7.00 Tf
+0.420 0.470 0.520 rg
+1 0 0 1 121.00 518.89 Tm
+(Area Tribun & Lapangan) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 529.89 Tm
+(Pembagian dan santap makan siang bersama seluruh peserta Pesta Rakyat) Tj
+ET
+q
+0.75 w
+1.000 1.000 1.000 rg
+0.860 0.880 0.910 RG
+35.00 485.89 525.28 28.50 re
+B
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+115.00 485.89 m
+115.00 514.39 l
+S
+Q
+q
+0.75 w
+0.860 0.880 0.910 RG
+230.00 485.89 m
+230.00 514.39 l
+S
+Q
+BT
+/F2 8.00 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 41.00 501.39 Tm
+(12.00 - Selesai) Tj
+ET
+BT
+/F2 8.00 Tf
+0.120 0.160 0.200 rg
+1 0 0 1 121.00 501.39 Tm
+(Penutupan Acara) Tj
+ET
+BT
+/F1 7.00 Tf
+0.420 0.470 0.520 rg
+1 0 0 1 121.00 490.39 Tm
+(Stadion Pakansari) Tj
+ET
+BT
+/F1 7.50 Tf
+0.180 0.220 0.260 rg
+1 0 0 1 236.00 501.39 Tm
+(Penutupan resmi seluruh rangkaian kegiatan Kongres Nasional PERSADIA 2026) Tj
+ET
+q
+0.985 0.990 1.000 rg
+0.043 0.239 0.369 RG
+35.00 392.89 525.28 75.00 re
+B
+Q
+q
+0.000 0.706 0.675 rg
+35.00 392.89 4.00 75.00 re
+f
+Q
+BT
+/F2 8.00 Tf
+0.043 0.239 0.369 rg
+1 0 0 1 48.00 453.89 Tm
+(INFORMASI RESMI & CATATAN PANITIA PELAKSANA:) Tj
+ET
+BT
+/F1 7.00 Tf
+0.250 0.300 0.350 rg
+1 0 0 1 48.00 440.89 Tm
+(1. Seluruh jadwal acara, pembagian ruangan sidang, serta nama pengisi sesi bersifat mengikat namun dapat disesuaikan) Tj
+ET
+BT
+/F1 7.00 Tf
+0.250 0.300 0.350 rg
+1 0 0 1 48.00 430.89 Tm
+(   secara dinamis di lokasi apabila terdapat arahan khusus dari Dewan Pertimbangan dan Panitia Pusat.) Tj
+ET
+BT
+/F1 7.00 Tf
+0.250 0.300 0.350 rg
+1 0 0 1 48.00 419.89 Tm
+(2. Re-registrasi barcode digital dibuka di Foyer Ballroom Novotel \(Hari ke-1\) dan Pintu 8 Stadion Pakansari \(Hari ke-2\).) Tj
+ET
+BT
+/F1 7.00 Tf
+0.250 0.300 0.350 rg
+1 0 0 1 48.00 408.89 Tm
+(3. Informasi pembaruan jadwal dan panduan resmi dapat diakses melalui portal resmi KONAS PERSADIA 2026.) Tj
+ET
+q
+0.50 w
+0.850 0.880 0.920 RG
+35.00 32.00 m
+560.28 32.00 l
+S
+Q
+BT
+/F1 6.50 Tf
+0.600 0.400 0.150 rg
+1 0 0 1 35.00 25.00 Tm
+(* Jadwal dan susunan pembicara dapat berubah sewaktu-waktu tanpa pemberitahuan terlebih dahulu.) Tj
+ET
+BT
+/F1 7.00 Tf
+0.450 0.500 0.550 rg
+1 0 0 1 35.00 18.00 Tm
+(Kongres Nasional PERSADIA 2026 • Novotel Bogor & Stadion Pakansari) Tj
+ET
+BT
+/F2 7.00 Tf
+0.400 0.450 0.500 rg
+1 0 0 1 485.28 18.00 Tm
+(Halaman 4 dari 4) Tj
 ET
 
 endstream
 endobj
 xref
-0 11
+0 13
 0000000000 65535 f 
 0000000015 00000 n 
 0000000064 00000 n 
-0000000133 00000 n 
-0000000230 00000 n 
-0000000332 00000 n 
-0000000474 00000 n 
-0000010873 00000 n 
-0000011015 00000 n 
-0000023230 00000 n 
-0000023373 00000 n 
+0000000140 00000 n 
+0000000237 00000 n 
+0000000339 00000 n 
+0000000481 00000 n 
+0000011890 00000 n 
+0000012032 00000 n 
+0000022809 00000 n 
+0000022952 00000 n 
+0000034980 00000 n 
+0000035124 00000 n 
 trailer
-<< /Size 11 /Root 1 0 R >>
+<< /Size 13 /Root 1 0 R >>
 startxref
-33595
+43310
 %%EOF

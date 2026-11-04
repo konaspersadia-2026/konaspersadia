@@ -6,7 +6,7 @@ import {
   CheckCircle2, XCircle, Search, RefreshCw, QrCode, ShieldAlert, 
   ArrowLeft, CheckSquare, Square, LogOut, Flashlight, Volume2, 
   VolumeX, Camera, AlertTriangle, Clock, Calendar, Check, Stethoscope,
-  Sparkles, UserCheck, ChevronRight, Edit3, User, Hash, Coffee, Shirt, Utensils,
+  Sparkles, UserCheck, ChevronRight, Edit3, User, Coffee, Shirt, Utensils,
   KeyRound, Eye, EyeOff
 } from 'lucide-react';
 
@@ -184,12 +184,6 @@ function App() {
   const [editThn, setEditThn] = useState("");
   const [editNik, setEditNik] = useState("");
 
-  // Nomor Meja Pemeriksaan (disimpan otomatis di localStorage perangkat)
-  const [nomorMeja, setNomorMeja] = useState<string>(() => {
-    return localStorage.getItem('scanner_nomor_meja') || '';
-  });
-  const [isSettingMeja, setIsSettingMeja] = useState(false);
-
   // States form pemeriksaan fisik / gula darah
   const [tinggiBadan, setTinggiBadan] = useState("");
   const [beratBadan, setBeratBadan] = useState("");
@@ -273,9 +267,6 @@ function App() {
     return localStorage.getItem('persadia_scanner_auth') === 'true';
   });
   const [passcode, setPasscode] = useState("");
-  const [loginNomorMeja, setLoginNomorMeja] = useState<string>(() => {
-    return localStorage.getItem('scanner_nomor_meja') || '';
-  });
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
@@ -354,13 +345,6 @@ function App() {
         }
       }
 
-      // Simpan nomor meja jika diisi oleh petugas saat login
-      if (loginNomorMeja.trim()) {
-        const cleanMeja = loginNomorMeja.trim();
-        setNomorMeja(cleanMeja);
-        localStorage.setItem('scanner_nomor_meja', cleanMeja);
-      }
-
       // Simpan status otentikasi & passcode di localStorage untuk RPC data
       localStorage.setItem('persadia_scanner_auth', 'true');
       localStorage.setItem('persadia_scanner_auth_time', new Date().toISOString());
@@ -381,6 +365,7 @@ function App() {
     localStorage.removeItem('persadia_scanner_auth_time');
     localStorage.removeItem('persadia_scanner_passcode');
     localStorage.removeItem('scanner_date_confirmed');
+    localStorage.removeItem('scanner_nomor_meja');
     if (isSupabaseConfigured) {
       await supabase.auth.signOut().catch(() => {});
     }
@@ -1503,22 +1488,6 @@ function App() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
-                <span>Nomor Meja / Nama Petugas</span>
-                <span className="text-[10px] text-slate-400 font-normal normal-case">(Opsional)</span>
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Contoh: Meja 03 / dr. Rina"
-                  value={loginNomorMeja}
-                  onChange={(e) => setLoginNomorMeja(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all text-sm"
-                />
-              </div>
-            </div>
-
             {loginError && (
               <div className="p-3 bg-red-50 rounded-xl border border-red-200 text-xs text-red-700 flex items-start gap-2">
                 <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
@@ -1647,7 +1616,7 @@ function App() {
           </div>
 
           <div className="mt-6 flex items-center justify-between text-xs text-slate-500 pt-4 border-t border-slate-100">
-            <span>Petugas: <strong>{nomorMeja ? nomorMeja : 'Panitia Lapangan'}</strong></span>
+            <span>Akses: <strong>Petugas Lapangan</strong></span>
             <button
               onClick={handleLogout}
               className="text-red-500 hover:text-red-700 font-semibold cursor-pointer"
@@ -1702,54 +1671,6 @@ function App() {
                   ? (currentModeItem ? currentModeItem.label : "Scanner Panitia")
                   : (selectedDate === '2026-11-07' ? 'Pos Hari 1 (Novotel)' : 'Pos Hari 2 (Pakansari)')}
               </h1>
-            </div>
-            
-            {/* Badge Nomor Meja Petugas */}
-            <div className="relative">
-              <button
-                onClick={() => setIsSettingMeja(!isSettingMeja)}
-                className="flex items-center gap-1 px-2.5 py-1 bg-emerald-800 hover:bg-emerald-900 text-emerald-100 border border-emerald-600/70 rounded-lg text-xs font-bold transition-all cursor-pointer"
-                title="Klik untuk mengatur nomor meja / pos Anda"
-              >
-                <Hash className="w-3 h-3 text-emerald-300" />
-                <span>{nomorMeja ? nomorMeja : "Meja"}</span>
-              </button>
-
-              {/* Popover Setting Nomor Meja */}
-              {isSettingMeja && (
-                <div className="absolute left-0 top-full mt-2 w-52 bg-white text-slate-800 p-3 rounded-xl shadow-xl border border-slate-200 z-30 animate-in fade-in zoom-in-95">
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">Nomor Meja / Petugas:</label>
-                  <input
-                    type="text"
-                    placeholder="Contoh: Meja 12"
-                    value={nomorMeja}
-                    onChange={(e) => {
-                      setNomorMeja(e.target.value);
-                      localStorage.setItem('scanner_nomor_meja', e.target.value);
-                    }}
-                    className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-emerald-500 mb-2"
-                    autoFocus
-                  />
-                  <div className="flex items-center justify-between gap-1.5">
-                    <button
-                      onClick={() => {
-                        setNomorMeja('');
-                        localStorage.removeItem('scanner_nomor_meja');
-                        setIsSettingMeja(false);
-                      }}
-                      className="px-2 py-1 text-slate-500 hover:text-red-600 text-[10px]"
-                    >
-                      Hapus
-                    </button>
-                    <button
-                      onClick={() => setIsSettingMeja(false)}
-                      className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-[11px] font-bold"
-                    >
-                      Selesai
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
@@ -1972,7 +1893,6 @@ function App() {
                     </h2>
                     <p className="text-xs text-slate-500 truncate">
                       {currentModeItem.sub}
-                      {nomorMeja ? ` • Meja: ${nomorMeja}` : ''}
                     </p>
                   </div>
                 </div>

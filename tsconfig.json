@@ -23,5 +23,6 @@
     "allowImportingTsExtensions": true,
     "noEmit": true,
     "types": ["vite/client"]
-  }
+  },
+  "exclude": ["tutorial-scanner-video", "node_modules", "dist"]
 }

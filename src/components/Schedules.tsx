@@ -28,15 +28,15 @@ export default function Schedules() {
   // 1. Simposium & Workshop Schedule Data (Novotel Bogor, 7 Nov 2026)
   const ilmiahSchedule: ScheduleEvent[] = [
     {
-      time: "08:00 – 08:30",
-      title: "Registrasi Peserta Simposium & Workshop",
+      time: "07:00 – 08:00",
+      title: "Registration",
       location: "Foyer Ballroom Novotel",
       speaker: "Panitia Pelaksana",
       type: "administrative",
-      description: ["Re-registrasi peserta Simposium & Workshop"]
+      description: ["Registrasi dan re-registrasi peserta Simposium & Workshop Medis"]
     },
     {
-      time: "08:30 – 08:50",
+      time: "08:00 – 08:20",
       title: "SESI 1 — Plenary Lecture",
       location: "Room Gede",
       speaker: "Prof. dr. Putu Moda Arsana, SpPD-KEMD | MC: Dr. dr. Rudy Kurniawan, SpPD, MM, MARS, Dip.TH, DCD",
@@ -47,54 +47,50 @@ export default function Schedules() {
       ]
     },
     {
-      time: "08:50 – 09:00",
+      time: "08:20 – 08:55",
       title: "Opening Ceremony",
       location: "Room Gede",
-      speaker: "Pimpinan Pengurus Pusat & Tamu Kehormatan",
+      speaker: "MC: Dr. dr. Rudy Kurniawan, SpPD, MM, MARS, Dip.TH, DCD",
       type: "administrative",
       description: [
-        "Pembukaan resmi Kongres Nasional PERSADIA & Konferensi Gabungan 2026 oleh Pimpinan Pengurus Pusat & Tamu Kehormatan"
+        "08.20 – 08.25: Pembacaan Doa — Pak Agus Sumitro (Persadia Depok)",
+        "08.25 – 08.30: Lagu Indonesia Raya — Ibu Susan (Persadia Bogor)",
+        "08.30 – 08.32: Selamat Datang Ketua Panitia Konas Persadia 2026 — dr. Roy Panusunan Sibarani, SpPD-KEMD",
+        "08.32 – 08.35: Selamat Datang Presiden Persadia 2023–2026 — DR. dr. K. Heri Nugroho Harioseno, SpPD-KEMD",
+        "08.35 – 08.50: Sambutan Wakil Menteri Kesehatan Republik Indonesia — Prof. dr. Dante Saksono Harbuwono, SpPD-KEMD, PhD",
+        "08.50 – 08.55: Pembukaan resmi Konas Persadia, Konker PEDI dan Konker PERKENI 2026"
       ]
     },
     {
-      time: "09:00 – 10:00",
+      time: "09:00 – 10:30",
       title: "SESI 2 — Presidents' Lecture",
       location: "Room Gede",
-      speaker: "Prof. Dr. dr. Sidartawan Soegondo, SpPD-KEMD | Dr. dr. K. Heri Nugroho Harioseno, SpPD-KEMD | Prof. Dr. dr. Achmad Rudijanto, SpPD-KEMD | Moderator: dr. Fauzia Kirana, SpPD",
+      speaker: "Prof. Dr. dr. Sidartawan Soegondo | Dr. dr. K. Heri Nugroho Harioseno | Prof. Dr. dr. Achmad Rudijanto | Moderator: dr. Fauzia Kirana, SpPD",
       type: "symposium",
       description: [
-        "09.00 – 09.20: 'Obesity: The Growing Metabolic Challenge' — Prof. Dr. dr. Sidartawan Soegondo, SpPD-KEMD (FKUI - RSCM / PB PERKENI)",
-        "09.20 – 09.40: 'Tirzepatide: Beyond the Numbers (Dual GIP/GLP-1)' — Dr. dr. K. Heri Nugroho Harioseno, SpPD-KEMD (UNDIP / RSUP Dr. Kariadi)",
-        "09.40 – 10.00: 'Diabetes Update Treatment: Janus, The First and After' — Prof. Dr. dr. Achmad Rudijanto, SpPD-KEMD (Universitas Brawijaya / PB PERKENI)"
-      ]
-    },
-    {
-      time: "10:00 – 10:30",
-      title: "Coffee Break & Diskusi Panel",
-      location: "Foyer Novotel Bogor",
-      speaker: "Pembicara Presidents' Lecture & Seluruh Peserta",
-      type: "break",
-      description: [
-        "Tanya jawab interaktif bersama pembicara Presidents' Lecture & Rehat Kopi/Kudapan Pagi di Foyer Novotel Bogor"
+        "09.00 – 09.30: Topic: 'Obesity: The Growing Metabolic Challenge' — Prof. Dr. dr. Sidartawan Soegondo, SpPD-KEMD (FKUI - RSCM / PB PERKENI)",
+        "09.30 – 09.50: Topic: 'Tirzepatide: Beyond the numbers' — Dr. dr. K. Heri Nugroho Harioseno, SpPD-KEMD (UNDIP / RSUP Dr. Kariadi)",
+        "09.50 – 10.10: Topic: 'Diabetes update treatment: Janus, The First and After' — Prof. Dr. dr. Achmad Rudijanto, SpPD-KEMD (Universitas Brawijaya / PB PERKENI)",
+        "10.10 – 10.30: DISCUSSION + COFFEE BREAK"
       ]
     },
     {
       time: "10:30 – 11:30",
       title: "SESI 3 — Sesi Dokter Layanan Primer (FKTP)",
       location: "Room Gede",
-      speaker: "Prof. Dr. dr. Sidartawan Soegondo, SpPD-KEMD | dr. Baringin T A Manik, MKM | dr. Dicky Levenus Tahapary, SpPD-KEMD, PhD | Moderator: dr. Nur Rusyda Kuddah, SpPD-KEMD",
+      speaker: "Prof. Dr. dr. Sidartawan Soegondo | dr. Baringin T A Manik, MKM | dr. Dicky Levenus Tahapary, SpPD-KEMD, PhD | Moderator: dr. Nur Rusyda Kuddah, SpPD-KEMD",
       type: "symposium",
       description: [
-        "10.30 – 10.35: 'Opening Speech' — Prof. Dr. dr. Sidartawan Soegondo, SpPD-KEMD",
-        "10.35 – 10.50: 'My Life in FKTP: Realita & Dedikasi Layanan Primer' — dr. Baringin T A Manik, MKM (Dokter Praktisi Layanan Primer)",
-        "10.50 – 11.10: 'Diabetes Approach in FKTP: Deteksi Cepat & Tatalaksana' — dr. Dicky Levenus Tahapary, SpPD-KEMD, PhD (FKUI - RSCM / PB PERSADIA)",
-        "11.10 – 11.30: Diskusi & Tanya Jawab Kasus Layanan Primer"
+        "10.30 – 10.35: Opening Speech — Prof. Dr. dr. Sidartawan Soegondo, SpPD-KEMD",
+        "10.35 – 10.50: Topic: 'My life in FKTP: Realita & Dedikasi Layanan Primer' — dr. Baringin T A Manik, MKM (Dokter Praktisi Layanan Primer)",
+        "10.50 – 11.20: Topic: 'Diabetes approach in FKTP: Deteksi Cepat & Tatalaksana' — dr. Dicky Levenus Tahapary, SpPD-KEMD, PhD (FKUI - RSCM / PB PERSADIA)",
+        "11.20 – 11.30: DISCUSSION & Tanya Jawab"
       ]
     },
     {
       time: "11:30 – 12:30",
-      title: "SESI 4 — Sesi Paralel: Simposium Neuropati, Workshop 1 (CGM) & Workshop 2",
-      location: "Room Gede, Room Pangrango & Workshop 2",
+      title: "SESI 4 — Sesi Paralel: Simposium Neuropati, Workshop 1 (CGM) & Workshop 6",
+      location: "Room Gede, Room Pangrango & Room Geulis",
       speaker: "dr. Roy Panusunan Sibarani, dr. Gloria Tanjung, dr. Johanes Purwoto, Daniel Surbakti, dr. H. Harli Amir Mahmudji",
       type: "parallel",
       parallelRooms: [
@@ -103,9 +99,9 @@ export default function Schedules() {
           trackTitle: "Simposium: Footsteps Leading to Neuropathy",
           speaker: "Speaker 1: dr. Roy Panusunan Sibarani, SpPD-KEMD | Speaker 2: dr. Gloria Tanjung, SpN | Moderator: dr. William Djauhari",
           details: [
-            "11.30 – 11.50: From Upstream: Endocrinologist POV — dr. Roy Panusunan Sibarani, SpPD-KEMD",
-            "11.50 – 12.10: To Downstream: Neurologist POV — dr. Gloria Tanjung, SpN",
-            "12.10 – 12.30: DISCUSSION & Tanya Jawab Klinis"
+            "11.40 – 12.00: From Upstream: Endocrinologist POV — dr. Roy Panusunan Sibarani, SpPD-KEMD",
+            "12.00 – 12.20: To Downstream: Neurologist POV — dr. Gloria Tanjung, SpN",
+            "12.20 – 12.30: DISCUSSION & Tanya Jawab Klinis"
           ]
         },
         {
@@ -113,28 +109,29 @@ export default function Schedules() {
           trackTitle: "Workshop 1: Diabetes Technology: CGM",
           speaker: "Speaker 1: dr. Johanes Purwoto, SpPD-KEMD | Speaker 2: Daniel Surbakti",
           details: [
-            "11.30 – 12.00: Doctor's POV — dr. Johanes Purwoto, SpPD-KEMD (Mastering AGP reports, CGM-driven clinical decisions in T1D & T2D, CGM in special populations: prediabetes, pregnancy, elderly, hospitalized)",
+            "11.30 – 12.00: Doctor's POV — dr. Johanes Purwoto, SpPD-KEMD (Mod: dr. Kartika, SpPD)",
             "12.00 – 12.10: Patient's POV — Daniel Surbakti",
-            "12.10 – 12.30: HANDS ON: Case-based CGM Workshop — Solving real-world glycemic profiles & artifacts"
+            "12.10 – 12.30: HANDS ON & DISCUSSION: Pemasangan CGM & Case-based CGM Workshop (Fasilitator: dr. Johanes Purwoto, dr. Libriansyah, dr. Leny Puspitasari)"
           ]
         },
         {
-          room: "Workshop 2",
-          trackTitle: "Workshop 2: Inflammatory and Autonomic Markers after 30-Day Propolis Extract Supplementation in Obesity with Diabetes",
+          room: "Room Geulis",
+          trackTitle: "Workshop 6: Beyond Glucose: NLR and Heart Rate Variability Changes Following Propolis Extract (Propoelix) Supplementation in Adults with Obesity and Diabetes",
           speaker: "Speaker: dr. H. Harli Amir Mahmudji, SpPD-KEMD",
           details: [
-            "11.30 – 12.10: Inflammatory and Autonomic Markers after 30-Day Propolis Extract Supplementation in Obesity with Diabetes — dr. H. Harli Amir Mahmudji, SpPD-KEMD",
-            "12.10 – 12.30: DISCUSSION & Tanya Jawab Klinis"
+            "11.30 – 12.00: Sesi Materi Ilmiah — dr. H. Harli Amir Mahmudji, SpPD-KEMD",
+            "12.00 – 12.30: DISCUSSION & Tanya Jawab"
           ]
         }
       ]
     },
     {
-      time: "12:30 – 14:00",
-      title: "ISHOMA (Istirahat, Sholat, Makan Siang)",
-      location: "R. Makan Ballroom 2 & Restaurant Novotel",
+      time: "12:40 – 14:00",
+      title: "ISHOMA (Restoran Novotel)",
+      location: "Restoran Novotel Bogor",
       speaker: "Panitia Konsumsi",
-      type: "break"
+      type: "break",
+      description: ["Istirahat, Sholat Dzuhur, dan Makan Siang Buffet di Restoran Novotel Bogor"]
     },
     {
       time: "14:00 – 15:00",
@@ -148,8 +145,8 @@ export default function Schedules() {
           trackTitle: "Workshop 2: Semaglutide on Prediabetes",
           speaker: "Speaker: dr. Sony Wibisono Mudjanarko, SpPD-KEMD",
           details: [
-            "14.00 – 14.30: Teori & Telaah (Targeting metabolic risk early: Semaglutide beyond weight loss; Synergy of Semaglutide and lifestyle intervention in Prediabetes Reversal; Patient selection & dosing protocol)",
-            "14.30 – 15.00: HANDS ON: Case-Based Learning — Navigating Real-World Prediabetes Cases with Semaglutide (How to use, tapering strategy, compliance)"
+            "14.00 – 14.30: Teori & Telaah (Targeting metabolic risk early; Synergy of Semaglutide and lifestyle intervention in Prediabetes Reversal; Patient selection & dosing protocol)",
+            "14.30 – 15.00: HANDS ON: Case-Based Learning: Navigating Real-World Prediabetes Cases with Semaglutide (Fasilitator: dr. Sony Wibisono, dr. Khomimah, dr. Nanang Miftah Fajari)"
           ]
         },
         {
@@ -157,8 +154,8 @@ export default function Schedules() {
           trackTitle: "Workshop 3: Nutrition in Diabetes",
           speaker: "Speaker: dr. Santi Syafril, SpPD-KEMD",
           details: [
-            "14.00 – 14.30: Teori Diet Nutrisi (Navigating dietary patterns: Mediterranean, Low-Carb, Intermittent Fasting; Carbohydrate counting & Glycemic Index; Behavior change & nutritional counseling)",
-            "14.30 – 15.00: HANDS ON: Meal planning and case-based — Designing Practical Diets for Real World Patients (shift worker, obesity, elderly)"
+            "14.00 – 14.30: Teori Diet Nutrisi (Mediterranean, Low-Carb, Intermittent Fasting; Carbohydrate counting & Glycemic Index; Behavior change & nutritional counseling)",
+            "14.30 – 15.00: HANDS ON: Meal planning and case-based: Designing Practical Diets for Real World Patients (Fasilitator: dr. Santi Syafril, dr. Herni Basir, dr. Brama Ihsan Sazli)"
           ]
         }
       ]
@@ -173,21 +170,19 @@ export default function Schedules() {
         {
           room: "Room Gede",
           trackTitle: "Workshop 4: Investigating Hypoglycemia",
-          speaker: "Speaker 1: Dr. dr. Yuanita Langi, SpPD-KEMD | Filling the Gap: dr. Henny Megawati, SpPD",
+          speaker: "Speaker 1: Dr. dr. Yuanita Langi, SpPD-KEMD | Filling the gap: dr. Henny Megawati, SpPD",
           details: [
-            "15.00 – 15.20: Speaker: Dr. dr. Yuanita Langi, SpPD-KEMD",
-            "15.20 – 15.40: Topik (Hypoglycemia Unawareness mechanism & risk stratification, Special populations: elderly/renal/shift workers, Management protocol, prevention, post-crisis care)",
-            "15.40 – 16.00: HANDS ON: Case-based workshop — navigating complex hypoglycemic scenarios in daily practice (dr. Henny Megawati, SpPD)"
+            "15.00 – 15.30: Materi (Hypoglycemia Unawareness mechanism & risk stratification, Special populations: elderly/renal/shift workers, Crisis management protocol)",
+            "15.30 – 16.00: HANDS ON: Case-based workshop — navigating complex hypoglycemic scenarios (Fasilitator: Dr. dr. Yuanita Langi, dr. Rulli Rosandi, dr. Yohana Ceria Anindita, Filling the gap: dr. Henny Megawati)"
           ]
         },
         {
           room: "Room Pangrango",
-          trackTitle: "Workshop 5: Pre-Diabetes — Counting the Time",
-          speaker: "Speaker 1: Dr. dr. Made Ratna Saraswati, SpPD-KEMD | Filling the Gap: dr. Pandu Sakti, SpPD, AIFO-K",
+          trackTitle: "Workshop 5: Pre-Diabetes: Counting the time",
+          speaker: "Speaker 1: Dr. dr. Made Ratna Saraswati, SpPD-KEMD | Filling the gap: dr. Pandu Sakti, SpPD, AIFO-K",
           details: [
-            "15.00 – 15.20: Speaker: Dr. dr. Made Ratna Saraswati, SpPD-KEMD",
-            "15.20 – 15.40: Topik (Early detection & risk stratification in prediabetes: stopping the diabetes continuum; Pharmacotherapy vs Lifestyle modification; Reversing prediabetes: practical nutrition & exercise)",
-            "15.40 – 16.00: HANDS ON: Case-based learning — personalizing prediabetes management in high-risk patients (dr. Pandu Sakti, SpPD, AIFO-K)"
+            "15.00 – 15.30: Materi (Early detection & risk stratification in prediabetes; Pharmacotherapy vs Lifestyle modification; Reversing prediabetes: practical nutrition & exercise)",
+            "15.30 – 16.00: HANDS ON: Case-based learning — personalizing prediabetes management (Fasilitator: Dr. dr. Made Ratna Saraswati, Dr. dr. Fabiola MS Adam, dr. Nurleny Sutanto, Filling the gap: dr. Pandu Sakti)"
           ]
         }
       ]
@@ -201,14 +196,23 @@ export default function Schedules() {
     },
     {
       time: "18:30 – 21:00",
-      title: "MALAM KEAKRABAN (Gala Dinner & Pentas Budaya)",
+      title: "MALAM LILIN KECIL (Grand Ballroom Novotel)",
       location: "Grand Ballroom Novotel Bogor",
-      speaker: "Tamara Geraldine (Host), Pengurus Pusat & Tamu Kehormatan",
+      speaker: "Tamara Geraldine (Host), dr. Roy Panusunan Sibarani, Mr. Chawn Hu, AXXI 8 Band",
       type: "entertainment",
       description: [
-        "Kata Sambutan Pengurus & Tokoh Kehormatan",
-        "Sesi Diskusi Reflektif & Ramah Tamah Lintas Cabang",
-        "Penampilan Lagu dan Tari Lilin-Lilin Kecil"
+        "18.30 – 19.30: Makan Malam Diiringi Live Music AXXI 8 Band",
+        "19.15 – 19.30: Soyjoy Menu Creation",
+        "19.30 – 19.32: Pembukaan oleh MC: Tamara Geraldine",
+        "19.32 – 19.35: Perkenalan Ketua Umum Terpilih PERSADIA 2026–2029: dr. Roy Panusunan Sibarani, SpPD-KEMD",
+        "19.35 – 19.45: Dreisam – CGM S1 Pro Product Launching (Mr. Chawn Hu – Marketing Director)",
+        "19.45 – 20.00: Lagu (AXXI 8 Band): Yang Terbaik, September Ceria, Astaga",
+        "20.00 – 20.10: Pembacaan Sajak 'Life Is Too Sweet for Giving Up' oleh Anita Sabidin dan Pak Imam Soeseno",
+        "20.10 – 20.25: Lagu Amburadul (AXXI 8), Tuhan Ada Dimana-mana (Tulus)",
+        "20.25 – 20.40: Fashion Show Batik Marunda",
+        "20.40 – 20.45: Narasi tentang Cinta oleh Tamara Geraldine",
+        "20.45 – 20.55: Lagu Lilin Lilin Kecil oleh Paduan Suara Pria GKI Pengadilan Bogor",
+        "20.55 – 21.00: Ucapan Terima kasih dan acara ditutup"
       ]
     }
   ];
@@ -216,81 +220,50 @@ export default function Schedules() {
   // 2. Diabetes Health Forum Schedule Data (Ballroom 2 Novotel, 7 Nov 2026)
   const dhfSchedule: ScheduleEvent[] = [
     {
-      time: "08:30 – 08:40",
-      title: "Pembukaan Diabetes Health Forum",
+      time: "09:10 – 09:30",
+      title: "DIVILAB Cor 3",
       location: "Ballroom 2, Novotel Bogor",
-      speaker: "MC & Panitia Edukasi PERSADIA",
-      type: "administrative"
+      speaker: "Tim Edukasi Diabetes",
+      type: "activity",
+      description: ["Sesi pengenalan & inovasi pemantauan diabetes terkini"]
     },
     {
-      time: "08:40 – 09:25",
-      title: "Sesi Edukasi: 'Masih muda, kok diabetes?'",
+      time: "09:35 – 10:35",
+      title: "Talkshow 1: Temu 6 Tokoh Senior Penyandang Diabetes",
       location: "Ballroom 2, Novotel Bogor",
-      speaker: "Narasumber Pakar Endokrinologi",
+      speaker: "Anchor: Ibu Manuella | 6 Tokoh Senior Inspiratif PERSADIA",
       type: "talkshow",
       description: [
-        "Membedah fenomena diabetes usia muda di era digital.",
-        "Faktor risiko genetik vs gaya hidup sedenter & pola makan cepat saji.",
-        "Langkah preventif dan remisi dini bagi generasi usia produktif."
-      ]
-    },
-    {
-      time: "09:25 – 09:55",
-      title: "Sesi Tanya Jawab Interaktif",
-      location: "Ballroom 2, Novotel Bogor",
-      speaker: "Moderator & Peserta Forum",
-      type: "talkshow"
-    },
-    {
-      time: "09:55 – 10:25",
-      title: "Temu 6 Tokoh Senior Penyandang Diabetes",
-      location: "Ballroom 2, Novotel Bogor",
-      speaker: "6 Tokoh Senior Inspiratif PERSADIA",
-      type: "activity",
-      description: [
-        "Berbagi pengalaman nyata puluhan tahun hidup berkualitas bersama diabetes.",
+        "Inspirasi dan keteladanan hidup sehat berkualitas puluhan tahun bersama diabetes.",
         "Tips disiplin pantau gula darah, menjaga pola makan, dan ketangguhan mental."
       ]
     },
     {
-      time: "10:25 – 10:35",
-      title: "Coffee Break & Networking",
-      location: "Foyer Ballroom 2",
-      speaker: "Panitia Konsumsi",
-      type: "break"
-    },
-    {
-      time: "10:35 – 11:20",
-      title: "Talkshow Spesial: 'Cantik, Bugar, Bergairah'",
+      time: "10:40 – 11:40",
+      title: "Talkshow 2: 'Cantik, Bugar, Bergairah'",
       location: "Ballroom 2, Novotel Bogor",
-      speaker: "dr. Boyke Dian Nugraha, SpOG, MARS",
+      speaker: "Anchor: dr. Mayorita | Narasumber: dr. Boyke Dian Nugraha, SpOG & dr. Roy Panusunan Sibarani, SpPD-KEMD",
       type: "talkshow",
       description: [
-        "Menjaga vitalitas, kebugaran fisik, dan kepercayaan diri penyandang diabetes.",
-        "Tips medis menjaga keharmonisan pasangan suami istri tetap prima dan bahagia.",
-        "Mengatasi mitos dan dampak vaskulopati/neuropati pada kesehatan pasutri."
+        "Menjaga vitalitas, kebugaran fisik, dan keharmonisan keluarga penyandang diabetes.",
+        "Fashion Show: Batik Marunda"
       ]
     },
     {
-      time: "11:20 – 11:50",
-      title: "Sesi Tanya Jawab Bersama dr. Boyke, SpOG",
-      location: "Ballroom 2, Novotel Bogor",
-      speaker: "dr. Boyke Dian Nugraha, SpOG, MARS & Peserta",
-      type: "talkshow"
-    },
-    {
-      time: "11:50 – 12:00",
-      title: "Sesi Penutupan & Foto Bersama",
+      time: "11:40 – 12:00",
+      title: "Doorprize dan Foto Bersama",
       location: "Ballroom 2, Novotel Bogor",
       speaker: "Panitia & Seluruh Peserta Forum",
-      type: "administrative"
+      type: "administrative",
+      description: ["Pengundian doorprize menarik dan sesi foto dokumentasi bersama"]
     },
     {
       time: "12:00 – Selesai",
       title: "Makan Siang dan Ramah Tamah",
-      location: "R. Makan Ballroom 2 / Restoran Novotel",
+      location: "Ballroom 2 / Restoran Novotel",
       speaker: "Panitia Pelaksana",
-      type: "break"
+      type: "break",
+      description: ["Santap makan siang bersama dan silaturahmi seluruh delegasi"]
     }
   ];
 
@@ -361,46 +334,34 @@ export default function Schedules() {
   // 4. Jadwal Rapat Organisasi (Novotel Bogor, 7 Nov 2026)
   const rapatSchedule: ScheduleEvent[] = [
     {
-      time: "14:00 – 17:00",
+      time: "13:00 – 17:00",
       title: "Rapat Kerja PERSADIA (Sidang Pleno & Komisi)",
-      location: "Ruang Karang–Sanggar",
+      location: "Ruang Kencana-Sanggar, Novotel Bogor",
       speaker: "Pengurus Pusat & Delegasi Cabang PERSADIA se-Indonesia",
       type: "meeting",
       description: [
-        "Ruang Breakout Sidang Komisi:",
-        "• Ruang Karang",
-        "• Ruang Sanggar",
-        "• Ruang Geulis"
+        "Rapat Kerja Nasional PERSADIA",
+        "Breakout Room: Ruang Kencana, Ruang Sanggar, Ruang Geulis"
       ]
     },
     {
-      time: "14:00 – 15:00",
-      title: "KONKER PERSADIA / PEDI (Koordinasi Bersama)",
-      location: "Ballroom 2 Novotel Bogor",
-      speaker: "Pengurus Pusat PERSADIA & Dewan Pengurus PEDI",
-      type: "meeting",
-      description: [
-        "Penyelarasan program kerja nasional edukasi diabetes komunitas dan tenaga edukator."
-      ]
-    },
-    {
-      time: "14:00 – 17:00",
+      time: "13:00 – 17:00",
       title: "Rapat Kerja PEDI (Perkumpulan Edukator Diabetes Indonesia)",
-      location: "Ruang Kencana",
+      location: "Ruang Karang, Novotel Bogor",
       speaker: "Pengurus & Anggota PEDI",
       type: "meeting",
       description: [
-        "Rapat kerja internal evaluasi kompetensi edukator dan rencana sertifikasi 2026-2029."
+        "Rapat kerja internal evaluasi kompetensi edukator dan program kerja nasional PEDI."
       ]
     },
     {
-      time: "18:00 – 19:00",
-      title: "Rapat Sinergi PERKENI & PEDI",
-      location: "Ballroom 2 Novotel Bogor",
-      speaker: "Pimpinan Pengurus Pusat PERKENI & PEDI",
+      time: "18:00 – 21:15",
+      title: "Rapat Kerja PERKENI (Perkumpulan Endokrinologi Indonesia)",
+      location: "Ballroom 2, Novotel Bogor",
+      speaker: "Pimpinan & Anggota Pengurus Pusat PERKENI",
       type: "meeting",
       description: [
-        "Penguatan kolaborasi klinis dokter spesialis endokrin dan edukator diabetes profesional."
+        "Rapat Kerja dan Konsolidasi Organisasi PERKENI 2026."
       ]
     }
   ];
@@ -579,25 +540,14 @@ export default function Schedules() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  {activeTab === "ilmiah" && (
-                    <a
-                      href="/panduan-simposium-workshop-konas-persadia-2026.pdf"
-                      download="Panduan-Lengkap-Simposium-Workshop-KONAS-PERSADIA-2026.pdf"
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-600 text-white text-xs font-bold transition shadow-sm cursor-pointer hover:scale-[1.02]"
-                      title="Download Panduan Lengkap Simposium & Workshop (.pdf)"
-                    >
-                      <Download className="w-3.5 h-3.5 text-white" />
-                      <span>Download Panduan Simpo & WS (.pdf)</span>
-                    </a>
-                  )}
                   <a
                     href="/rundown-konas-persadia-2026.pdf"
                     download="Rundown-Acara-KONAS-PERSADIA-2026.pdf"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/25 text-white text-xs font-bold transition shadow-sm cursor-pointer hover:scale-[1.02]"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-600 text-white text-xs font-bold transition shadow-sm cursor-pointer hover:scale-[1.02]"
                     title="Download Rundown Resmi (.pdf)"
                   >
-                    <Download className="w-3.5 h-3.5 text-teal-300" />
-                    <span>Download Rundown</span>
+                    <Download className="w-3.5 h-3.5 text-white" />
+                    <span>Download Rundown (.pdf)</span>
                   </a>
                   <div className="shrink-0 bg-white/10 backdrop-blur-sm border border-white/20 px-3.5 py-2 rounded-xl text-center">
                     <span className="block text-2xl font-extrabold text-white leading-none">
