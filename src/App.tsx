@@ -19,6 +19,8 @@ import TicketDownloadPage from "./components/TicketDownloadPage";
 import VotingAdminDashboard from "./components/Voting/VotingAdminDashboard";
 import VotingPage from "./components/Voting/VotingPage";
 import VotingLiveResults from "./components/Voting/VotingLiveResults";
+import DoorprizeAdmin from "./components/Doorprize/DoorprizeAdmin";
+import DoorprizeView from "./components/Doorprize/DoorprizeView";
 
 export default function App() {
   const [activeSection, setActiveSection] = useState("beranda");
@@ -44,6 +46,14 @@ export default function App() {
       currentPath === "/voting" ||
       currentPath === "/voting-admin" ||
       currentPath === "/voting-live" ||
+      currentHash === "#doorprize" ||
+      currentHash === "#undian" ||
+      currentHash === "#doorprize-admin" ||
+      currentHash === "#admin-doorprize" ||
+      currentPath === "/doorprize" ||
+      currentPath === "/undian" ||
+      currentPath === "/doorprize-admin" ||
+      currentPath === "/admin-doorprize" ||
       currentHash === "#sponsorship" || 
       currentHash === "#akomodasi" || 
       currentHash === "#hotel" ||
@@ -152,6 +162,18 @@ export default function App() {
     currentPath === "/pendaftaran" ||
     currentPath === "/register";
 
+  const isDoorprizeAdminPage =
+    currentHash.startsWith("#doorprize-admin") ||
+    currentHash.startsWith("#admin-doorprize") ||
+    currentPath.startsWith("/doorprize-admin") ||
+    currentPath.startsWith("/admin-doorprize");
+
+  const isDoorprizePage =
+    currentHash.startsWith("#doorprize") ||
+    currentHash.startsWith("#undian") ||
+    currentPath.startsWith("/doorprize") ||
+    currentPath.startsWith("/undian");
+
   const isVotingAdminPage =
     currentHash.startsWith("#voting-admin") ||
     currentHash.startsWith("#admin-voting") ||
@@ -235,6 +257,32 @@ export default function App() {
       <VotingPage
         initialToken={getInitialVoteToken()}
         onNavigateHome={handleBackToHome}
+      />
+    );
+  }
+
+  if (isDoorprizeAdminPage) {
+    return (
+      <DoorprizeAdmin
+        onNavigateHome={handleBackToHome}
+        onOpenPublicView={() => {
+          window.location.hash = "#doorprize";
+          setCurrentHash("#doorprize");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+      />
+    );
+  }
+
+  if (isDoorprizePage) {
+    return (
+      <DoorprizeView
+        onNavigateHome={handleBackToHome}
+        onOpenTicket={() => {
+          window.location.hash = "#tiket";
+          setCurrentHash("#tiket");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
       />
     );
   }

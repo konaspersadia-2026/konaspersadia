@@ -101,6 +101,13 @@ export default function Navbar({ onOpenRegister, activeSection, onNavigate }: Na
           {/* Desktop Action Buttons (Sisi Kanan) */}
           <div className="hidden xl:flex items-center gap-1.5 2xl:gap-2 shrink-0">
             <a
+              href="#doorprize"
+              onClick={() => window.scrollTo(0, 0)}
+              className="px-2.5 py-1 2xl:px-3 2xl:py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 hover:text-white font-bold text-xs rounded-full border border-amber-400/40 transition whitespace-nowrap cursor-pointer shadow-xs flex items-center gap-1.5"
+            >
+              🎁 Doorprize
+            </a>
+            <a
               href="#tiket"
               onClick={() => window.scrollTo(0, 0)}
               className="px-3 py-1 2xl:px-3.5 2xl:py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 hover:text-white font-bold text-xs rounded-full border border-cyan-400/40 transition whitespace-nowrap cursor-pointer shadow-xs flex items-center gap-1.5"
@@ -125,6 +132,13 @@ export default function Navbar({ onOpenRegister, activeSection, onNavigate }: Na
 
           {/* Mobile & Tablet Menu & Actions */}
           <div className="xl:hidden flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+            <a
+              href="#doorprize"
+              onClick={() => window.scrollTo(0, 0)}
+              className="px-2 py-1 sm:px-2.5 sm:py-1.5 bg-amber-500/20 text-amber-200 font-bold text-[10px] sm:text-xs rounded-full border border-amber-400/40 cursor-pointer whitespace-nowrap"
+            >
+              🎁 Doorprize
+            </a>
             <a
               href="#tiket"
               onClick={() => window.scrollTo(0, 0)}
@@ -183,7 +197,17 @@ export default function Navbar({ onOpenRegister, activeSection, onNavigate }: Na
             </button>
           </div>
 
-          <div className="pb-2 border-b border-white/10">
+          <div className="pb-2 border-b border-white/10 space-y-1.5">
+            <a
+              href="#doorprize"
+              onClick={() => {
+                window.scrollTo(0, 0);
+                setIsOpen(false);
+              }}
+              className="w-full py-2.5 px-3 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 hover:text-white rounded-lg text-center text-xs font-bold transition flex items-center justify-center gap-2"
+            >
+              🎁 Cek Undian Doorprize Live
+            </a>
             <a
               href="#tiket"
               onClick={() => {

@@ -221,9 +221,9 @@ export default function Schedules() {
   const dhfSchedule: ScheduleEvent[] = [
     {
       time: "09:10 – 09:30",
-      title: "DIVILAB Cor 3",
+      title: "Cek Rutin, Hidup Lebih Tenang: Suara Pasien dan Solusi Pemantauan Diabetes",
       location: "Ballroom 2, Novotel Bogor",
-      speaker: "Tim Edukasi Diabetes",
+      speaker: "Narasumber 1: Ibu Astry Tri Astuti | Moderator: Bpk. Edward Christian",
       type: "activity",
       description: ["Sesi pengenalan & inovasi pemantauan diabetes terkini"]
     },

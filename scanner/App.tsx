@@ -107,7 +107,24 @@ const formatTglIndo = (raw?: string | null) => {
   }
 };
 
+// Helper deteksi perangkat iOS (iPhone/iPad) & In-App Browser (WhatsApp, Instagram, dll.)
+const checkIsIOS = () => {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+};
+
+const checkIsInAppBrowser = () => {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || navigator.vendor || '';
+  return /FBAN|FBAV|Instagram|WhatsApp|Line|Twitter|MicroMessenger/i.test(ua);
+};
+
 function App() {
+  const isIOS = useMemo(() => checkIsIOS(), []);
+  const isInApp = useMemo(() => checkIsInAppBrowser(), []);
+  const isStartingScanner = useRef(false);
+
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<string | null>(null);
   const [data, setData] = useState<Pendaftar[]>([]);
@@ -699,37 +716,80 @@ function App() {
     };
   };
 
+  // Helper penutupan scanner yang aman (await stop + hardware cooldown)
+  const stopScannerSafely = async () => {
+    if (scannerRef.current) {
+      const inst = scannerRef.current;
+      scannerRef.current = null;
+      try {
+        if (inst.isScanning) {
+          await inst.stop();
+        }
+      } catch (e) {
+        console.warn("Error saat menghentikan scanner:", e);
+      }
+      try {
+        inst.clear();
+      } catch {}
+      // Berikan cooldown hardware agar AVCaptureSession atau Camera2 HAL terlepas tuntas
+      await new Promise(r => setTimeout(r, 200));
+    }
+    setTorchOn(false);
+  };
+
   const startScannerWithCamera = async (targetId?: string) => {
+    if (isStartingScanner.current) return;
+    isStartingScanner.current = true;
+
     try {
+      // Pastikan instance lama terhenti bersih dan hardware camera siap
+      await stopScannerSafely();
+
       const html5QrCode = new Html5Qrcode("reader");
       scannerRef.current = html5QrCode;
 
       let cameraToUse: string | { facingMode: string } = targetId || currentCameraId;
 
-      if (!cameraToUse) {
-        try {
-          const cams = await Html5Qrcode.getCameras();
-          if (cams && cams.length > 0) {
-            const { selectedId, backCameras } = selectNormalCamera(cams);
-            setAvailableCameras(backCameras);
-            if (selectedId) {
-              cameraToUse = selectedId;
-              setCurrentCameraId(selectedId);
+      if (isIOS) {
+        // KHUSUS iOS (iPhone / iPad):
+        // 1. Lewati siklus getCameras() ganda yang memicu hardware lock di WebKit / Chrome iOS.
+        // 2. Selalu gunakan facingMode "environment" (kamera belakang native).
+        // 3. Hindari penguncian string ID kamera karena deviceId di iOS diacak per sesi browser.
+        cameraToUse = { facingMode: "environment" };
+      } else {
+        // JALUR ANDROID & DESKTOP (100% Tetap Sama):
+        // Menjaga fitur pemilihan sensor 1x Camera2 HAL dan penolakan 0.5x ultra-wide
+        if (!cameraToUse) {
+          try {
+            const cams = await Html5Qrcode.getCameras();
+            if (cams && cams.length > 0) {
+              const { selectedId, backCameras } = selectNormalCamera(cams);
+              setAvailableCameras(backCameras);
+              if (selectedId) {
+                cameraToUse = selectedId;
+                setCurrentCameraId(selectedId);
+              }
             }
+          } catch (e) {
+            console.warn("getCameras gagal, gunakan default environment", e);
           }
-        } catch (e) {
-          console.warn("getCameras gagal, gunakan default environment", e);
         }
       }
 
       const finalConfig = cameraToUse || { facingMode: "environment" };
 
+      // Konfigurasi stream: Khusus iOS jangan paksa aspectRatio di level hardware
+      // agar tidak memicu OverconstrainedError di WebKit
+      const scannerConfig: any = {
+        fps: 15,
+      };
+      if (!isIOS) {
+        scannerConfig.aspectRatio = 1.0;
+      }
+
       await html5QrCode.start(
         finalConfig,
-        {
-          fps: 15,
-          aspectRatio: 1.0, // Paksa frame 1:1 persegi sempurna
-        },
+        scannerConfig,
         async (decodedText) => {
           const extractedId = extractIdFromScannedText(decodedText);
           setIsScanning(false);
@@ -746,14 +806,16 @@ function App() {
         () => {}
       );
 
-      // Refresh list kamera jika belum terisi atau label kosong saat pemindaian awal
-      try {
-        const refreshed = await Html5Qrcode.getCameras();
-        if (refreshed && refreshed.length > 0) {
-          const { backCameras } = selectNormalCamera(refreshed);
-          setAvailableCameras(backCameras);
-        }
-      } catch {}
+      // Refresh list kamera jika belum terisi atau label kosong saat pemindaian awal (khusus non-iOS)
+      if (!isIOS) {
+        try {
+          const refreshed = await Html5Qrcode.getCameras();
+          if (refreshed && refreshed.length > 0) {
+            const { backCameras } = selectNormalCamera(refreshed);
+            setAvailableCameras(backCameras);
+          }
+        } catch {}
+      }
 
       // Pastikan zoom normal 1.0 jika perangkat mendukung MediaTrackCapabilities zoom
       try {
@@ -771,13 +833,22 @@ function App() {
 
     } catch (err: any) {
       console.error("Gagal memulai scanner", err);
-      setError("Gagal mengakses kamera. Pastikan Anda memberikan izin akses kamera.");
+      const errStr = (err?.name || err?.message || String(err)).toLowerCase();
+      if (errStr.includes("notallowed") || errStr.includes("permission")) {
+        setError("Izin akses kamera diblokir. Silakan ketuk ikon pengaturan di sebelah kiri alamat web untuk mengizinkan kamera.");
+      } else if (errStr.includes("overconstrained") || errStr.includes("notreadable") || errStr.includes("abort")) {
+        setError("Kamera sedang digunakan aplikasi lain atau format tidak didukung. Tutup aplikasi lain lalu coba lagi.");
+      } else {
+        setError("Gagal mengakses kamera. Pastikan Anda memberikan izin akses kamera.");
+      }
       playScannerChime('error', soundEnabled);
+    } finally {
+      isStartingScanner.current = false;
     }
   };
 
   const handleSwitchCamera = async () => {
-    if (availableCameras.length <= 1 || isSwitchingCamera) return;
+    if (isIOS || availableCameras.length <= 1 || isSwitchingCamera) return;
     setIsSwitchingCamera(true);
 
     try {
@@ -785,23 +856,12 @@ function App() {
       const nextIndex = (currentIndex + 1) % availableCameras.length;
       const nextCamera = availableCameras[nextIndex];
 
-      // Hentikan instance berjalan
-      if (scannerRef.current) {
-        const inst = scannerRef.current;
-        if (inst.isScanning) {
-          await inst.stop();
-        }
-        try { inst.clear(); } catch {}
-        scannerRef.current = null;
-      }
-      setTorchOn(false);
+      // Hentikan instance berjalan secara aman
+      await stopScannerSafely();
 
       // Simpan preferensi & set camera id
       localStorage.setItem('scanner_preferred_camera_id', nextCamera.id);
       setCurrentCameraId(nextCamera.id);
-
-      // Beri sedikit jeda agar hardware stream terlepas
-      await new Promise(r => setTimeout(r, 80));
 
       // Jalankan scanner dengan ID kamera baru
       await startScannerWithCamera(nextCamera.id);
@@ -817,21 +877,12 @@ function App() {
   useEffect(() => {
     if (isScanning) {
       startScannerWithCamera();
+    } else {
+      stopScannerSafely();
     }
 
     return () => {
-      if (scannerRef.current) {
-        const inst = scannerRef.current;
-        if (inst.isScanning) {
-          inst.stop().then(() => {
-            try { inst.clear(); } catch {}
-          }).catch(() => {});
-        } else {
-          try { inst.clear(); } catch {}
-        }
-        scannerRef.current = null;
-      }
-      setTorchOn(false);
+      stopScannerSafely();
     };
   }, [isScanning]);
 
@@ -1912,6 +1963,16 @@ function App() {
               </div>
             )}
 
+            {/* Banner Edukasi Khusus iPhone jika dibuka di WhatsApp / In-App Browser */}
+            {isIOS && isInApp && (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 mb-3 text-xs text-amber-900 flex items-start gap-2.5 shadow-xs">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div className="leading-relaxed">
+                  <strong className="font-bold text-amber-950">Tips Pengguna iPhone:</strong> Jika kamera tidak terbuka di dalam WhatsApp, ketuk ikon titik tiga atau <strong>Bagikan</strong> di pojok layar lalu pilih <strong className="underline">"Buka di Safari / Chrome"</strong>.
+                </div>
+              </div>
+            )}
+
             {/* Viewfinder Kamera Scanner Persegi (1:1 Square) */}
             <div className={`bg-white rounded-2xl shadow-md border border-slate-200 p-4 sm:p-5 overflow-hidden ${isScanning ? 'block' : 'hidden'}`}>
               <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
@@ -1924,7 +1985,7 @@ function App() {
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-100 text-emerald-800">
                       Lensa Normal (1x)
                     </span>
-                    {availableCameras.length > 1 && (
+                    {!isIOS && availableCameras.length > 1 && (
                       <span className="text-[11px] text-slate-500 font-medium">
                         (Sensor {availableCameras.findIndex(c => c.id === currentCameraId) + 1} dari {availableCameras.length})
                       </span>
@@ -1933,7 +1994,7 @@ function App() {
                 </div>
 
                 <div className="flex items-center space-x-2">
-                  {availableCameras.length > 1 && (
+                  {!isIOS && availableCameras.length > 1 && (
                     <button
                       type="button"
                       onClick={handleSwitchCamera}

@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent } from "react";
-import { ArrowLeft, Search, Download, Copy, Check, Loader2, AlertCircle, HelpCircle, QrCode, Stethoscope, Sparkles, XCircle, AlertTriangle, Ban, MessageCircle } from "lucide-react";
+import { ArrowLeft, Search, Download, Copy, Check, Loader2, AlertCircle, HelpCircle, QrCode, Stethoscope, Sparkles, XCircle, AlertTriangle, Ban, MessageCircle, Gift } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { toJpeg } from "html-to-image";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
@@ -134,6 +134,62 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
         }
       })();
     }
+  }, [selectedParticipant?.no_registrasi]);
+
+  // Cek status doorprize untuk peserta terpilih
+  const [doorprizeInfo, setDoorprizeInfo] = useState<{
+    isWinner: boolean;
+    prizeName?: string;
+    isEligible: boolean;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!selectedParticipant?.no_registrasi || !isSupabaseConfigured) {
+      setDoorprizeInfo(null);
+      return;
+    }
+    const regId = selectedParticipant.no_registrasi;
+    (async () => {
+      try {
+        // 1. Cek apakah sudah menang di doorprize_pemenang
+        const { data: winData } = await supabase
+          .from("doorprize_pemenang")
+          .select("nama_hadiah, status")
+          .eq("no_registrasi", regId)
+          .eq("status", "sah")
+          .maybeSingle();
+
+        if (winData) {
+          setDoorprizeInfo({ isWinner: true, prizeName: winData.nama_hadiah, isEligible: true });
+          return;
+        }
+
+        // 2. Cek apakah kupon aktif via cek_kupon_doorprize RPC
+        const { data: kuponData } = await supabase.rpc("cek_kupon_doorprize", { p_no_registrasi: regId });
+        if (kuponData && kuponData.length > 0) {
+          const row = kuponData[0];
+          const isAktif = Boolean(row.kupon_aktif ?? row.kesediaan_rekam_medis);
+          setDoorprizeInfo({ isWinner: false, isEligible: isAktif });
+        } else {
+          // Fallback cek langsung
+          const { data: pData } = await supabase
+            .from("pendaftar")
+            .select("kesediaan_data, cek_gula_darah, gula_darah")
+            .eq("no_registrasi", regId)
+            .maybeSingle();
+          const isElig =
+            pData &&
+            (pData.kesediaan_data === "Ya" ||
+              pData.kesediaan_data === "true" ||
+              pData.cek_gula_darah === "Ya" ||
+              pData.cek_gula_darah === "true" ||
+              (pData.gula_darah && pData.gula_darah.trim() !== ""));
+          setDoorprizeInfo({ isWinner: false, isEligible: Boolean(isElig) });
+        }
+      } catch {
+        // Abaikan jika tabel belum siap
+      }
+    })();
   }, [selectedParticipant?.no_registrasi]);
 
   // Cek parameter dari URL dan hash saat inisialisasi
@@ -727,6 +783,57 @@ export default function TicketDownloadPage({ onNavigateHome }: TicketDownloadPag
                         QR Code check-in dinonaktifkan sehingga tiket ini <strong>tidak dapat digunakan untuk akses masuk</strong> lokasi acara. Jika Anda membutuhkan klarifikasi atau merasa ini kekeliruan data, silakan klik tombol bantuan panitia di bawah.
                       </p>
                     </div>
+                  </div>
+                )}
+
+                {/* Doorprize Ticket Badge */}
+                {doorprizeInfo && !isCancelledParticipant(selectedParticipant) && (
+                  <div className={`p-4 rounded-3xl border shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                    doorprizeInfo.isWinner
+                      ? "bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-amber-50 border-amber-400"
+                      : doorprizeInfo.isEligible
+                      ? "bg-emerald-50/90 border-emerald-300"
+                      : "bg-amber-50/90 border-amber-300"
+                  }`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
+                        doorprizeInfo.isWinner
+                          ? "bg-amber-400 text-slate-950 shadow-md"
+                          : doorprizeInfo.isEligible
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-amber-100 text-amber-700"
+                      }`}>
+                        <Gift className="w-5 h-5" />
+                      </div>
+                      <div>
+                        {doorprizeInfo.isWinner ? (
+                          <>
+                            <p className="text-xs font-black text-amber-800 uppercase tracking-wider">🎉 SELAMAT! ANDA MENANG DOORPRIZE!</p>
+                            <p className="text-sm font-bold text-slate-900">Hadiah: <strong className="text-amber-600">{doorprizeInfo.prizeName}</strong></p>
+                          </>
+                        ) : doorprizeInfo.isEligible ? (
+                          <>
+                            <p className="text-xs font-bold text-emerald-900 uppercase tracking-wider">Kupon Doorprize: AKTIF &amp; SAH</p>
+                            <p className="text-[11px] text-emerald-700">Nomor registrasi Anda telah masuk dalam kotak undian doorprize.</p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-xs font-bold text-amber-900 uppercase tracking-wider">Kupon Doorprize Belum Aktif</p>
+                            <p className="text-[11px] text-amber-700">Lakukan pemeriksaan &amp; persetujuan rekam medis di pos kesehatan agar kupon aktif.</p>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <a
+                      href="#doorprize"
+                      className={`px-3 py-2 rounded-xl text-xs font-extrabold shrink-0 shadow-xs text-center transition cursor-pointer ${
+                        doorprizeInfo.isWinner
+                          ? "bg-amber-500 hover:bg-amber-600 text-white"
+                          : "bg-slate-900 hover:bg-slate-800 text-white"
+                      }`}
+                    >
+                      {doorprizeInfo.isWinner ? "Klaim Hadiah &rarr;" : "Pantau Undian &rarr;"}
+                    </a>
                   </div>
                 )}
 
