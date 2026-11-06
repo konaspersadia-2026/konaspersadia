@@ -632,6 +632,9 @@ export default function VotingAdminDashboard({
 
           if (wa) {
             wa = wa.replace(/[^\d+]/g, '');
+            if (wa.startsWith('8')) {
+              wa = '0' + wa;
+            }
           }
 
           const catatan = (
@@ -814,11 +817,19 @@ export default function VotingAdminDashboard({
     try {
       const activePasscode = sessionStorage.getItem('persadia_voting_admin_passcode') || passcode.trim() || 'panlih2026';
 
-      // 1. Coba panggil RPC PostgreSQL atomik
-      const { data, error } = await supabase.rpc('reset_voting_data', { 
+      // 1. Coba panggil RPC PostgreSQL atomik (dengan passcode, fallback ke 1 parameter)
+      let { data, error } = await supabase.rpc('reset_voting_data', { 
         p_mode: mode,
         p_passcode: activePasscode
-      });
+      } as any);
+
+      if (error && (error.message?.includes('schema cache') || error.code === 'PGRST202')) {
+        const fallbackRes = await supabase.rpc('reset_voting_data', { 
+          p_mode: mode
+        });
+        data = fallbackRes.data;
+        error = fallbackRes.error;
+      }
 
       if (error) {
         throw new Error(
@@ -868,12 +879,19 @@ export default function VotingAdminDashboard({
         console.warn("RPC admin_start_round_2 gagal, mencoba fallback aman via reset_voting_data...", rpcErr || rpcRes?.message);
         
         // 2. Fallback aman: gunakan reset_voting_data('votes_only') yang sudah berstatus SECURITY DEFINER
-        const { error: resetErr } = await supabase.rpc('reset_voting_data', { 
+        let resetRes = await supabase.rpc('reset_voting_data', { 
           p_mode: 'votes_only',
           p_passcode: activePasscode
-        });
-        if (resetErr) {
-          throw new Error("Gagal mengosongkan kotak suara via database: " + resetErr.message);
+        } as any);
+
+        if (resetRes.error && (resetRes.error.message?.includes('schema cache') || resetRes.error.code === 'PGRST202')) {
+          resetRes = await supabase.rpc('reset_voting_data', { 
+            p_mode: 'votes_only'
+          });
+        }
+
+        if (resetRes.error) {
+          throw new Error("Gagal mengosongkan kotak suara via database: " + resetRes.error.message);
         }
 
         // 3. Konfigurasi Putaran 2

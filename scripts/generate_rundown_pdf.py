@@ -441,8 +441,12 @@ def build_pdf():
     p2.draw_table_header("WAKTU", "KEGIATAN", "KETERANGAN & NARASUMBER")
 
     p2.draw_table_row(
-        "09.10 - 09.30", "DIVILAB Cor 3", "Ballroom 2",
-        ["Sesi pengenalan & inovasi pemantauan diabetes terkini"],
+        "09.10 - 09.30", "Cek Rutin, Hidup Lebih Tenang: Suara Pasien", "Ballroom 2",
+        [
+            "Topik: Cek Rutin, Hidup Lebih Tenang: Suara Pasien dan Solusi Pemantauan Diabetes",
+            "Narasumber 1: Ibu Astry Tri Astuti",
+            "Moderator: Bpk. Edward Christian"
+        ],
         bg_alt=True
     )
 

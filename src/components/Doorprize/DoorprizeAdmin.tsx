@@ -232,7 +232,7 @@ export default function DoorprizeAdmin({ onNavigateHome, onOpenPublicView }: Doo
         { p_passcode: activePass }
       );
 
-      if (!rpcDoorprizeErr && Array.isArray(rpcDoorprizeData) && rpcDoorprizeData.length > 0) {
+      if (!rpcDoorprizeErr && Array.isArray(rpcDoorprizeData)) {
         eligibleList = rpcDoorprizeData;
       } else {
         // Fallback jika RPC get_doorprize_participants belum dieksekusi di database:
@@ -551,23 +551,25 @@ export default function DoorprizeAdmin({ onNavigateHome, onOpenPublicView }: Doo
     const headers = ["No", "No. Registrasi", "Nama Lengkap", "Cabang PERSADIA", "Kategori", "Hadiah", "Status", "Waktu Undian"];
     const rows = winners.map((w, idx) => [
       idx + 1,
-      `"${w.no_registrasi}"`,
-      `"${w.nama_lengkap}"`,
-      `"${w.cabang_persadia}"`,
-      `"${w.kategori_peserta}"`,
-      `"${w.nama_hadiah}"`,
-      `"${w.status.toUpperCase()}"`,
+      `"${(w.no_registrasi || "").replace(/"/g, '""')}"`,
+      `"${(w.nama_lengkap || "").replace(/"/g, '""')}"`,
+      `"${(w.cabang_persadia || "").replace(/"/g, '""')}"`,
+      `"${(w.kategori_peserta || "").replace(/"/g, '""')}"`,
+      `"${(w.nama_hadiah || "").replace(/"/g, '""')}"`,
+      `"${(w.status || "").toUpperCase()}"`,
       `"${new Date(w.waktu_undian).toLocaleString("id-ID")}"`,
     ]);
 
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", url);
     link.setAttribute("download", `Rekap_Pemenang_Doorprize_KONAS_PERSADIA_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   // =========================================================================

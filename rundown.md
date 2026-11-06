@@ -131,7 +131,7 @@
 
 | Waktu | Kegiatan | Keterangan & Narasumber |
 |---|---|---|
-| **09.10 – 09.30** | DIVILAB Cor 3 | Sesi pengenalan & inovasi pemantauan diabetes |
+| **09.10 – 09.30** | Cek Rutin, Hidup Lebih Tenang: Suara Pasien dan Solusi Pemantauan Diabetes | Sesi pengenalan & inovasi pemantauan diabetes terkini<br>• **Narasumber 1:** Ibu Astry Tri Astuti<br>• **Moderator:** Bpk. Edward Christian |
 | **09.35 – 10.35** | **Talkshow 1:** Temu 6 Tokoh Senior Penyandang Diabetes | Inspirasi dan keteladanan hidup sehat berkualitas puluhan tahun bersama diabetes<br>**Anchor:** Ibu Manuella |
 | **10.40 – 11.40** | **Talkshow 2:** *"Cantik, Bugar, Bergairah"* | Menjaga vitalitas, kebugaran, dan keharmonisan keluarga penyandang diabetes<br>**Anchor:** dr. Mayorita<br>• **Narasumber 1:** dr. Boyke Dian Nugraha, SpOG, MARS<br>• **Narasumber 2:** dr. Roy Panusunan Sibarani, SpPD-KEMD<br>• **Fashion Show:** Batik Marunda |
 | **11.40 – 12.00** | Doorprize dan Foto Bersama | Pengundian doorprize dan sesi dokumentasi bersama |
