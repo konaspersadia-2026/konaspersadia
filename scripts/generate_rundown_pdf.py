@@ -441,9 +441,10 @@ def build_pdf():
     p2.draw_table_header("WAKTU", "KEGIATAN", "KETERANGAN & NARASUMBER")
 
     p2.draw_table_row(
-        "09.10 - 09.30", "Cek Rutin, Hidup Lebih Tenang: Suara Pasien", "Ballroom 2",
+        "09.10 - 09.30", "Lebih dari Cek Gula Darah", "Ballroom 2",
         [
-            "Topik: Cek Rutin, Hidup Lebih Tenang: Suara Pasien dan Solusi Pemantauan Diabetes",
+            "Topik: Lebih dari Cek Gula Darah: Kenali Polanya, Jalani Hidup Lebih Tenang",
+            "Sesi Pengenalan Inovasi Alat Pemantau Kesehatan pertama di Indonesia berbasis IoT dan AI - DiViLab",
             "Narasumber 1: Ibu Astry Tri Astuti",
             "Moderator: Bpk. Edward Christian"
         ],

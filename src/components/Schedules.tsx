@@ -221,11 +221,11 @@ export default function Schedules() {
   const dhfSchedule: ScheduleEvent[] = [
     {
       time: "09:10 – 09:30",
-      title: "Cek Rutin, Hidup Lebih Tenang: Suara Pasien dan Solusi Pemantauan Diabetes",
+      title: "Lebih dari Cek Gula Darah: Kenali Polanya, Jalani Hidup Lebih Tenang",
       location: "Ballroom 2, Novotel Bogor",
       speaker: "Narasumber 1: Ibu Astry Tri Astuti | Moderator: Bpk. Edward Christian",
       type: "activity",
-      description: ["Sesi pengenalan & inovasi pemantauan diabetes terkini"]
+      description: ["Sesi Pengenalan Inovasi Alat Pemantau Kesehatan pertama di Indonesia berbasis IoT dan AI - DiViLab"]
     },
     {
       time: "09:35 – 10:35",
@@ -410,33 +410,33 @@ export default function Schedules() {
   };
 
   const tabs = [
-    { 
-      id: "ilmiah" as ScheduleTab, 
-      label: "Simposium & Workshop", 
+    {
+      id: "ilmiah" as ScheduleTab,
+      label: "Simposium & Workshop",
       sub: "7 Nov • Novotel Bogor",
       icon: BookOpen,
-      count: ilmiahSchedule.length 
+      count: ilmiahSchedule.length
     },
-    { 
-      id: "dhf" as ScheduleTab, 
-      label: "Diabetes Health Forum", 
+    {
+      id: "dhf" as ScheduleTab,
+      label: "Diabetes Health Forum",
       sub: "7 Nov • Ballroom 2 (dr. Boyke)",
       icon: Sparkles,
-      count: dhfSchedule.length 
+      count: dhfSchedule.length
     },
-    { 
-      id: "pesta_rakyat" as ScheduleTab, 
-      label: "Pesta Rakyat", 
+    {
+      id: "pesta_rakyat" as ScheduleTab,
+      label: "Pesta Rakyat",
       sub: "8 Nov • GOR Pakansari",
       icon: Heart,
-      count: pestaSchedule.length 
+      count: pestaSchedule.length
     },
-    { 
-      id: "rapat" as ScheduleTab, 
-      label: "Rapat Organisasi", 
+    {
+      id: "rapat" as ScheduleTab,
+      label: "Rapat Organisasi",
       sub: "7 Nov • PERSADIA / PEDI / PERKENI",
       icon: Users,
-      count: rapatSchedule.length 
+      count: rapatSchedule.length
     },
   ];
 
@@ -459,7 +459,7 @@ export default function Schedules() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <motion.div 
+        <motion.div
           className="text-center max-w-3xl mx-auto mb-12"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -487,11 +487,10 @@ export default function Schedules() {
                   key={tab.id}
                   id={`tab-btn-${tab.id}`}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-300 cursor-pointer text-left ${
-                    isSelected
-                      ? "bg-[#0B3D5E] text-white shadow-md shadow-[#0B3D5E]/20 scale-[1.02]"
-                      : "bg-white text-slate-700 hover:bg-slate-50 border border-slate-100 hover:border-slate-200"
-                  }`}
+                  className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-300 cursor-pointer text-left ${isSelected
+                    ? "bg-[#0B3D5E] text-white shadow-md shadow-[#0B3D5E]/20 scale-[1.02]"
+                    : "bg-white text-slate-700 hover:bg-slate-50 border border-slate-100 hover:border-slate-200"
+                    }`}
                 >
                   <div className="flex items-center gap-1.5 font-bold text-xs sm:text-sm mb-0.5">
                     <Icon className={`w-4 h-4 shrink-0 ${isSelected ? "text-amber-300" : "text-[#00B4AC]"}`} />
@@ -567,7 +566,7 @@ export default function Schedules() {
                     <div key={eventIdx} className="relative group">
                       {/* Timeline Node */}
                       <div className="absolute -left-[23px] sm:-left-[39px] top-2 w-3.5 h-3.5 rounded-full bg-white border-4 border-[#0B3D5E] group-hover:scale-125 transition-transform"></div>
-                      
+
                       {/* Event Card */}
                       <div className="bg-white rounded-xl p-4 sm:p-5 shadow-xs border border-slate-100 hover:border-[#00B4AC]/40 transition group-hover:shadow-md">
                         {/* Header: Time & Badge */}
@@ -602,8 +601,8 @@ export default function Schedules() {
                         {event.parallelRooms && (
                           <div className={`grid grid-cols-1 ${event.parallelRooms.length >= 3 ? "md:grid-cols-3" : "md:grid-cols-2"} gap-3.5 my-3`}>
                             {event.parallelRooms.map((par, pIdx) => (
-                              <div 
-                                key={pIdx} 
+                              <div
+                                key={pIdx}
                                 className="bg-gradient-to-b from-blue-50/40 to-slate-50/80 rounded-xl p-3.5 border border-blue-100 flex flex-col justify-between"
                               >
                                 <div>
@@ -653,11 +652,11 @@ export default function Schedules() {
             </motion.div>
           </AnimatePresence>
         </div>
-        
+
         {/* Disclaimer Note */}
         <div className="max-w-3xl mx-auto mt-12 p-4 bg-amber-50 border border-amber-200/60 rounded-xl flex items-start gap-3">
           <div className="mt-0.5 text-amber-600 shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
           </div>
           <div>
             <p className="text-xs sm:text-sm text-amber-800 leading-relaxed font-medium">
