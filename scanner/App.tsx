@@ -7,7 +7,7 @@ import {
   ArrowLeft, CheckSquare, Square, LogOut, Flashlight, Volume2, 
   VolumeX, Camera, AlertTriangle, Clock, Calendar, Check, Stethoscope,
   Sparkles, UserCheck, ChevronRight, Edit3, User, Coffee, Shirt, Utensils,
-  KeyRound, Eye, EyeOff
+  KeyRound, Eye, EyeOff, Wifi, WifiOff, Database
 } from 'lucide-react';
 
 interface Pendaftar {
@@ -120,10 +120,141 @@ const checkIsInAppBrowser = () => {
   return /FBAN|FBAV|Instagram|WhatsApp|Line|Twitter|MicroMessenger/i.test(ua);
 };
 
+// ==============================================================================
+// NATIVE INDEXEDDB CACHE HELPER (UNTUK DATA 7.000+ PENDAFTAR)
+// ==============================================================================
+const DB_NAME = 'persadia_scanner_cache_v1';
+const DB_VERSION = 1;
+const STORE_NAME = 'pendaftar_store';
+
+const openScannerDB = (): Promise<IDBDatabase> => {
+  return new Promise((resolve, reject) => {
+    if (typeof window === 'undefined' || !window.indexedDB) {
+      reject(new Error("IndexedDB tidak didukung"));
+      return;
+    }
+    const req = window.indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+};
+
+const saveCachedPendaftar = async (pendaftarList: Pendaftar[]) => {
+  try {
+    const db = await openScannerDB();
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).put(pendaftarList, 'all_pendaftar');
+    tx.objectStore(STORE_NAME).put(new Date().toISOString(), 'last_synced_at');
+  } catch (e) {
+    console.warn("Gagal menyimpan cache ke IndexedDB:", e);
+  }
+};
+
+const loadCachedPendaftar = async (): Promise<{ data: Pendaftar[] | null; lastSynced: string | null }> => {
+  try {
+    const db = await openScannerDB();
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const store = tx.objectStore(STORE_NAME);
+    const dataReq = store.get('all_pendaftar');
+    const syncReq = store.get('last_synced_at');
+
+    return new Promise((resolve) => {
+      tx.oncomplete = () => {
+        resolve({
+          data: (dataReq.result as Pendaftar[]) || null,
+          lastSynced: (syncReq.result as string) || null
+        });
+      };
+      tx.onerror = () => resolve({ data: null, lastSynced: null });
+    });
+  } catch {
+    return { data: null, lastSynced: null };
+  }
+};
+
+// ==============================================================================
+// OFFLINE QUEUE HELPER (UNTUK ANTREAN SINKRONISASI UPDATE)
+// ==============================================================================
+interface PendingSyncItem {
+  id: string;
+  noRegistrasi: string;
+  updatePayload: Record<string, any>;
+  timestamp: string;
+  checkpointLabel: string;
+}
+
+const getOfflineQueue = (): PendingSyncItem[] => {
+  try {
+    const raw = localStorage.getItem('scanner_offline_queue');
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveOfflineQueue = (queue: PendingSyncItem[]) => {
+  try {
+    localStorage.setItem('scanner_offline_queue', JSON.stringify(queue));
+  } catch (e) {
+    console.warn("Gagal menyimpan antrean offline:", e);
+  }
+};
+
+const addToOfflineQueue = (noRegistrasi: string, updatePayload: Record<string, any>, checkpointLabel: string): PendingSyncItem[] => {
+  const current = getOfflineQueue();
+  const cleanReg = noRegistrasi.trim();
+  const existingIdx = current.findIndex(item => item.noRegistrasi.trim().toUpperCase() === cleanReg.toUpperCase());
+  
+  if (existingIdx >= 0) {
+    current[existingIdx].updatePayload = {
+      ...current[existingIdx].updatePayload,
+      ...updatePayload
+    };
+    current[existingIdx].timestamp = new Date().toISOString();
+  } else {
+    current.push({
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      noRegistrasi: cleanReg,
+      updatePayload,
+      timestamp: new Date().toISOString(),
+      checkpointLabel
+    });
+  }
+  saveOfflineQueue(current);
+  return current;
+};
+
+const removeFromOfflineQueue = (id: string): PendingSyncItem[] => {
+  const current = getOfflineQueue().filter(item => item.id !== id);
+  saveOfflineQueue(current);
+  return current;
+};
+
 function App() {
   const isIOS = useMemo(() => checkIsIOS(), []);
   const isInApp = useMemo(() => checkIsInAppBrowser(), []);
   const isStartingScanner = useRef(false);
+
+  // States Jaringan & Sinkronisasi Offline
+  const [isOnline, setIsOnline] = useState<boolean>(() => {
+    return typeof navigator !== 'undefined' ? navigator.onLine : true;
+  });
+  const [pendingQueueCount, setPendingQueueCount] = useState<number>(() => {
+    return getOfflineQueue().length;
+  });
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [lastCacheTime, setLastCacheTime] = useState<string | null>(null);
+
+  // States Auto-Sleep Kamera (Hemat Baterai & Suhu HP)
+  const [isCameraAutoSleeping, setIsCameraAutoSleeping] = useState<boolean>(false);
+  const lastScanActivityRef = useRef<number>(Date.now());
+  const isFlushingQueue = useRef<boolean>(false);
 
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<string | null>(null);
@@ -378,6 +509,12 @@ function App() {
   };
 
   const handleLogout = async () => {
+    if (getOfflineQueue().length > 0) {
+      if (!confirm(`Perhatian: Masih ada ${getOfflineQueue().length} data transaksi presensi yang belum tersinkronisasi ke server. Jika Anda keluar sekarang, data tetap aman di perangkat ini, namun belum terkirim ke database pusat. Tetap ingin keluar?`)) {
+        return;
+      }
+    }
+
     localStorage.removeItem('persadia_scanner_auth');
     localStorage.removeItem('persadia_scanner_auth_time');
     localStorage.removeItem('persadia_scanner_passcode');
@@ -396,14 +533,124 @@ function App() {
     setHasConfirmedDate(false);
   };
 
-  const fetchData = async () => {
+  // Background processor untuk antrean sinkronisasi offline
+  const processOfflineQueue = async () => {
+    if (isFlushingQueue.current || !navigator.onLine) return;
+    const queue = getOfflineQueue();
+    if (queue.length === 0) {
+      setPendingQueueCount(0);
+      return;
+    }
+
+    isFlushingQueue.current = true;
+    setIsSyncing(true);
+
+    try {
+      const activePasscode = localStorage.getItem('persadia_scanner_passcode') || passcode.trim() || 'persadia2026';
+
+      for (const item of queue) {
+        let itemSuccess = false;
+
+        // 1. Coba lewat RPC update_pendaftar_scanner
+        try {
+          const { data: rpcData, error: rpcErr } = await supabase.rpc('update_pendaftar_scanner', {
+            p_no_registrasi: item.noRegistrasi,
+            p_updates: item.updatePayload,
+            p_passcode: activePasscode
+          });
+          if (!rpcErr && rpcData && rpcData.success) {
+            itemSuccess = true;
+          }
+        } catch {}
+
+        // 2. Fallback direct update jika RPC belum berhasil
+        if (!itemSuccess) {
+          try {
+            const { error: directErr } = await supabase
+              .from('pendaftar')
+              .update(item.updatePayload)
+              .eq('no_registrasi', item.noRegistrasi);
+            if (!directErr) {
+              itemSuccess = true;
+            }
+          } catch {}
+        }
+
+        if (itemSuccess) {
+          const remaining = removeFromOfflineQueue(item.id);
+          setPendingQueueCount(remaining.length);
+        } else {
+          // Jika gagal (kemungkinan sinyal drop kembali), hentikan antrean sementara
+          break;
+        }
+      }
+    } finally {
+      isFlushingQueue.current = false;
+      setIsSyncing(false);
+      setPendingQueueCount(getOfflineQueue().length);
+    }
+  };
+
+  // Efek sinkronisasi antrean otomatis & event deteksi koneksi online/offline
+  useEffect(() => {
+    // Jalankan flush antrean awal & load cache timestamp
+    processOfflineQueue();
+    loadCachedPendaftar().then(cached => {
+      if (cached.lastSynced) setLastCacheTime(cached.lastSynced);
+    });
+
+    const interval = setInterval(() => {
+      if (navigator.onLine && getOfflineQueue().length > 0) {
+        processOfflineQueue();
+      }
+    }, 5000);
+
+    const handleOnline = () => {
+      setIsOnline(true);
+      processOfflineQueue();
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  const fetchData = async (forceRemote = false) => {
     setLoading(true);
     setError(null);
+
+    // 1. Coba load instan dari IndexedDB Cache terlebih dahulu (0.05 detik)
+    if (!forceRemote) {
+      try {
+        const cached = await loadCachedPendaftar();
+        if (cached.data && cached.data.length > 0) {
+          setData(cached.data);
+          setLastCacheTime(cached.lastSynced);
+          setLoading(false); // Langsung interaktif tanpa menunggu jaringan!
+        }
+      } catch (e) {
+        console.warn("Gagal load dari cache IndexedDB:", e);
+      }
+    }
 
     if (!isSupabaseConfigured) {
       setLoading(false);
       setError("Supabase tidak dikonfigurasi. Mode scanner memerlukan Supabase.");
-      setData([]);
+      return;
+    }
+
+    // Jika sedang offline dan sudah ada data cache, jangan paksakan network call
+    if (!navigator.onLine && dataRef.current.length > 0) {
+      setLoading(false);
       return;
     }
 
@@ -451,7 +698,7 @@ function App() {
         }
       }
 
-      if (allData) {
+      if (allData && allData.length > 0) {
         const mappedData: Pendaftar[] = allData.map((row: any) => ({
           "Timestamp": row.timestamp || new Date().toISOString(),
           "No. Registrasi": row.no_registrasi || "-",
@@ -473,12 +720,15 @@ function App() {
           ...row
         }));
         setData(mappedData);
-      } else {
-        setData([]);
+        // Simpan snapshot ke IndexedDB untuk mode offline mendatang
+        await saveCachedPendaftar(mappedData);
+        setLastCacheTime(new Date().toISOString());
       }
     } catch (err: any) {
-      console.error(err);
-      setError("Kesalahan saat memuat data: " + err.message);
+      console.warn("Fetch remote gagal, cek cache lokal:", err);
+      if (dataRef.current.length === 0) {
+        setError("Gagal memuat data dari server: " + err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -535,34 +785,53 @@ function App() {
     });
   };
 
-  // Fetch single-row real-time dari Supabase saat scan
+  // Fetch single-row real-time dari Supabase saat scan dengan batas timeout 2.5s (Anti-Freeze)
   const fetchLiveParticipant = async (targetId: string, fallbackUser?: Pendaftar | null) => {
-    if (!isSupabaseConfigured || !targetId) return fallbackUser || null;
+    if (!isSupabaseConfigured || !targetId || !navigator.onLine) return fallbackUser || null;
     
     try {
       const cleanReg = targetId.trim();
       const activePasscode = localStorage.getItem('persadia_scanner_passcode') || passcode.trim() || 'persadia2026';
       let freshRow: any = null;
 
-      // 1. Coba lewat RPC aman get_scanner_live_participant
-      const { data: rpcRows, error: rpcErr } = await supabase.rpc('get_scanner_live_participant', {
-        p_passcode: activePasscode,
-        p_no_registrasi: cleanReg
-      });
+      const timeoutPromise = new Promise<{ data: any; error: any }>((_, reject) =>
+        setTimeout(() => reject(new Error("Timeout verifikasi online")), 2500)
+      );
 
-      if (!rpcErr && Array.isArray(rpcRows) && rpcRows.length > 0) {
-        freshRow = rpcRows[0];
-      } else {
-        // 2. Fallback query langsung
-        const { data, error } = await supabase
-          .from('pendaftar')
-          .select('*')
-          .eq('no_registrasi', cleanReg)
-          .maybeSingle();
+      // 1. Coba lewat RPC aman get_scanner_live_participant dengan batas timeout 2.5s
+      try {
+        const rpcPromise = supabase.rpc('get_scanner_live_participant', {
+          p_passcode: activePasscode,
+          p_no_registrasi: cleanReg
+        });
 
-        if (!error && data) {
-          freshRow = data;
+        const { data: rpcRows, error: rpcErr } = await Promise.race([rpcPromise, timeoutPromise]) as any;
+
+        if (!rpcErr && Array.isArray(rpcRows) && rpcRows.length > 0) {
+          freshRow = rpcRows[0];
         }
+      } catch (e) {
+        // Jika timeout atau rpc gagal, coba direct query singkat
+      }
+
+      if (!freshRow) {
+        // 2. Fallback query langsung jika RPC belum membalas (timeout 1.5s)
+        try {
+          const directPromise = supabase
+            .from('pendaftar')
+            .select('*')
+            .eq('no_registrasi', cleanReg)
+            .maybeSingle();
+
+          const directTimeout = new Promise<{ data: any; error: any }>((_, reject) =>
+            setTimeout(() => reject(new Error("Timeout verifikasi direct")), 1500)
+          );
+
+          const { data, error } = await Promise.race([directPromise, directTimeout]) as any;
+          if (!error && data) {
+            freshRow = data;
+          }
+        } catch {}
       }
 
       if (freshRow) {
@@ -791,6 +1060,8 @@ function App() {
         finalConfig,
         scannerConfig,
         async (decodedText) => {
+          lastScanActivityRef.current = Date.now();
+          setIsCameraAutoSleeping(false);
           const extractedId = extractIdFromScannedText(decodedText);
           setIsScanning(false);
 
@@ -873,15 +1144,29 @@ function App() {
     }
   };
 
-  // Efek kamera scanner
+  // Efek kamera scanner & Smart Auto-Sleep (90 detik tanpa aktivitas)
   useEffect(() => {
+    let sleepInterval: any = null;
+
     if (isScanning) {
+      lastScanActivityRef.current = Date.now();
+      setIsCameraAutoSleeping(false);
       startScannerWithCamera();
+
+      // Monitor aktivitas setiap 5 detik untuk menghemat baterai & suhu HP
+      sleepInterval = setInterval(() => {
+        if (Date.now() - lastScanActivityRef.current > 90000) {
+          console.log("Kamera auto-sleep setelah 90 detik tanpa aktivitas");
+          setIsScanning(false);
+          setIsCameraAutoSleeping(true);
+        }
+      }, 5000);
     } else {
       stopScannerSafely();
     }
 
     return () => {
+      if (sleepInterval) clearInterval(sleepInterval);
       stopScannerSafely();
     };
   }, [isScanning]);
@@ -919,41 +1204,74 @@ function App() {
 
   // Helper terpusat untuk update data pendaftar ke Supabase
   // Mengutamakan RPC SECURITY DEFINER agar kebal dari error RLS 'permission denied for table pendaftar'
-  const updatePendaftarRow = async (noRegistrasi: string, updatePayload: Record<string, any>) => {
-    // 1. Coba lewat RPC update_pendaftar_scanner (SECURITY DEFINER)
+  // Dilengkapi Fast Timeout 3.5s & otomatis masuk antrean offline jika koneksi lambat/terputus
+  const updatePendaftarRow = async (
+    noRegistrasi: string,
+    updatePayload: Record<string, any>,
+    checkpointLabel = 'Presensi'
+  ): Promise<{ success: boolean; queued?: boolean }> => {
+    // Jika perangkat terdeteksi offline, simpan langsung ke antrean lokal tanpa freeze
+    if (!navigator.onLine) {
+      addToOfflineQueue(noRegistrasi, updatePayload, checkpointLabel);
+      setPendingQueueCount(getOfflineQueue().length);
+      return { success: true, queued: true };
+    }
+
+    const activePasscode = localStorage.getItem('persadia_scanner_passcode') || passcode.trim() || 'persadia2026';
+
+    const sendOnline = async () => {
+      // 1. Coba lewat RPC update_pendaftar_scanner (SECURITY DEFINER)
+      try {
+        const { data: rpcData, error: rpcErr } = await supabase.rpc('update_pendaftar_scanner', {
+          p_no_registrasi: noRegistrasi,
+          p_updates: updatePayload,
+          p_passcode: activePasscode
+        });
+        if (!rpcErr && rpcData && rpcData.success) {
+          return { success: true };
+        }
+        if (rpcErr) {
+          console.warn("RPC update_pendaftar_scanner fallback ke direct update:", rpcErr.message);
+        }
+      } catch (rpcCatch) {
+        console.warn("RPC call error fallback ke direct update:", rpcCatch);
+      }
+
+      // 2. Fallback direct table update ke tabel pendaftar
+      const { error: directErr } = await supabase
+        .from('pendaftar')
+        .update(updatePayload)
+        .eq('no_registrasi', noRegistrasi);
+
+      if (directErr) {
+        if (directErr.message && directErr.message.toLowerCase().includes('permission denied')) {
+          throw new Error(
+            "Izin update ditolak oleh database (permission denied for table pendaftar).\n\n" +
+            "Solusi: Silakan buka Supabase Dashboard -> SQL Editor, lalu jalankan script 'supabase/fix_scanner_hari2_and_rls.sql' untuk mengaktifkan izin update scanner."
+          );
+        }
+        throw directErr;
+      }
+      return { success: true };
+    };
+
+    const timeoutPromise = new Promise<{ timeout: true }>((_, reject) =>
+      setTimeout(() => reject(new Error("NETWORK_TIMEOUT")), 3500)
+    );
+
     try {
-      const activePasscode = localStorage.getItem('persadia_scanner_passcode') || passcode.trim() || 'persadia2026';
-      const { data: rpcData, error: rpcErr } = await supabase.rpc('update_pendaftar_scanner', {
-        p_no_registrasi: noRegistrasi,
-        p_updates: updatePayload,
-        p_passcode: activePasscode
-      });
-      if (!rpcErr && rpcData && rpcData.success) {
-        return { success: true };
+      await Promise.race([sendOnline(), timeoutPromise]);
+      return { success: true, queued: false };
+    } catch (err: any) {
+      if (err.message && err.message.includes('permission denied')) {
+        throw err;
       }
-      if (rpcErr) {
-        console.warn("RPC update_pendaftar_scanner fallback ke direct update:", rpcErr.message);
-      }
-    } catch (rpcCatch) {
-      console.warn("RPC call error fallback ke direct update:", rpcCatch);
-    }
 
-    // 2. Fallback direct table update ke tabel pendaftar
-    const { error: directErr } = await supabase
-      .from('pendaftar')
-      .update(updatePayload)
-      .eq('no_registrasi', noRegistrasi);
-
-    if (directErr) {
-      if (directErr.message && directErr.message.toLowerCase().includes('permission denied')) {
-        throw new Error(
-          "Izin update ditolak oleh database (permission denied for table pendaftar).\n\n" +
-          "Solusi: Silakan buka Supabase Dashboard -> SQL Editor, lalu jalankan script 'supabase/fix_scanner_hari2_and_rls.sql' untuk mengaktifkan izin update scanner."
-        );
-      }
-      throw directErr;
+      console.warn("Koneksi bermasalah/timeout, update dialihkan ke antrean offline:", err.message || err);
+      addToOfflineQueue(noRegistrasi, updatePayload, checkpointLabel);
+      setPendingQueueCount(getOfflineQueue().length);
+      return { success: true, queued: true };
     }
-    return { success: true };
   };
 
   const handleUpdateCheckpoint = async (checkpointId: string, currentValue: boolean, extraColumns: string[] = []) => {
@@ -1011,7 +1329,7 @@ function App() {
         updatePayload[col.toLowerCase()] = newValue ? "Ya" : null;
       });
 
-      await updatePendaftarRow(selectedUser["No. Registrasi"], updatePayload);
+      await updatePendaftarRow(selectedUser["No. Registrasi"], updatePayload, currentModeItem?.label || checkpointId);
       
       const updatedUser: Pendaftar = { 
         ...selectedUser, 
@@ -1052,10 +1370,15 @@ function App() {
       });
 
       setSelectedUser(updatedUser);
-      setData(prevData => prevData.map(d => 
-        d["No. Registrasi"] === selectedUser["No. Registrasi"] ? updatedUser : d
-      ));
+      setData(prevData => {
+        const nextData = prevData.map(d => 
+          d["No. Registrasi"] === selectedUser["No. Registrasi"] ? updatedUser : d
+        );
+        saveCachedPendaftar(nextData);
+        return nextData;
+      });
 
+      lastScanActivityRef.current = Date.now();
       playScannerChime('success', soundEnabled);
     } catch (err: any) {
       console.error(err);
@@ -1111,7 +1434,7 @@ function App() {
         updatePayload.nik = cleanNik;
       }
 
-      await updatePendaftarRow(selectedUser["No. Registrasi"], updatePayload);
+      const res = await updatePendaftarRow(selectedUser["No. Registrasi"], updatePayload, 'Perbaikan Identitas');
 
       const updatedUser: Pendaftar = {
         ...selectedUser,
@@ -1125,13 +1448,22 @@ function App() {
       };
 
       setSelectedUser(updatedUser);
-      setData(prevData => prevData.map(d => 
-        d["No. Registrasi"] === selectedUser["No. Registrasi"] ? updatedUser : d
-      ));
+      setData(prevData => {
+        const nextData = prevData.map(d => 
+          d["No. Registrasi"] === selectedUser["No. Registrasi"] ? updatedUser : d
+        );
+        saveCachedPendaftar(nextData);
+        return nextData;
+      });
 
+      lastScanActivityRef.current = Date.now();
       setIsEditingIdentity(false);
       playScannerChime('success', soundEnabled);
-      alert("Data identitas peserta berhasil diperbarui!");
+      if (res?.queued) {
+        alert("Data identitas peserta tersimpan lokal dan akan otomatis disinkronkan ke server saat jaringan tersedia.");
+      } else {
+        alert("Data identitas peserta berhasil diperbarui!");
+      }
     } catch (err: any) {
       console.error(err);
       playScannerChime('error', soundEnabled);
@@ -1206,7 +1538,7 @@ function App() {
         updatePayload.nik = cleanNik;
       }
 
-      await updatePendaftarRow(selectedUser["No. Registrasi"], updatePayload);
+      const res = await updatePendaftarRow(selectedUser["No. Registrasi"], updatePayload, 'Pemeriksaan Fisik & Gula Darah');
       
       const updatedUser: Pendaftar = { 
         ...selectedUser, 
@@ -1218,13 +1550,22 @@ function App() {
         "Cek_Gula_Darah": 'Ya'
       };
       setSelectedUser(updatedUser);
-      setData(prevData => prevData.map(d => 
-        d["No. Registrasi"] === selectedUser["No. Registrasi"] ? updatedUser : d
-      ));
+      setData(prevData => {
+        const nextData = prevData.map(d => 
+          d["No. Registrasi"] === selectedUser["No. Registrasi"] ? updatedUser : d
+        );
+        saveCachedPendaftar(nextData);
+        return nextData;
+      });
       
+      lastScanActivityRef.current = Date.now();
       setIsEditingIdentity(false);
       playScannerChime('success', soundEnabled);
-      alert('Data identitas dan hasil pemeriksaan fisik & gula darah berhasil disimpan!');
+      if (res?.queued) {
+        alert('Data identitas & pemeriksaan gula darah berhasil disimpan secara lokal dan akan otomatis dikirim ke server!');
+      } else {
+        alert('Data identitas dan hasil pemeriksaan fisik & gula darah berhasil disimpan!');
+      }
     } catch (err: any) {
       console.error(err);
       playScannerChime('error', soundEnabled);
@@ -1239,6 +1580,8 @@ function App() {
     setScanResult(null);
     setError(null);
     setCandidateList(null);
+    lastScanActivityRef.current = Date.now();
+    setIsCameraAutoSleeping(false);
     setIsScanning(true);
   };
 
@@ -1692,6 +2035,8 @@ function App() {
               onClick={() => {
                 if (selectedUser) {
                   setSelectedUser(null);
+                  lastScanActivityRef.current = Date.now();
+                  setIsCameraAutoSleeping(false);
                   setIsScanning(true);
                 } else if (scannerMode) {
                   setScannerMode(null);
@@ -1737,7 +2082,7 @@ function App() {
 
             {/* Refresh Data */}
             <button 
-              onClick={fetchData}
+              onClick={() => fetchData(true)}
               disabled={loading}
               className="p-2 bg-emerald-800 hover:bg-emerald-900 rounded-full transition-colors disabled:opacity-50"
               title="Refresh Data Pendaftar"
@@ -1758,6 +2103,62 @@ function App() {
       </header>
 
       <main className="max-w-2xl mx-auto p-4 mt-3">
+        {/* Network & Offline Sync Status Bar */}
+        <div className="mb-4 bg-white border border-slate-200 rounded-2xl p-3 shadow-xs flex flex-wrap items-center justify-between gap-2.5 text-xs">
+          <div className="flex items-center gap-2">
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-bold text-[11px] ${
+              isOnline ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200 animate-pulse'
+            }`}>
+              {isOnline ? (
+                <>
+                  <Wifi className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Online</span>
+                </>
+              ) : (
+                <>
+                  <WifiOff className="w-3.5 h-3.5 text-rose-600" />
+                  <span>Offline (Tersimpan Lokal)</span>
+                </>
+              )}
+            </span>
+
+            <span className="hidden sm:inline-flex items-center gap-1 text-slate-500 font-medium">
+              <Database className="w-3.5 h-3.5 text-slate-400" />
+              <span>Data Lokal Siap</span>
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 ml-auto">
+            {pendingQueueCount > 0 ? (
+              <button
+                type="button"
+                onClick={() => processOfflineQueue()}
+                disabled={isSyncing || !isOnline}
+                className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg transition-colors shadow-xs cursor-pointer disabled:opacity-50 text-xs"
+                title="Klik untuk sinkronisasi paksa data offline ke server Supabase"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                <span>{pendingQueueCount} Tertunda</span>
+                <span className="text-[10px] bg-amber-700/60 px-1.5 py-0.2 rounded-full">Kirim</span>
+              </button>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-emerald-700 font-medium bg-emerald-50/80 px-2 py-0.5 rounded-md">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="text-[11px]">Tersinkron</span>
+              </span>
+            )}
+
+            <button
+              type="button"
+              onClick={() => fetchData(true)}
+              disabled={loading || !isOnline}
+              className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer disabled:opacity-40"
+              title="Perbarui data terbaru dari database pusat"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-emerald-600' : ''}`} />
+            </button>
+          </div>
+        </div>
         {/* Pesan Error / Notifikasi */}
         {error && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start shadow-xs">
@@ -2048,24 +2449,54 @@ function App() {
               </p>
             </div>
 
-            {/* Action Card Mulai Scan Kamera (Jika kamera sedang ditutup) */}
+            {/* Action Card Mulai Scan Kamera (Jika kamera sedang ditutup atau auto-sleep) */}
             {!isScanning && (
               <div className="bg-white rounded-2xl shadow-xs border border-slate-200 p-6 flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mb-3">
-                  <QrCode className="w-8 h-8" />
-                </div>
-                <h2 className="text-lg font-bold text-slate-900 mb-1">Pindai QR E-Ticket</h2>
-                <p className="text-slate-600 text-xs sm:text-sm mb-4 max-w-sm">
-                  Arahkan kamera ke QR code tiket peserta untuk verifikasi dan penyaluran pos <strong className="text-emerald-700">{currentModeItem?.label}</strong>.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setIsScanning(true)}
-                  className="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center cursor-pointer text-sm"
-                >
-                  <Camera className="w-5 h-5 mr-2" />
-                  Mulai Scan Kamera
-                </button>
+                {isCameraAutoSleeping ? (
+                  <>
+                    <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mb-3 animate-pulse">
+                      <Clock className="w-8 h-8" />
+                    </div>
+                    <h2 className="text-lg font-bold text-slate-900 mb-1">Kamera Istirahat Otomatis</h2>
+                    <p className="text-slate-600 text-xs sm:text-sm mb-4 max-w-sm">
+                      Kamera dinonaktifkan sementara untuk <strong className="text-amber-700">menghemat baterai</strong> dan <strong className="text-amber-700">mencegah HP cepat panas</strong> karena 90 detik tidak ada aktivitas pemindaian.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        lastScanActivityRef.current = Date.now();
+                        setIsCameraAutoSleeping(false);
+                        setIsScanning(true);
+                      }}
+                      className="w-full sm:w-auto px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center cursor-pointer text-sm"
+                    >
+                      <Camera className="w-5 h-5 mr-2" />
+                      Bangunkan Kamera (Lanjut Scan)
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mb-3">
+                      <QrCode className="w-8 h-8" />
+                    </div>
+                    <h2 className="text-lg font-bold text-slate-900 mb-1">Pindai QR E-Ticket</h2>
+                    <p className="text-slate-600 text-xs sm:text-sm mb-4 max-w-sm">
+                      Arahkan kamera ke QR code tiket peserta untuk verifikasi dan penyaluran pos <strong className="text-emerald-700">{currentModeItem?.label}</strong>.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        lastScanActivityRef.current = Date.now();
+                        setIsCameraAutoSleeping(false);
+                        setIsScanning(true);
+                      }}
+                      className="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center cursor-pointer text-sm"
+                    >
+                      <Camera className="w-5 h-5 mr-2" />
+                      Mulai Scan Kamera
+                    </button>
+                  </>
+                )}
               </div>
             )}
 
