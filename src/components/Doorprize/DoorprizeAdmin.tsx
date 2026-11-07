@@ -225,40 +225,77 @@ export default function DoorprizeAdmin({ onNavigateHome, onOpenPublicView }: Doo
     try {
       const activePass = localStorage.getItem("persadia_doorprize_passcode") || "doorprize2026";
 
-      // 1. Ambil data peserta undian via RPC get_doorprize_participants (Prioritas 1)
+      // 1. Ambil data peserta undian via RPC get_doorprize_participants (Auto-Pagination Loop untuk melampaui batas 1.000 Supabase)
       let eligibleList: Participant[] = [];
-      const { data: rpcDoorprizeData, error: rpcDoorprizeErr } = await supabase.rpc(
-        "get_doorprize_participants",
-        { p_passcode: activePass }
-      );
+      let page = 0;
+      let hasMore = true;
+      const pageSize = 1000;
+      let rpcSucceeded = false;
 
-      if (!rpcDoorprizeErr && Array.isArray(rpcDoorprizeData)) {
-        eligibleList = rpcDoorprizeData;
-      } else {
-        // Fallback jika RPC get_doorprize_participants belum dieksekusi di database:
-        // Gunakan get_scanner_pendaftar dan filter peserta yang sudah periksa gula darah atau kesediaan_data
+      while (hasMore && page < 20) {
+        const from = page * pageSize;
+        const to = from + pageSize - 1;
+
+        const { data: pageData, error: pageErr } = await supabase
+          .rpc("get_doorprize_participants", { p_passcode: activePass })
+          .range(from, to);
+
+        if (!pageErr && Array.isArray(pageData)) {
+          rpcSucceeded = true;
+          if (pageData.length > 0) {
+            eligibleList = [...eligibleList, ...pageData];
+            // Jika data yang diterima kurang dari pageSize (halaman terakhir)
+            // atau jika data langsung memuat semua (seperti JSONB array > 1000)
+            if (pageData.length < pageSize || pageData.length > pageSize) {
+              hasMore = false;
+            } else {
+              page++;
+            }
+          } else {
+            hasMore = false;
+          }
+        } else {
+          // Jika RPC pada halaman pertama error (misal tidak mendukung .range atau RPC belum ada)
+          if (page === 0) {
+            try {
+              const { data: singleData, error: singleErr } = await supabase.rpc(
+                "get_doorprize_participants",
+                { p_passcode: activePass }
+              );
+              if (!singleErr && Array.isArray(singleData)) {
+                rpcSucceeded = true;
+                eligibleList = singleData;
+              }
+            } catch {}
+          }
+          hasMore = false;
+        }
+      }
+
+      // Fallback jika RPC get_doorprize_participants belum berhasil:
+      // Gunakan get_scanner_pendaftar dan filter peserta yang sudah periksa gula darah atau kesediaan_data
+      if (!rpcSucceeded || eligibleList.length === 0) {
         try {
-          let page = 0;
-          let hasMore = true;
-          const pageSize = 1000;
+          let fbPage = 0;
+          let fbHasMore = true;
           let allScan: any[] = [];
 
-          while (hasMore && page < 10) {
+          while (fbHasMore && fbPage < 20) {
             const { data: scanData, error: scanErr } = await supabase.rpc("get_scanner_pendaftar", {
-              p_passcode: "persadia2026",
-              p_page: page,
+              p_passcode: activePass || "persadia2026",
+              p_page: fbPage,
               p_page_size: pageSize,
             });
 
             if (!scanErr && Array.isArray(scanData) && scanData.length > 0) {
               allScan = [...allScan, ...scanData];
               if (scanData.length < pageSize) {
-                hasMore = false;
+                fbHasMore = false;
               } else {
-                page++;
+                fbPage++;
               }
             } else {
-              hasMore = false;
+              fbHasMore = false;
             }
           }
 
