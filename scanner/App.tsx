@@ -340,7 +340,7 @@ function App() {
   const [gulaDarah, setGulaDarah] = useState("");
   const [lingkarPerut, setLingkarPerut] = useState("");
   const [kesediaanData, setKesediaanData] = useState(false);
-  const [gejalaNeuropati, setGejalaNeuropati] = useState(false);
+  const [gejalaNeuropati, setGejalaNeuropati] = useState<'Ya' | 'Tidak' | ''>('');
 
   // States Pengaturan Kamera Scanner (Prioritas Normal 1x & Ganti Lensa)
   const [availableCameras, setAvailableCameras] = useState<Array<{ id: string; label: string }>>([]);
@@ -352,6 +352,7 @@ function App() {
   // Simpan data terbaru & instance scanner di ref
   const dataRef = useRef<Pendaftar[]>([]);
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const lastLoadedUserRegRef = useRef<string | null>(null);
 
   useEffect(() => {
     dataRef.current = data;
@@ -359,6 +360,10 @@ function App() {
 
   useEffect(() => {
     if (selectedUser) {
+      const currentReg = selectedUser["No. Registrasi"] || selectedUser.no_registrasi || "";
+      const isNewUser = currentReg !== lastLoadedUserRegRef.current;
+      lastLoadedUserRegRef.current = currentReg;
+
       // Inisialisasi data pemeriksaan
       setTinggiBadan(selectedUser.tinggi_badan || "");
       setBeratBadan(selectedUser.berat_badan || "");
@@ -368,7 +373,12 @@ function App() {
       setGulaDarah(selectedUser.gula_darah || "");
       setLingkarPerut(selectedUser.lingkar_perut || "");
       setKesediaanData(selectedUser.kesediaan_data === 'Ya' || selectedUser.kesediaan_data === true);
-      setGejalaNeuropati(selectedUser.gejala_neuropati === 'Ya' || selectedUser.gejala_neuropati === true);
+      
+      // Gejala neuropati: SELALU default kosong ('') saat membuka data peserta baru
+      // Jangan pernah default 'Tidak' agar petugas wajib menanyakan & memilih langsung
+      if (isNewUser) {
+        setGejalaNeuropati('');
+      }
 
       // Inisialisasi data edit identitas
       setEditNama(selectedUser["Nama Lengkap"] || selectedUser.nama_lengkap || "");
@@ -398,6 +408,7 @@ function App() {
         setIsEditingIdentity(false);
       }
     } else {
+      lastLoadedUserRegRef.current = null;
       setTinggiBadan("");
       setBeratBadan("");
       setTensiSistolik("");
@@ -405,7 +416,7 @@ function App() {
       setGulaDarah("");
       setLingkarPerut("");
       setKesediaanData(false);
-      setGejalaNeuropati(false);
+      setGejalaNeuropati('');
       setIsEditingIdentity(false);
     }
   }, [selectedUser, scannerMode]);
@@ -1516,6 +1527,12 @@ function App() {
       return;
     }
 
+    if (!gejalaNeuropati || (gejalaNeuropati !== 'Ya' && gejalaNeuropati !== 'Tidak')) {
+      playScannerChime('error', soundEnabled);
+      alert("Tidak dapat mengirim data! Pertanyaan gejala neuropati wajib dipilih (Ya atau Tidak).");
+      return;
+    }
+
     setActionLoading('pemeriksaan');
     try {
       const cleanNik = editNik ? editNik.replace(/\D/g, "") : "";
@@ -1526,7 +1543,7 @@ function App() {
         gula_darah: gulaDarah.trim(),
         lingkar_perut: lingkarPerut,
         kesediaan_data: kesediaanData ? 'Ya' : 'Tidak',
-        gejala_neuropati: gejalaNeuropati ? 'Ya' : 'Tidak',
+        gejala_neuropati: gejalaNeuropati,
         cek_gula_darah: 'Ya',
         // Lengkapi data identitas jika sebelumnya kosong atau sedang disunting
         nama_lengkap: (editNama && editNama.trim()) || selectedUser["Nama Lengkap"] || selectedUser.nama_lengkap,
@@ -1580,6 +1597,8 @@ function App() {
     setScanResult(null);
     setError(null);
     setCandidateList(null);
+    lastLoadedUserRegRef.current = null;
+    setGejalaNeuropati('');
     lastScanActivityRef.current = Date.now();
     setIsCameraAutoSleeping(false);
     setIsScanning(true);
@@ -1722,9 +1741,10 @@ function App() {
   const isIdentityIncomplete = isTanggalLahirMissing || isJenisKelaminMissing || isNamaMissing;
   const isGulaDarahEmpty = !gulaDarah || !gulaDarah.trim();
   const isKesediaanDataMissing = !kesediaanData;
+  const isGejalaNeuropatiMissing = !gejalaNeuropati || (gejalaNeuropati !== 'Ya' && gejalaNeuropati !== 'Tidak');
 
-  // Tombol simpan terkunci jika di pos pemeriksaan gula darah dan data belum lengkap atau belum menyetujui rekam medis
-  const isPemeriksaanDisabled = actionLoading === 'pemeriksaan' || isIdentityIncomplete || isGulaDarahEmpty || isKesediaanDataMissing;
+  // Tombol simpan terkunci jika di pos pemeriksaan gula darah dan data belum lengkap, belum menyetujui rekam medis, atau belum mengisi gejala neuropati
+  const isPemeriksaanDisabled = actionLoading === 'pemeriksaan' || isIdentityIncomplete || isGulaDarahEmpty || isKesediaanDataMissing || isGejalaNeuropatiMissing;
 
   let hasAccess = false;
   let rejectionReason = "";
@@ -3341,18 +3361,65 @@ function App() {
                         </label>
                       </div>
 
-                      <label htmlFor="gejala-neuropati-cb" className="flex items-start gap-2.5 cursor-pointer px-1">
-                        <input
-                          id="gejala-neuropati-cb"
-                          type="checkbox"
-                          checked={gejalaNeuropati}
-                          onChange={e => setGejalaNeuropati(e.target.checked)}
-                          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0"
-                        />
-                        <span className="text-xs text-slate-700 font-medium leading-tight">
-                          Peserta mengalami gejala neuropati (kesemutan, kebas, atau nyeri pada kaki/tangan).
-                        </span>
-                      </label>
+                      {/* Pertanyaan Wajib Gejala Neuropati */}
+                      <div className={`p-3 rounded-xl border transition-all ${
+                        isGejalaNeuropatiMissing 
+                          ? 'bg-amber-50/70 border-amber-300' 
+                          : 'bg-white border-slate-200'
+                      }`}>
+                        <div className="mb-2">
+                          <span className="text-xs text-slate-800 font-bold leading-snug block">
+                            Apakah peserta mengalami gejala neuropati?
+                            <span className="text-rose-600 font-extrabold ml-1" title="Wajib dijawab">* (Wajib)</span>
+                          </span>
+                          <span className="text-[11px] text-slate-500 block mt-0.5">
+                            (Kesemutan, kebas, rasa baal, atau nyeri/panas pada kaki atau tangan)
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => setGejalaNeuropati('Ya')}
+                            className={`py-2.5 px-3 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                              gejalaNeuropati === 'Ya'
+                                ? 'bg-rose-50 border-rose-500 text-rose-700 ring-2 ring-rose-200 shadow-xs'
+                                : 'bg-slate-50 border-slate-300 text-slate-700 hover:bg-slate-100'
+                            }`}
+                          >
+                            <span className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${
+                              gejalaNeuropati === 'Ya' ? 'border-rose-600 bg-rose-600' : 'border-slate-400 bg-white'
+                            }`}>
+                              {gejalaNeuropati === 'Ya' && <span className="w-1.5 h-1.5 rounded-full bg-white"></span>}
+                            </span>
+                            <span>Ya (Mengalami)</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setGejalaNeuropati('Tidak')}
+                            className={`py-2.5 px-3 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                              gejalaNeuropati === 'Tidak'
+                                ? 'bg-emerald-50 border-emerald-500 text-emerald-700 ring-2 ring-emerald-200 shadow-xs'
+                                : 'bg-slate-50 border-slate-300 text-slate-700 hover:bg-slate-100'
+                            }`}
+                          >
+                            <span className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${
+                              gejalaNeuropati === 'Tidak' ? 'border-emerald-600 bg-emerald-600' : 'border-slate-400 bg-white'
+                            }`}>
+                              {gejalaNeuropati === 'Tidak' && <span className="w-1.5 h-1.5 rounded-full bg-white"></span>}
+                            </span>
+                            <span>Tidak (Tidak Ada)</span>
+                          </button>
+                        </div>
+
+                        {isGejalaNeuropatiMissing && (
+                          <p className="text-[11px] text-amber-700 font-semibold mt-2 flex items-center gap-1">
+                            <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-600" />
+                            <span>Wajib pilih salah satu opsi (Ya / Tidak) sebelum menyimpan</span>
+                          </p>
+                        )}
+                      </div>
                     </div>
                     
                     <button
@@ -3372,6 +3439,8 @@ function App() {
                         <AlertTriangle className="w-4 h-4 mr-2 text-amber-500" />
                       ) : isKesediaanDataMissing ? (
                         <AlertTriangle className="w-4 h-4 mr-2 text-amber-500" />
+                      ) : isGejalaNeuropatiMissing ? (
+                        <AlertTriangle className="w-4 h-4 mr-2 text-amber-500" />
                       ) : (
                         <CheckCircle2 className="w-4 h-4 mr-2" />
                       )}
@@ -3386,6 +3455,8 @@ function App() {
                         'Masukkan Nilai Gula Darah'
                       ) : isKesediaanDataMissing ? (
                         'Wajib: Centang Persetujuan Rekam Medis'
+                      ) : isGejalaNeuropatiMissing ? (
+                        'Wajib: Pilih Gejala Neuropati (Ya / Tidak)'
                       ) : (!hasSavedDob || !hasSavedJk) ? (
                         'Simpan Identitas & Data Pemeriksaan'
                       ) : (selectedUser['Cek_Gula_Darah'] === 'Ya' || selectedUser['cek_gula_darah'] === 'Ya') ? (
