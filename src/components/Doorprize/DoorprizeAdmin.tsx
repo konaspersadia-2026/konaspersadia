@@ -20,6 +20,7 @@ import {
   Plus,
   Check,
   LayoutGrid,
+  X,
 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 
@@ -47,6 +48,21 @@ interface Winner {
   waktu_undian: string;
 }
 
+const DEFAULT_PRIZES: string[] = [
+  "Sepeda Lipat",
+  "Smart TV 32 Inch",
+  "Kulkas 1 Pintu",
+  "Mesin Cuci",
+  "Magic Com / Rice Cooker",
+  "Kipas Angin Stand",
+  "Setrika Listrik",
+  "Blender",
+  "Dispenser Air",
+  "Kompor Gas",
+  "Voucher Belanja",
+  "Paket Sembako Sehat",
+];
+
 export default function DoorprizeAdmin({ onNavigateHome, onOpenPublicView }: DoorprizeAdminProps) {
   // Autentikasi Panitia (Passcode Mandiri Khusus Doorprize)
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -62,26 +78,36 @@ export default function DoorprizeAdmin({ onNavigateHome, onOpenPublicView }: Doo
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [dataError, setDataError] = useState<string | null>(null);
 
-  // Daftar Hadiah (Disimpan di State & LocalStorage - diinput sendiri oleh panitia)
+  // Daftar Hadiah (Disimpan di State & LocalStorage - diinput sendiri oleh panitia atau menggunakan default)
   const [prizes, setPrizes] = useState<string[]>(() => {
-    const saved = localStorage.getItem("persadia_doorprize_custom_prizes");
-    if (saved) {
-      try {
+    try {
+      const saved = localStorage.getItem("persadia_doorprize_custom_prizes");
+      if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      } catch (e) {}
-    }
-    return [];
+        if (Array.isArray(parsed)) {
+          const clean = parsed
+            .map((p) => (typeof p === "string" ? p.trim() : ""))
+            .filter(Boolean);
+          if (clean.length > 0) return clean;
+        }
+      }
+    } catch (e) {}
+    return DEFAULT_PRIZES;
   });
 
   const [activePrize, setActivePrize] = useState<string>(() => {
-    const savedPrize = localStorage.getItem("persadia_doorprize_active_prize");
-    if (savedPrize && typeof savedPrize === "string") return savedPrize;
-    return "";
+    try {
+      const savedPrize = localStorage.getItem("persadia_doorprize_active_prize");
+      if (savedPrize && typeof savedPrize === "string" && savedPrize.trim()) {
+        return savedPrize.trim();
+      }
+    } catch {}
+    return DEFAULT_PRIZES[0];
   });
 
   const [newPrizeInput, setNewPrizeInput] = useState("");
   const [isAddingNewPrize, setIsAddingNewPrize] = useState(false);
+  const [isPrizeModalOpen, setIsPrizeModalOpen] = useState(false);
 
   // Status Undian
   const [isSpinning, setIsSpinning] = useState(false);
@@ -338,7 +364,26 @@ export default function DoorprizeAdmin({ onNavigateHome, onOpenPublicView }: Doo
         }
         setWinners([]);
       } else {
-        setWinners(winnerData || []);
+        const list = winnerData || [];
+        setWinners(list);
+        // Otomatis sinkronkan hadiah dari daftar pemenang di database jika ada yang belum tercatat di prizes
+        if (list.length > 0) {
+          const dbPrizes = Array.from(
+            new Set(list.map((w: any) => (w.nama_hadiah || "").trim()).filter(Boolean))
+          );
+          if (dbPrizes.length > 0) {
+            setPrizes((prev) => {
+              const prevLower = new Set(prev.map((p) => p.toLowerCase()));
+              const toAdd = dbPrizes.filter((p) => !prevLower.has(p.toLowerCase()));
+              if (toAdd.length === 0) return prev;
+              const merged = [...prev, ...toAdd];
+              try {
+                localStorage.setItem("persadia_doorprize_custom_prizes", JSON.stringify(merged));
+              } catch {}
+              return merged;
+            });
+          }
+        }
       }
     } catch (err: any) {
       console.error("Fetch doorprize data error:", err);
@@ -370,10 +415,14 @@ export default function DoorprizeAdmin({ onNavigateHome, onOpenPublicView }: Doo
   useEffect(() => {
     if (prizes.length > 0 && (!activePrize || !prizes.includes(activePrize))) {
       setActivePrize(prizes[0]);
-      localStorage.setItem("persadia_doorprize_active_prize", prizes[0]);
+      try {
+        localStorage.setItem("persadia_doorprize_active_prize", prizes[0]);
+      } catch {}
     } else if (prizes.length === 0) {
       setActivePrize("");
-      localStorage.removeItem("persadia_doorprize_active_prize");
+      try {
+        localStorage.removeItem("persadia_doorprize_active_prize");
+      } catch {}
     }
   }, [prizes, activePrize]);
 
@@ -398,17 +447,25 @@ export default function DoorprizeAdmin({ onNavigateHome, onOpenPublicView }: Doo
       return;
     }
     if (stagedWinner) {
-      showToast("Sahkan atau batalkan pemenang saat ini sebelum mengganti hadiah!", "info");
-      return;
+      const confirmSwitch = window.confirm(
+        `Ada peserta (${stagedWinner.nama_lengkap}) yang baru terundi. Ingin beralih ke hadiah "${prizeName}" dan reset putaran saat ini?`
+      );
+      if (!confirmSwitch) return;
+      setStagedWinner(null);
+      setRollingCandidate(null);
     }
     setActivePrize(prizeName);
-    localStorage.setItem("persadia_doorprize_active_prize", prizeName);
+    try {
+      localStorage.setItem("persadia_doorprize_active_prize", prizeName);
+    } catch {}
+    showToast(`Hadiah aktif: "${prizeName}"`, "info");
   };
 
-  // Handler tambah hadiah baru dari panitia
-  const handleAddPrize = (e?: React.FormEvent) => {
+  // Handler tambah hadiah baru dari panitia (bisa dari input atau chip cepat)
+  const handleAddPrize = (e?: React.FormEvent, prizeNameToAdd?: string) => {
     if (e) e.preventDefault();
-    const trimmed = newPrizeInput.trim();
+    const raw = prizeNameToAdd || newPrizeInput;
+    const trimmed = raw.trim();
     if (!trimmed) {
       showToast("Ketik nama hadiah terlebih dahulu!", "error");
       return;
@@ -418,20 +475,26 @@ export default function DoorprizeAdmin({ onNavigateHome, onOpenPublicView }: Doo
       handleSelectPrize(exists);
       setNewPrizeInput("");
       setIsAddingNewPrize(false);
-      showToast(`Hadiah "${exists}" sudah ada di dropdown dan sekarang aktif.`, "info");
+      setIsPrizeModalOpen(false);
+      showToast(`Hadiah "${exists}" sudah ada di daftar dan sekarang aktif!`, "info");
       return;
     }
     const updated = [...prizes, trimmed];
     setPrizes(updated);
-    localStorage.setItem("persadia_doorprize_custom_prizes", JSON.stringify(updated));
+    try {
+      localStorage.setItem("persadia_doorprize_custom_prizes", JSON.stringify(updated));
+    } catch {}
     setActivePrize(trimmed);
-    localStorage.setItem("persadia_doorprize_active_prize", trimmed);
+    try {
+      localStorage.setItem("persadia_doorprize_active_prize", trimmed);
+    } catch {}
     setNewPrizeInput("");
     setIsAddingNewPrize(false);
-    showToast(`Hadiah "${trimmed}" berhasil ditambahkan ke dropdown & siap diundi!`, "success");
+    setIsPrizeModalOpen(false);
+    showToast(`Hadiah "${trimmed}" berhasil ditambahkan & langsung aktif!`, "success");
   };
 
-  // Handler hapus hadiah dari daftar dropdown
+  // Handler hapus hadiah dari daftar pilihan
   const handleDeletePrize = (prizeToDelete?: string) => {
     const target = prizeToDelete || activePrize;
     if (!target) return;
@@ -440,11 +503,34 @@ export default function DoorprizeAdmin({ onNavigateHome, onOpenPublicView }: Doo
 
     const updated = prizes.filter((p) => p !== target);
     setPrizes(updated);
-    localStorage.setItem("persadia_doorprize_custom_prizes", JSON.stringify(updated));
+    try {
+      localStorage.setItem("persadia_doorprize_custom_prizes", JSON.stringify(updated));
+    } catch {}
     const nextPrize = updated.length > 0 ? updated[0] : "";
     setActivePrize(nextPrize);
-    localStorage.setItem("persadia_doorprize_active_prize", nextPrize);
-    showToast(`Hadiah "${target}" berhasil dihapus dari dropdown.`, "info");
+    try {
+      if (nextPrize) {
+        localStorage.setItem("persadia_doorprize_active_prize", nextPrize);
+      } else {
+        localStorage.removeItem("persadia_doorprize_active_prize");
+      }
+    } catch {}
+    showToast(`Hadiah "${target}" berhasil dihapus dari daftar pilihan.`, "info");
+  };
+
+  // Handler reset hadiah ke daftar standar (default)
+  const handleResetDefaultPrizes = () => {
+    const confirmReset = window.confirm(
+      "Kembalikan daftar hadiah ke daftar standar (default) KONAS PERSADIA 2026?"
+    );
+    if (!confirmReset) return;
+    setPrizes(DEFAULT_PRIZES);
+    try {
+      localStorage.setItem("persadia_doorprize_custom_prizes", JSON.stringify(DEFAULT_PRIZES));
+      localStorage.setItem("persadia_doorprize_active_prize", DEFAULT_PRIZES[0]);
+    } catch {}
+    setActivePrize(DEFAULT_PRIZES[0]);
+    showToast("Daftar hadiah telah dikembalikan ke daftar standar!", "success");
   };
 
   // Jalankan Putar Undian (Single Spin / Satu Per Satu)
@@ -824,7 +910,7 @@ export default function DoorprizeAdmin({ onNavigateHome, onOpenPublicView }: Doo
                     <input
                       type="text"
                       required
-                      placeholder="Ketik hadiah pertama (misal: Sepeda)..."
+                      placeholder="Ketik nama hadiah (misal: Sepeda)..."
                       value={newPrizeInput}
                       onChange={(e) => setNewPrizeInput(e.target.value)}
                       disabled={isSpinning}
@@ -838,24 +924,28 @@ export default function DoorprizeAdmin({ onNavigateHome, onOpenPublicView }: Doo
                       <Plus className="w-3.5 h-3.5" />
                       <span>Tambah</span>
                     </button>
+                    <button
+                      type="button"
+                      onClick={handleResetDefaultPrizes}
+                      className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold border border-slate-200 transition cursor-pointer shrink-0"
+                    >
+                      Standar
+                    </button>
                   </form>
                 ) : (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
                     <div className="relative flex-1 min-w-0">
                       <select
                         value={activePrize}
-                        onChange={(e) => {
-                          setActivePrize(e.target.value);
-                          localStorage.setItem("persadia_doorprize_active_prize", e.target.value);
-                        }}
-                        disabled={isSpinning || Boolean(stagedWinner)}
-                        className="w-full pl-3 pr-7 py-2 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 font-bold text-xs sm:text-sm focus:border-teal-600 focus:bg-white outline-none transition disabled:opacity-50 cursor-pointer truncate"
+                        onChange={(e) => handleSelectPrize(e.target.value)}
+                        disabled={isSpinning}
+                        className="w-full pl-2.5 sm:pl-3 pr-7 py-2 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 font-bold text-xs sm:text-sm focus:border-teal-600 focus:bg-white outline-none transition disabled:opacity-50 cursor-pointer truncate"
                       >
                         {prizes.map((p) => {
                           const count = prizeWinnerStats[p] || 0;
                           return (
                             <option key={p} value={p}>
-                              🎁 {p} {count > 0 ? `(${count} Pemenang Sah)` : ""}
+                              🎁 {p} {count > 0 ? `(${count} Sah)` : ""}
                             </option>
                           );
                         })}
@@ -864,60 +954,25 @@ export default function DoorprizeAdmin({ onNavigateHome, onOpenPublicView }: Doo
 
                     <button
                       type="button"
-                      onClick={() => setIsAddingNewPrize(!isAddingNewPrize)}
-                      disabled={isSpinning || Boolean(stagedWinner)}
-                      className={`px-2.5 py-2 rounded-xl border text-xs font-bold transition flex items-center gap-1 cursor-pointer disabled:opacity-50 shrink-0 ${
-                        isAddingNewPrize
-                          ? "bg-slate-200 border-slate-300 text-slate-800"
-                          : "bg-teal-50 hover:bg-teal-100 border-teal-200 text-teal-800"
-                      }`}
-                      title="Tambah hadiah baru ke dropdown"
+                      onClick={() => setIsPrizeModalOpen(true)}
+                      disabled={isSpinning}
+                      className="px-2.5 sm:px-3 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 text-white border border-teal-700 text-xs font-bold transition flex items-center gap-1 cursor-pointer disabled:opacity-50 shrink-0 shadow-xs"
+                      title="Tambah hadiah baru atau kelola daftar hadiah"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">{isAddingNewPrize ? "Tutup" : "+ Hadiah"}</span>
+                      <span>+ Hadiah</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => handleDeletePrize()}
-                      disabled={isSpinning || Boolean(stagedWinner)}
+                      disabled={isSpinning}
                       className="p-2 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 transition cursor-pointer disabled:opacity-50 shrink-0"
-                      title={`Hapus hadiah "${activePrize}"`}
+                      title={`Hapus hadiah "${activePrize}" dari daftar`}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                )}
-
-                {/* Form Tambah Hadiah Inline jika dibuka */}
-                {isAddingNewPrize && prizes.length > 0 && (
-                  <form onSubmit={handleAddPrize} className="flex gap-2 mt-2 pt-2 border-t border-slate-100 animate-fadeIn">
-                    <input
-                      type="text"
-                      autoFocus
-                      placeholder="Ketik nama hadiah baru..."
-                      value={newPrizeInput}
-                      onChange={(e) => setNewPrizeInput(e.target.value)}
-                      className="flex-1 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 font-semibold outline-none focus:border-teal-500 focus:bg-white transition"
-                    />
-                    <button
-                      type="submit"
-                      disabled={!newPrizeInput.trim()}
-                      className="px-3 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition cursor-pointer disabled:opacity-40 shrink-0"
-                    >
-                      Simpan
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsAddingNewPrize(false);
-                        setNewPrizeInput("");
-                      }}
-                      className="px-2.5 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold transition cursor-pointer shrink-0"
-                    >
-                      Batal
-                    </button>
-                  </form>
                 )}
               </div>
             </div>
@@ -926,10 +981,15 @@ export default function DoorprizeAdmin({ onNavigateHome, onOpenPublicView }: Doo
             <div className="bg-gradient-to-b from-teal-50/70 via-white to-emerald-50/50 border-2 border-teal-200 rounded-3xl p-4 sm:p-6 lg:p-7 text-center shadow-xs relative overflow-hidden flex-1 min-h-0 flex flex-col justify-between items-center">
               {/* Badge Hadiah Aktif di Atas */}
               <div className="shrink-0 mb-2">
-                <span className="inline-flex items-center gap-2 px-4 sm:px-6 py-1.5 sm:py-2 rounded-full bg-teal-100 border border-teal-300 text-teal-900 text-xs sm:text-sm font-extrabold uppercase tracking-widest shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => setIsPrizeModalOpen(true)}
+                  className="inline-flex items-center gap-2 px-4 sm:px-6 py-1.5 sm:py-2 rounded-full bg-teal-100 hover:bg-teal-200 border border-teal-300 text-teal-900 text-xs sm:text-sm font-extrabold uppercase tracking-widest shadow-2xs transition cursor-pointer"
+                  title="Klik untuk ganti atau kelola hadiah"
+                >
                   <Sparkles className="w-4 h-4 text-teal-600 animate-pulse" />
-                  <span>Hadiah: {currentPrizeName || "Belum Ada Hadiah"}</span>
-                </span>
+                  <span>Hadiah: {currentPrizeName || "Belum Ada Hadiah (Klik untuk Pilih)"}</span>
+                </button>
               </div>
 
               {/* Area Nomor & Nama (Flex-1 di Tengah) */}
@@ -969,7 +1029,7 @@ export default function DoorprizeAdmin({ onNavigateHome, onOpenPublicView }: Doo
                     <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
                       {currentPrizeName
                         ? "Tekan tombol putar di bawah untuk mengacak nomor pemenang satu per satu."
-                        : "Silakan masukkan nama hadiah pada dropdown di atas sebelum memutar undian."}
+                        : "Silakan pilih atau tambahkan hadiah pada menu di atas sebelum memutar undian."}
                     </p>
                   </div>
                 )}
@@ -979,8 +1039,15 @@ export default function DoorprizeAdmin({ onNavigateHome, onOpenPublicView }: Doo
               <div className="w-full max-w-xl shrink-0 pt-2">
                 {!stagedWinner ? (
                   <button
-                    onClick={handleStartSpin}
-                    disabled={isSpinning || activeLotteryPool.length === 0 || !currentPrizeName}
+                    onClick={() => {
+                      if (!currentPrizeName) {
+                        setIsPrizeModalOpen(true);
+                        showToast("Silakan pilih atau tambahkan nama hadiah terlebih dahulu!", "info");
+                        return;
+                      }
+                      handleStartSpin();
+                    }}
+                    disabled={isSpinning || activeLotteryPool.length === 0}
                     className="w-full py-3 sm:py-3.5 xl:py-4 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 active:scale-[0.99] text-white font-black text-sm sm:text-base xl:text-lg rounded-2xl shadow-md shadow-teal-600/30 transition flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Play className="w-5 h-5 fill-white" />
@@ -988,8 +1055,8 @@ export default function DoorprizeAdmin({ onNavigateHome, onOpenPublicView }: Doo
                       {isSpinning
                         ? "SEDANG MENGACAK NOMOR..."
                         : !currentPrizeName
-                        ? "TAMBAHKAN HADIAH TERLEBIH DAHULU"
-                        : "PUTAR UNDIAN SEKARANG"}
+                        ? "+ KLIK DI SINI UNTUK PILIH / TAMBAH HADIAH"
+                        : `PUTAR UNDIAN SEKARANG (${currentPrizeName.toUpperCase()})`}
                     </span>
                   </button>
                 ) : (
@@ -1017,6 +1084,19 @@ export default function DoorprizeAdmin({ onNavigateHome, onOpenPublicView }: Doo
                         <span>GUGUR / PUTAR LAGI</span>
                       </button>
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStagedWinner(null);
+                        setRollingCandidate(null);
+                        showToast("Putaran dibatalkan. Siap undi ulang.", "info");
+                      }}
+                      disabled={isSavingDecision}
+                      className="w-full py-1 text-slate-400 hover:text-slate-600 text-xs font-semibold underline cursor-pointer transition"
+                    >
+                      Batal / Reset Pilihan Ini (Tanpa Simpan ke Database)
+                    </button>
                   </div>
                 )}
               </div>
@@ -1138,6 +1218,187 @@ export default function DoorprizeAdmin({ onNavigateHome, onOpenPublicView }: Doo
           </div>
         </div>
       </main>
+
+      {/* MODAL KELOLA & TAMBAH HADIAH */}
+      {isPrizeModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+            {/* Modal Header */}
+            <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-gradient-to-r from-teal-50 to-white shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-teal-600 text-white flex items-center justify-center shadow-xs">
+                  <Gift className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900 leading-tight">
+                    Kelola &amp; Tambah Hadiah
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Atur daftar hadiah yang akan diundi di panggung
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setIsPrizeModalOpen(false);
+                  setNewPrizeInput("");
+                }}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 overflow-y-auto space-y-4 flex-1">
+              {/* Form Input Tambah Hadiah */}
+              <div>
+                <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">
+                  Tambah Hadiah Baru
+                </label>
+                <form onSubmit={handleAddPrize} className="flex gap-2">
+                  <input
+                    type="text"
+                    autoFocus
+                    placeholder="Contoh: Sepeda Listrik, HP Samsung, dll..."
+                    value={newPrizeInput}
+                    onChange={(e) => setNewPrizeInput(e.target.value)}
+                    className="flex-1 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-300 text-sm text-slate-900 font-bold outline-none focus:border-teal-600 focus:bg-white transition"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!newPrizeInput.trim()}
+                    className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer disabled:opacity-40 shrink-0 shadow-xs"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Simpan</span>
+                  </button>
+                </form>
+              </div>
+
+              {/* Pilihan Cepat (Quick Chips) */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                  Pilihan Cepat (Klik untuk tambah instan)
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {DEFAULT_PRIZES.filter((p) => !prizes.includes(p)).map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => handleAddPrize(undefined, preset)}
+                      className="px-2.5 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-800 text-xs font-semibold transition cursor-pointer flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3 text-teal-600" />
+                      <span>{preset}</span>
+                    </button>
+                  ))}
+                  {DEFAULT_PRIZES.filter((p) => !prizes.includes(p)).length === 0 && (
+                    <span className="text-[11px] text-slate-400 italic">
+                      Semua hadiah standar sudah ada di daftar.
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Daftar Hadiah Saat Ini */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-black text-slate-700 uppercase tracking-wider">
+                    Daftar Hadiah Tersedia ({prizes.length})
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleResetDefaultPrizes}
+                    className="text-[11px] font-bold text-teal-700 hover:underline cursor-pointer"
+                  >
+                    Reset Hadiah Standar
+                  </button>
+                </div>
+
+                <div className="border border-slate-200 rounded-2xl divide-y divide-slate-100 max-h-56 overflow-y-auto">
+                  {prizes.length === 0 ? (
+                    <div className="p-4 text-center text-xs text-slate-400">
+                      Belum ada hadiah. Silakan ketik nama hadiah di atas.
+                    </div>
+                  ) : (
+                    prizes.map((p) => {
+                      const isActive = p === activePrize;
+                      const count = prizeWinnerStats[p] || 0;
+                      return (
+                        <div
+                          key={p}
+                          className={`p-2.5 flex items-center justify-between gap-2 transition ${
+                            isActive ? "bg-teal-50/70 font-black text-teal-900" : "hover:bg-slate-50"
+                          }`}
+                        >
+                          <div
+                            onClick={() => {
+                              handleSelectPrize(p);
+                              setIsPrizeModalOpen(false);
+                            }}
+                            className="flex items-center gap-2 flex-1 cursor-pointer min-w-0"
+                          >
+                            <span className="text-sm">🎁</span>
+                            <span className="text-xs font-bold truncate">{p}</span>
+                            {count > 0 && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold shrink-0">
+                                {count} Sah
+                              </span>
+                            )}
+                            {isActive && (
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-600 text-white font-extrabold shrink-0">
+                                SEDANG AKTIF
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            {!isActive && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  handleSelectPrize(p);
+                                  setIsPrizeModalOpen(false);
+                                }}
+                                className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold transition cursor-pointer"
+                              >
+                                Pilih
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleDeletePrize(p)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
+                              title="Hapus hadiah ini"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-5 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-end shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPrizeModalOpen(false);
+                  setNewPrizeInput("");
+                }}
+                className="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold transition cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
