@@ -48,8 +48,8 @@ export default function Navbar({ onOpenRegister, activeSection, onNavigate }: Na
           : "bg-gradient-to-r from-[#0B3D5E] to-[#00B4AC] text-white py-2.5 sm:py-3.5"
       }`}
     >
-      <div className="max-w-[1600px] w-full mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-2 lg:gap-4 w-full">
+      <div className="max-w-[1600px] w-full mx-auto px-3 sm:px-6 xl:px-6">
+        <div className="flex items-center justify-between gap-2 xl:gap-3 w-full">
           {/* Logo & Brand */}
           <div
             id="brand-logo-container"
@@ -60,33 +60,33 @@ export default function Navbar({ onOpenRegister, activeSection, onNavigate }: Na
               <img 
                 src={EVENT_INFO.eventLogoUrl || "https://placehold.co/240x80/ffffff/1e3a8a?text=Logo+Acara"} 
                 alt="Logo Konas Persadia" 
-                className="h-5 sm:h-7 max-w-[75px] min-[360px]:max-w-[85px] sm:max-w-[140px] object-contain"
+                className="h-5 sm:h-7 max-w-[75px] min-[360px]:max-w-[85px] sm:max-w-[120px] 2xl:max-w-[140px] object-contain"
                 onError={(e) => {
                   e.currentTarget.src = "https://placehold.co/240x80/ffffff/1e3a8a?text=Logo+Acara";
                 }}
               />
             </div>
             <div className="shrink-0">
-              <div className="font-extrabold text-[9px] min-[360px]:text-[10px] sm:text-sm lg:text-base tracking-tight leading-[1.15] uppercase font-sans">
+              <div className="font-extrabold text-[9px] min-[360px]:text-[10px] sm:text-sm xl:text-sm 2xl:text-base tracking-tight leading-[1.15] uppercase font-sans">
                 <span className="block sm:inline">KONAS </span>
                 <span className="block sm:inline">PERSADIA </span>
                 <span className="block sm:inline text-[#C89A2E] sm:text-inherit">2026</span>
               </div>
-              <div className="text-[10px] text-[#F8FAFC]/90 hidden min-[1400px]:block">
+              <div className="text-[10px] text-[#F8FAFC]/90 hidden min-[1480px]:block">
                 KONAS PERSADIA • KONKER PERKENI • KONKER PEDI
               </div>
             </div>
           </div>
 
           {/* Desktop Nav Items (Rata Tengah) */}
-          <div className="hidden xl:flex items-center justify-center flex-1 mx-1 2xl:mx-3">
+          <div className="hidden xl:flex items-center justify-center flex-1 min-w-0 mx-1 2xl:mx-3">
             <div className="flex items-center space-x-0.5 2xl:space-x-1">
               {navItems.map((item) => (
                 <button
                   key={item.id}
                   id={`nav-link-${item.id}`}
                   onClick={() => handleItemClick(item.id)}
-                  className={`px-2 py-1 2xl:px-2.5 2xl:py-1.5 text-[11px] 2xl:text-xs font-medium transition-all duration-200 cursor-pointer whitespace-nowrap ${
+                  className={`px-1.5 py-1 2xl:px-2.5 2xl:py-1.5 text-[11px] 2xl:text-xs font-medium transition-all duration-200 cursor-pointer whitespace-nowrap ${
                     activeSection === item.id || (item.id === "jadwal" && activeSection === "pembicara")
                       ? "bg-white/15 text-[#C89A2E] font-semibold rounded-md shadow-xs"
                       : "hover:bg-white/10 text-white/90 hover:text-white rounded-md"
@@ -99,74 +99,54 @@ export default function Navbar({ onOpenRegister, activeSection, onNavigate }: Na
           </div>
 
           {/* Desktop Action Buttons (Sisi Kanan) */}
-          <div className="hidden xl:flex items-center gap-1.5 2xl:gap-2 shrink-0">
+          <div className="hidden xl:flex items-center gap-1.5 2xl:gap-2 shrink-0 pr-0.5">
             <a
               href="#doorprize"
               onClick={() => window.scrollTo(0, 0)}
-              className="px-2.5 py-1 2xl:px-3 2xl:py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 hover:text-white font-bold text-xs rounded-full border border-amber-400/40 transition whitespace-nowrap cursor-pointer shadow-xs flex items-center gap-1.5"
+              className="px-2 py-1 2xl:px-3 2xl:py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 hover:text-white font-bold text-[11px] 2xl:text-xs rounded-full border border-amber-400/40 transition whitespace-nowrap cursor-pointer shadow-xs flex items-center gap-1"
             >
               🎁 Doorprize
             </a>
             <a
               href="#tiket"
               onClick={() => window.scrollTo(0, 0)}
-              className="px-3 py-1 2xl:px-3.5 2xl:py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 hover:text-white font-bold text-xs rounded-full border border-cyan-400/40 transition whitespace-nowrap cursor-pointer shadow-xs flex items-center gap-1.5"
+              className="px-2 py-1 2xl:px-3.5 2xl:py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 hover:text-white font-bold text-[11px] 2xl:text-xs rounded-full border border-cyan-400/40 transition whitespace-nowrap cursor-pointer shadow-xs flex items-center gap-1"
             >
-              🎟️ Unduh E-Ticket
+              🎟️ <span className="hidden 2xl:inline">Unduh </span>E-Ticket
             </a>
             <a
               href="#sponsorship"
               onClick={() => window.scrollTo(0, 0)}
-              className="px-2.5 py-1 2xl:px-3 2xl:py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-400 hover:to-orange-400 font-extrabold text-[11px] 2xl:text-xs rounded-full shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 cursor-pointer text-center animate-pulse whitespace-nowrap"
+              className="px-2 py-1 2xl:px-3 2xl:py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-400 hover:to-orange-400 font-extrabold text-[11px] 2xl:text-xs rounded-full shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 cursor-pointer text-center animate-pulse whitespace-nowrap"
             >
               Sponsorship
             </a>
             <button
               id="nav-btn-daftar"
               onClick={onOpenRegister}
-              className="px-3 py-1 2xl:px-3.5 2xl:py-1.5 bg-red-600 hover:bg-red-500 text-white font-black text-xs 2xl:text-sm rounded-full shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 cursor-pointer whitespace-nowrap ring-2 ring-red-300 ring-offset-2 ring-offset-[#0B3D5E]"
+              className="px-2.5 py-1 2xl:px-3.5 2xl:py-1.5 bg-red-600 hover:bg-red-500 text-white font-black text-[11px] 2xl:text-sm rounded-full shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 cursor-pointer whitespace-nowrap ring-2 ring-red-300 ring-offset-1 2xl:ring-offset-2 ring-offset-[#0B3D5E]"
             >
               Daftar Sekarang
             </button>
           </div>
 
           {/* Mobile & Tablet Menu & Actions */}
-          <div className="xl:hidden flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-            <a
-              href="#doorprize"
-              onClick={() => window.scrollTo(0, 0)}
-              className="px-2 py-1 sm:px-2.5 sm:py-1.5 bg-amber-500/20 text-amber-200 font-bold text-[10px] sm:text-xs rounded-full border border-amber-400/40 cursor-pointer whitespace-nowrap"
-            >
-              🎁 Doorprize
-            </a>
-            <a
-              href="#tiket"
-              onClick={() => window.scrollTo(0, 0)}
-              className="px-2 py-1 sm:px-3 sm:py-1.5 bg-blue-500/20 text-cyan-200 font-bold text-[10px] sm:text-xs rounded-full border border-cyan-400/30 cursor-pointer whitespace-nowrap"
-            >
-              🎟️ E-Ticket
-            </a>
-            <a
-              href="#sponsorship"
-              onClick={() => window.scrollTo(0, 0)}
-              className="px-2.5 py-1 sm:px-4 sm:py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-extrabold text-[11px] sm:text-sm rounded-full shadow-md cursor-pointer text-center whitespace-nowrap animate-pulse"
-            >
-              Sponsorship
-            </a>
+          <div className="xl:hidden flex items-center gap-2 sm:gap-3 shrink-0">
             <button
               id="nav-mobile-btn-daftar"
               onClick={onOpenRegister}
-              className="px-2.5 py-1 sm:px-4 sm:py-2 bg-red-600 hover:bg-red-500 text-white font-black text-[11px] sm:text-sm rounded-full shadow-lg cursor-pointer whitespace-nowrap ring-1 sm:ring-2 ring-red-300 ring-offset-1 ring-offset-[#0B3D5E]"
+              className="px-3.5 py-1.5 sm:px-4 sm:py-2 bg-red-600 hover:bg-red-500 text-white font-black text-xs sm:text-sm rounded-full shadow-lg cursor-pointer whitespace-nowrap ring-2 ring-red-300 ring-offset-1 ring-offset-[#0B3D5E] transition-all active:scale-95"
             >
-              Daftar
+              <span className="sm:hidden">Daftar</span>
+              <span className="hidden sm:inline">Daftar Sekarang</span>
             </button>
             <button
               id="mobile-menu-toggle"
               onClick={() => setIsOpen(!isOpen)}
-              className="p-1 sm:p-1.5 rounded-md hover:bg-white/15 focus:outline-none text-white shrink-0 cursor-pointer"
+              className="p-1.5 sm:p-2 rounded-lg hover:bg-white/15 focus:outline-none text-white shrink-0 cursor-pointer transition-colors"
               aria-label="Toggle Menu"
             >
-              {isOpen ? <X className="h-5 w-5 sm:h-6 sm:w-6" /> : <Menu className="h-5 w-5 sm:h-6 sm:w-6" />}
+              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
           </div>
         </div>
